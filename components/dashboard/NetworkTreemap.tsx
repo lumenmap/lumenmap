@@ -3,7 +3,6 @@
 import { CATEGORY_COLORS } from "@/lib/constants";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { D3Treemap } from "@/components/dashboard/D3Treemap";
-import { TreemapViewSelector } from "@/components/dashboard/TreemapViewSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -60,14 +59,9 @@ export function NetworkTreemap() {
   return (
     <Card>
       <CardHeader className="flex flex-col gap-4">
-        <div>
-          <CardTitle>Network Treemap</CardTitle>
-          <p className="text-xs text-zinc-500">
-            Switch views to explore operation types or top accounts and
-            contracts.
-          </p>
-        </div>
-        <TreemapViewSelector />
+        <CardTitle>Network Treemap</CardTitle>
+
+        {/* Category colour legend */}
         <div
           className="flex flex-wrap gap-2"
           role="list"
@@ -79,7 +73,7 @@ export function NetworkTreemap() {
               role="listitem"
               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300 select-none"
             >
-              {/* Decorative color swatch — hidden from screen readers */}
+              {/* Decorative colour swatch — hidden from screen readers */}
               <span
                 aria-hidden="true"
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -90,10 +84,11 @@ export function NetworkTreemap() {
           ))}
         </div>
       </CardHeader>
+
       <CardContent>
         <div
           key={`${period}-${treemapView}`}
-          className="h-[420px] sm:h-[520px] lg:h-[600px] overflow-hidden rounded-xl border border-white/5 bg-black/20 p-2 sm:p-3"
+          className="h-[420px] overflow-hidden rounded-xl border border-white/5 bg-black/20 p-2 sm:h-[520px] sm:p-3 lg:h-[600px]"
         >
           <D3Treemap root={activeTreemap} onSelect={setSelectedNode} />
         </div>

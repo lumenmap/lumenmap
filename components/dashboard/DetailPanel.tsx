@@ -12,7 +12,9 @@ export function DetailPanel() {
 
   if (!selectedNode) {
     return (
-      <Card className="h-full">
+      /* On mobile the empty state is compact so it doesn't push KPIs far down.
+         On xl screens it stretches to fill the sidebar column (h-full). */
+      <Card className="xl:h-full">
         <CardHeader>
           <CardTitle>Details</CardTitle>
         </CardHeader>
@@ -36,7 +38,7 @@ export function DetailPanel() {
           : "This month";
 
   return (
-    <Card className="h-full">
+    <Card className="xl:h-full">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-2">
           <CardTitle className="text-base text-white">

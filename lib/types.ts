@@ -69,7 +69,7 @@ export interface TreemapNode {
   meta?: TreemapNodeMeta;
 }
 
-import type { TreemapViewId } from "@/lib/constants";
+
 
 export interface ActivityTreemaps {
   events: TreemapNode;
