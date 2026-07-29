@@ -78,3 +78,7 @@ export const TREEMAP_VIEWS = [
 ] as const;
 
 export type TreemapViewId = (typeof TREEMAP_VIEWS)[number]["id"];
+
+export function isValidTreemapView(value: string | null): value is TreemapViewId {
+  return TREEMAP_VIEWS.some((view) => view.id === value);
+}

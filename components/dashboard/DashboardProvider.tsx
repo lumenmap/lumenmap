@@ -2,8 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { TreemapViewId } from "@/lib/constants";
 import type { ActivityResponse, Period, SelectedNode } from "@/lib/types";
+import { isValidPeriod } from "@/lib/periods";
+import { isValidTreemapView } from "@/lib/constants";
 
 interface DashboardContextValue {
   period: Period;
@@ -30,9 +33,32 @@ async function fetchActivity(period: Period): Promise<ActivityResponse> {
 }
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
+  const searchParams = useSearchParams();
   const [period, setPeriod] = useState<Period>("1d");
   const [treemapView, setTreemapView] = useState<TreemapViewId>("events");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
+
+  // Initialize state from URL params on mount
+  useEffect(() => {
+    const urlPeriod = searchParams.get("period");
+    const urlView = searchParams.get("view");
+
+    if (urlPeriod && isValidPeriod(urlPeriod)) {
+      setPeriod(urlPeriod);
+    }
+    if (urlView && isValidTreemapView(urlView)) {
+      setTreemapView(urlView);
+    }
+  }, [searchParams]);
+
+  // Update URL when state changes (preserves other query params)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("period", period);
+    params.set("view", treemapView);
+    const newUrl = `?${params.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }, [period, treemapView]);
 
   useEffect(() => {
     setSelectedNode(null);
