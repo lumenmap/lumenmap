@@ -11,6 +11,7 @@ import type {
   ContractRow,
   SorobanFunctionContractRow,
   SorobanFunctionRow,
+  TransactionCountRow,
 } from "@/lib/types";
 
 export interface QueryParams {
@@ -115,6 +116,14 @@ WHERE rank <= ${TOP_CONTRACTS_PER_FUNCTION}
 ORDER BY function_name, op_count DESC
 `;
 
+export const transactionCountQuery = `
+SELECT
+  COUNT(*) AS transaction_count
+FROM \`crypto-stellar.crypto_stellar.history_transactions\`
+WHERE closed_at BETWEEN @start AND @end
+  AND successful = true
+`;
+
 export function getAccountQueryTypes(): string[] {
   return ACCOUNT_QUERY_TYPES;
 }
@@ -184,5 +193,16 @@ export function mapAccountMetadataRows(
   return rows.map((row) => ({
     account_id: String(row.account_id),
     home_domain: String(row.home_domain),
+  }));
+}
+
+export function mapTransactionCountRows(
+  rows: Record<string, unknown>[],
+): TransactionCountRow[] {
+  if (rows.length === 0) {
+    return [{ transaction_count: 0 }];
+  }
+  return rows.map((row) => ({
+    transaction_count: Number(row.transaction_count) || 0,
   }));
 }
