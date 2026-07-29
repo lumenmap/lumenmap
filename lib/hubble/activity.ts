@@ -25,6 +25,8 @@ import {
 } from "@/lib/entities/resolve-labels";
 import { resolvePeriod } from "@/lib/periods";
 import type { ActivityResponse, Period } from "@/lib/types";
+import { fetchAllProtocolSnapshots } from "@/lib/adapters/protocol-adapters";
+import { buildProtocolTreemap } from "@/lib/adapters/build-protocol-treemap";
 
 async function runQuery<T>(
   query: string,
@@ -113,6 +115,10 @@ export async function getActivityData(period: Period): Promise<ActivityResponse>
   });
   const treemaps = buildAllTreemaps({ ...raw, labels });
 
+  // Fetch protocol TVL data
+  const protocolSnapshots = await fetchAllProtocolSnapshots();
+  const protocolTreemap = buildProtocolTreemap(protocolSnapshots);
+
   const response: ActivityResponse = {
     period,
     start,
@@ -124,7 +130,10 @@ export async function getActivityData(period: Period): Promise<ActivityResponse>
     sorobanFunctions: raw.sorobanFunctions,
     sorobanFunctionContracts: raw.sorobanFunctionContracts,
     kpis,
-    treemaps,
+    treemaps: {
+      ...treemaps,
+      protocols: protocolTreemap,
+    },
   };
 
   setCache(cacheKey, response);

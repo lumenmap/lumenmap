@@ -7,7 +7,8 @@ export type TreemapNodeType =
   | "category"
   | "entity"
   | "contract"
-  | "account";
+  | "account"
+  | "protocol";
 
 export interface EntityInfo {
   name: string;
@@ -58,6 +59,13 @@ export interface TreemapNodeMeta {
   opCount?: number;
   childCount?: number;
   eventType?: string;
+  tvlUsd?: number;
+  snapshotTime?: string;
+  status?: AdapterStatus;
+  confidence?: number;
+  source?: string;
+  totalTVL?: number;
+  protocolCount?: number;
 }
 
 export interface TreemapNode {
@@ -74,6 +82,7 @@ import type { TreemapViewId } from "@/lib/constants";
 export interface ActivityTreemaps {
   events: TreemapNode;
   actors: TreemapNode;
+  protocols?: TreemapNode;
 }
 
 export interface ActivityResponse {
@@ -95,4 +104,25 @@ export interface SelectedNode {
   value: number;
   share: number;
   meta?: TreemapNodeMeta;
+}
+
+export type AdapterStatus = "valid" | "partial" | "stale" | "invalid";
+
+export interface ProtocolSnapshot {
+  protocol: string;
+  tvlUsd: number;
+  snapshotTime: string;
+  status: AdapterStatus;
+  metadata?: {
+    source?: string;
+    lastUpdated?: string;
+    confidence?: number;
+  };
+}
+
+export interface ProtocolAdapter {
+  protocolId: string;
+  protocolName: string;
+  fetchTVL: () => Promise<ProtocolSnapshot>;
+  validate: () => AdapterStatus;
 }

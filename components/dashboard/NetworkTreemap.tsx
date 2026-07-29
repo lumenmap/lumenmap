@@ -57,6 +57,21 @@ export function NetworkTreemap() {
 
   const activeTreemap = data.treemaps[treemapView];
 
+  if (!activeTreemap) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Network Treemap</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex h-[360px] items-center justify-center rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6 text-center text-sm text-yellow-200">
+            Protocol TVL data is not available for this view.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-4">

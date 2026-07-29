@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { hierarchy, treemap, treemapSquarify } from "d3-hierarchy";
 import type { HierarchyNode } from "d3-hierarchy";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, AlertCircle, Clock, CheckCircle } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/constants";
-import type { SelectedNode, TreemapNode } from "@/lib/types";
+import type { SelectedNode, TreemapNode, AdapterStatus } from "@/lib/types";
 import { formatNumber, formatPercent, truncateAddress } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -36,7 +36,37 @@ function resolveColor(node: TreemapNode): string {
 }
 
 function getNodeValue(node: TreemapNode): number {
-  return node.value ?? node.meta?.opCount ?? 0;
+  return node.value ?? node.meta?.opCount ?? node.meta?.tvlUsd ?? 0;
+}
+
+function formatUSD(value: number): string {
+  if (value >= 1_000_000_000) {
+    return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  }
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(2)}M`;
+  }
+  if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(2)}K`;
+  }
+  return `$${value.toFixed(2)}`;
+}
+
+function getStatusIcon(status: AdapterStatus | undefined) {
+  switch (status) {
+    case "valid":
+      return <CheckCircle className="h-3 w-3 text-green-400" />;
+    case "partial":
+      return <Clock className="h-3 w-3 text-yellow-400" />;
+    case "stale":
+      return <AlertCircle className="h-3 w-3 text-red-400" />;
+    default:
+      return null;
+  }
+}
+
+function isProtocolNode(node: TreemapNode): boolean {
+  return node.meta?.type === "protocol";
 }
 
 function findNodeByPath(root: TreemapNode, pathNames: string[]): TreemapNode | null {
@@ -284,10 +314,12 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
           const nodeId = `${data.id ?? data.name}-${node.x0}-${node.y0}`;
           const isHovered = hoveredId === nodeId;
           const identity = original.meta?.id ?? original.id;
+          const isProtocol = isProtocolNode(original);
           const showLabel = width > 72 && height > 44;
           const showIdentity =
             Boolean(identity) && width > 100 && height > 72 && showLabel;
           const showValue = width > 110 && height > (showIdentity ? 88 : 64);
+          const showStatus = isProtocol && width > 90 && height > 60;
 
           const canDrill = Boolean(original?.children?.length);
 
@@ -335,17 +367,22 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
                   {truncateAddress(identity, 5)}
                 </text>
               ) : null}
+              {showStatus && original.meta?.status ? (
+                <foreignObject x={10} y={showIdentity ? 52 : 42} width={16} height={16}>
+                  {getStatusIcon(original.meta.status)}
+                </foreignObject>
+              ) : null}
               {showValue ? (
                 <>
                   <text
-                    x={10}
+                    x={showStatus ? 30 : 10}
                     y={showIdentity ? 52 : 42}
                     fill="rgba(255,255,255,0.9)"
                     fontSize={13}
                     fontWeight={600}
                     pointerEvents="none"
                   >
-                    {formatNumber(value)}
+                    {isProtocol ? formatUSD(value) : formatNumber(value)}
                   </text>
                   <text
                     x={10}
@@ -359,7 +396,9 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
                 </>
               ) : null}
               <title>
-                {identity
+                {isProtocol
+                  ? `${data.name}\n${formatUSD(value)} TVL · ${formatPercent(share)}\nStatus: ${original.meta?.status ?? 'unknown'}\nUpdated: ${original.meta?.snapshotTime ? new Date(original.meta.snapshotTime).toLocaleString() : 'N/A'}`
+                  : identity
                   ? `${data.name}\n${identity}\n${formatNumber(value)} ops · ${formatPercent(share)}`
                   : `${data.name}\n${formatNumber(value)} ops · ${formatPercent(share)}`}
               </title>
