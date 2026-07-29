@@ -41,6 +41,20 @@ ORDER BY op_count DESC
 LIMIT ${TOP_CONTRACT_LIMIT}
 `;
 
+/**
+ * Uncapped distinct active Soroban contracts for the period.
+ * Same inclusion rules as the leaderboard (non-null, non-empty contract_id)
+ * but with no LIMIT so the KPI can exceed TOP_CONTRACT_LIMIT.
+ */
+export const activeContractCountQuery = `
+SELECT
+  COUNT(DISTINCT contract_id) AS active_contract_count
+FROM \`crypto-stellar.crypto_stellar_dbt.hourly_soroban_fee_agg_contract\`
+WHERE hour_agg BETWEEN @start AND @end
+  AND contract_id IS NOT NULL
+  AND contract_id != ''
+`;
+
 export const accountQuery = `
 WITH ranked AS (
   SELECT
@@ -122,6 +136,7 @@ export function getAccountQueryTypes(): string[] {
 export type RawQueryResults = {
   categories: CategoryRow[];
   contracts: ContractRow[];
+  activeContractCount: number;
   accounts: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
   sorobanFunctionContracts: SorobanFunctionContractRow[];
@@ -139,6 +154,26 @@ export function mapContractRows(rows: Record<string, unknown>[]): ContractRow[] 
     contract_id: String(row.contract_id),
     op_count: Number(row.op_count),
   }));
+}
+
+/**
+ * Maps the uncapped active-contract aggregate row.
+ * Empty result sets and missing values become 0.
+ */
+export function mapActiveContractCountRows(
+  rows: Record<string, unknown>[],
+): number {
+  if (rows.length === 0) {
+    return 0;
+  }
+
+  const value = rows[0]?.active_contract_count;
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+
+  const count = Number(value);
+  return Number.isFinite(count) && count > 0 ? count : 0;
 }
 
 export function mapAccountRows(rows: Record<string, unknown>[]): AccountRow[] {

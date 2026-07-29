@@ -35,6 +35,12 @@ GROUP BY contract_id
 ORDER BY op_count DESC
 LIMIT ${TOP_CONTRACT_LIMIT}`;
 
+const activeContractCountQuery = `
+SELECT COUNT(DISTINCT contract_id) AS active_contract_count
+FROM \`crypto-stellar.crypto_stellar_dbt.hourly_soroban_fee_agg_contract\`
+WHERE hour_agg BETWEEN @start AND @end
+  AND contract_id IS NOT NULL AND contract_id != ''`;
+
 const accountQuery = `
 WITH ranked AS (
   SELECT
@@ -107,6 +113,11 @@ const client = new BigQuery({
 const queries = [
   { name: "categoryQuery", sql: categoryQuery, params: baseParams },
   { name: "contractQuery", sql: contractQuery, params: baseParams },
+  {
+    name: "activeContractCountQuery",
+    sql: activeContractCountQuery,
+    params: baseParams,
+  },
   {
     name: "accountQuery",
     sql: accountQuery,

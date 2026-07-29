@@ -46,7 +46,25 @@ export interface ActivityKpis {
   totalOps: number;
   sorobanShare: number;
   topCategory: string;
+  /**
+   * Uncapped distinct active Soroban contracts for the period.
+   * Not derived from the capped `contracts` leaderboard length.
+   */
   activeContracts: number;
+}
+
+/** Provenance for Active Contracts: uncapped COUNT(DISTINCT contract_id). */
+export interface ActiveContractsProvenance {
+  metric: "activeContracts";
+  aggregation: "uncapped_distinct_count";
+  source: "hourly_soroban_fee_agg_contract";
+  query: "activeContractCountQuery";
+  /** Independent cap applied only to `contracts` leaderboard / treemap rows. */
+  leaderboardLimit: number;
+}
+
+export interface ActivityProvenance {
+  activeContracts: ActiveContractsProvenance;
 }
 
 export interface TreemapNodeMeta {
@@ -82,11 +100,18 @@ export interface ActivityResponse {
   end: string;
   source: DataSource;
   categories: CategoryRow[];
+  /** Top contracts for leaderboard / treemap (capped at TOP_CONTRACT_LIMIT). */
   contracts: ContractRow[];
   accounts: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
   sorobanFunctionContracts: SorobanFunctionContractRow[];
+  /**
+   * Uncapped distinct active-contract aggregate for the period.
+   * Source of `kpis.activeContracts`; independent of `contracts.length`.
+   */
+  activeContractCount: number;
   kpis: ActivityKpis;
+  provenance: ActivityProvenance;
   treemaps: ActivityTreemaps;
 }
 

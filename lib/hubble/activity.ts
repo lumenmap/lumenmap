@@ -3,11 +3,13 @@ import { getCached, setCache } from "@/lib/hubble/cache";
 import {
   accountQuery,
   accountMetadataQuery,
+  activeContractCountQuery,
   categoryQuery,
   contractQuery,
   getAccountQueryTypes,
   mapAccountMetadataRows,
   mapAccountRows,
+  mapActiveContractCountRows,
   mapCategoryRows,
   mapContractRows,
   mapSorobanFunctionContractRows,
@@ -23,6 +25,7 @@ import {
   homeDomainsToEntities,
   resolveEntityLabels,
 } from "@/lib/entities/resolve-labels";
+import { buildActivityProvenance } from "@/lib/metrics/provenance";
 import { resolvePeriod } from "@/lib/periods";
 import type { ActivityResponse, Period } from "@/lib/types";
 
@@ -52,12 +55,14 @@ async function fetchFromHubble(
   const [
     categoryRows,
     contractRows,
+    activeContractCountRows,
     accountRows,
     sorobanFunctionRows,
     sorobanFunctionContractRows,
   ] = await Promise.all([
     runQuery<Record<string, unknown>>(categoryQuery, params),
     runQuery<Record<string, unknown>>(contractQuery, params),
+    runQuery<Record<string, unknown>>(activeContractCountQuery, params),
     runQuery<Record<string, unknown>>(accountQuery, {
       ...params,
       types: getAccountQueryTypes(),
@@ -69,6 +74,7 @@ async function fetchFromHubble(
   return {
     categories: mapCategoryRows(categoryRows),
     contracts: mapContractRows(contractRows),
+    activeContractCount: mapActiveContractCountRows(activeContractCountRows),
     accounts: mapAccountRows(accountRows),
     sorobanFunctions: mapSorobanFunctionRows(sorobanFunctionRows),
     sorobanFunctionContracts: mapSorobanFunctionContractRows(
@@ -89,6 +95,37 @@ async function fetchHomeDomains(ids: string[]) {
   return homeDomainsToEntities(mapAccountMetadataRows(rows));
 }
 
+/** Builds the activity API payload from Hubble (or test) raw results. */
+export function buildActivityResponse(
+  period: Period,
+  start: string,
+  end: string,
+  raw: RawQueryResults,
+  options: {
+    source?: ActivityResponse["source"];
+    labels?: Parameters<typeof buildAllTreemaps>[0]["labels"];
+  } = {},
+): ActivityResponse {
+  const kpis = buildKpis(raw.categories, raw.activeContractCount);
+  const treemaps = buildAllTreemaps({ ...raw, labels: options.labels });
+
+  return {
+    period,
+    start,
+    end,
+    source: options.source ?? "hubble",
+    categories: raw.categories,
+    contracts: raw.contracts,
+    accounts: raw.accounts,
+    sorobanFunctions: raw.sorobanFunctions,
+    sorobanFunctionContracts: raw.sorobanFunctionContracts,
+    activeContractCount: raw.activeContractCount,
+    kpis,
+    provenance: buildActivityProvenance(),
+    treemaps,
+  };
+}
+
 export async function getActivityData(period: Period): Promise<ActivityResponse> {
   if (!hasBigQueryCredentials()) {
     throw new Error(
@@ -97,7 +134,7 @@ export async function getActivityData(period: Period): Promise<ActivityResponse>
   }
 
   const range = resolvePeriod(period);
-  const cacheKey = `activity:v10:${period}:${range.start.toISOString()}`;
+  const cacheKey = `activity:v11:${period}:${range.start.toISOString()}`;
 
   const cached = getCached<ActivityResponse>(cacheKey);
   if (cached) {
@@ -107,25 +144,10 @@ export async function getActivityData(period: Period): Promise<ActivityResponse>
   const start = range.start.toISOString();
   const end = range.end.toISOString();
   const raw = await fetchFromHubble(start, end);
-  const kpis = buildKpis(raw.categories, raw.contracts);
   const labels = await resolveEntityLabels(collectTreemapIds(raw), {
     fetchHomeDomains,
   });
-  const treemaps = buildAllTreemaps({ ...raw, labels });
-
-  const response: ActivityResponse = {
-    period,
-    start,
-    end,
-    source: "hubble",
-    categories: raw.categories,
-    contracts: raw.contracts,
-    accounts: raw.accounts,
-    sorobanFunctions: raw.sorobanFunctions,
-    sorobanFunctionContracts: raw.sorobanFunctionContracts,
-    kpis,
-    treemaps,
-  };
+  const response = buildActivityResponse(period, start, end, raw, { labels });
 
   setCache(cacheKey, response);
   return response;

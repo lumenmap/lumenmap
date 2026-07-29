@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+scripts/.test-out
+scripts/.verify-fixture-bundle.mjs
 
 # next.js
 /.next/

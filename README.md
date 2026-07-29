@@ -107,7 +107,8 @@ Dataset: `crypto-stellar.crypto_stellar_dbt`
 | --- | --- |
 | Operations by type | Counts per `type_string` |
 | Top accounts | Most active wallets per operation type |
-| Top contracts | Most invoked Soroban contracts |
+| Top contracts | Most invoked Soroban contracts (capped leaderboard) |
+| Active contracts | Uncapped `COUNT(DISTINCT contract_id)` for the Active Contracts KPI |
 | Soroban functions | Counts per function and per contract |
 
 ### Queries planned
@@ -182,7 +183,15 @@ Do not commit `gcp-sa.json` or `.env.local`. Both are gitignored. Each contribut
     "totalOps": 1234567,
     "sorobanShare": 0.42,
     "topCategory": "soroban",
-    "activeContracts": 89
+    "activeContracts": 247
+  },
+  "activeContractCount": 247,
+  "provenance": {
+    "activeContracts": {
+      "aggregation": "uncapped_distinct_count",
+      "query": "activeContractCountQuery",
+      "leaderboardLimit": 200
+    }
   },
   "treemaps": {
     "events": { "name": "Network Activity", "children": [] },
@@ -191,7 +200,9 @@ Do not commit `gcp-sa.json` or `.env.local`. Both are gitignored. Each contribut
 }
 ```
 
-Response also includes `categories`, `contracts`, `accounts`, `sorobanFunctions`, and `sorobanFunctionContracts`.
+Response also includes `categories`, capped `contracts` (leaderboard / treemap, max 200), `accounts`, `sorobanFunctions`, and `sorobanFunctionContracts`.
+
+`kpis.activeContracts` and `activeContractCount` are the uncapped distinct contract count for the period. They are not `contracts.length`.
 
 ### Planned endpoints
 
@@ -248,6 +259,7 @@ scripts/
 | `npm run build` | Production build |
 | `npm run start` | Production server |
 | `npm run lint` | ESLint |
+| `npm test` | Deterministic unit tests (no GCP) |
 | `npm run test:hubble` | BigQuery query smoke test |
 | `npm run sync:directory` | Sync labels from Stellar Expert |
 
@@ -258,6 +270,7 @@ scripts/
 - Hubble refreshes in intraday batches. Numbers can lag behind live chain state.
 - API responses are cached for 15 minutes by default.
 - Queries use date filters and top-N limits to keep BigQuery cost down.
+- Active Contracts is an uncapped distinct contract count. The contract leaderboard / treemap remains independently capped at 200.
 
 ## Activity categories
 

@@ -12,6 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node scripts/run-unit-tests.mjs",
     "sync:directory": "node scripts/sync-stellar-directory.mjs",
     "test:hubble": "node scripts/test-hubble-queries.mjs"
   },
@@ -36,6 +37,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "esbuild": "^0.25.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
