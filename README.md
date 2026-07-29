@@ -140,8 +140,7 @@ Dataset: `crypto-stellar.crypto_stellar_dbt`
 ### Prerequisites
 
 - Node.js 20+
-- Google Cloud project with BigQuery API enabled
-- Service account with BigQuery User role
+- Google Cloud project with BigQuery API enabled (only needed for live data — see [CONTRIBUTING.md](CONTRIBUTING.md))
 
 ### Install and run
 
@@ -151,7 +150,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Set GCP credentials in `.env.local`, then open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). The dashboard runs in **fixture mode** with sample data and needs no GCP credentials. To query live Hubble data, set GCP credentials in `.env.local` and restart.
 
 ### Environment variables
 
@@ -272,12 +271,15 @@ scripts/
 
 ## Contributing
 
-Contributions are welcome at [github.com/lumenmap/lumenmap](https://github.com/lumenmap/lumenmap).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide: setup, fixture mode, project structure, commands, branch workflow, and PR expectations.
 
-1. Fork the repository and create a branch.
-2. Make your changes. Run `npm run lint` before opening a pull request.
-3. If you change Hubble queries, run `npm run test:hubble` with valid GCP credentials.
-4. Open a pull request with a short description of what changed and why.
+Quick start:
+
+```bash
+git clone https://github.com/<your-username>/lumenmap.git
+cd lumenmap && npm install && cp .env.example .env.local
+npm run dev   # dashboard opens in fixture mode — no GCP required
+```
 
 To add wallet or dApp labels, edit [`data/entities.json`](data/entities.json) or run `npm run sync:directory`.
 

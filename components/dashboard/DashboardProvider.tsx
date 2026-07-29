@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import type { TreemapViewId } from "@/lib/constants";
 import type { ActivityResponse, Period, SelectedNode } from "@/lib/types";
 
@@ -34,9 +34,18 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [treemapView, setTreemapView] = useState<TreemapViewId>("events");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
 
-  useEffect(() => {
+  // Clear the selected node whenever the period or view changes so the detail
+  // panel does not show stale data. Wrapping the setters avoids the
+  // setState-in-effect anti-pattern.
+  function handleSetPeriod(p: Period) {
     setSelectedNode(null);
-  }, [period, treemapView]);
+    setPeriod(p);
+  }
+
+  function handleSetTreemapView(v: TreemapViewId) {
+    setSelectedNode(null);
+    setTreemapView(v);
+  }
 
   const query = useQuery({
     queryKey: ["activity", period],
@@ -47,9 +56,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       period,
-      setPeriod,
+      setPeriod: handleSetPeriod,
       treemapView,
-      setTreemapView,
+      setTreemapView: handleSetTreemapView,
       data: query.data,
       isLoading: query.isLoading,
       isError: query.isError,
