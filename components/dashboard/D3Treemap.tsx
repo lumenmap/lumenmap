@@ -74,7 +74,7 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
 
       const { width, height } = entry.contentRect;
       setSize({
-        width: Math.max(Math.floor(width), 320),
+        width: Math.max(Math.floor(width), 0),
         height: Math.max(Math.floor(height), 280),
       });
     });
@@ -182,7 +182,7 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
         <svg
           width={size.width}
           height={size.height}
-          className="block overflow-hidden rounded-lg"
+          className="block max-w-full overflow-hidden rounded-lg"
           role="img"
           aria-label="Network activity treemap"
         >

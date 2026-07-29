@@ -66,7 +66,7 @@ export function KpiCards() {
               <Icon className="h-4 w-4 text-stellar-light" />
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-semibold text-white">
+              <p className="text-lg font-semibold text-white sm:text-xl lg:text-2xl">
                 {item.format(value as never)}
               </p>
             </CardContent>

@@ -13,7 +13,8 @@
     "start": "next start",
     "lint": "eslint",
     "sync:directory": "node scripts/sync-stellar-directory.mjs",
-    "test:hubble": "node scripts/test-hubble-queries.mjs"
+    "test:hubble": "node scripts/test-hubble-queries.mjs",
+    "test:responsive-overflow": "node scripts/test-responsive-overflow.mjs"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.3.1",

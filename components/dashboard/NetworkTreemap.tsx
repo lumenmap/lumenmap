@@ -83,10 +83,10 @@ export function NetworkTreemap() {
           ))}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-w-0">
         <div
           key={`${period}-${treemapView}`}
-          className="h-[420px] sm:h-[520px] lg:h-[600px] overflow-hidden rounded-xl border border-white/5 bg-black/20 p-2 sm:p-3"
+          className="h-[420px] sm:h-[520px] lg:h-[600px] max-w-full overflow-hidden rounded-xl border border-white/5 bg-black/20 p-2 sm:p-3"
         >
           <D3Treemap root={activeTreemap} onSelect={setSelectedNode} />
         </div>
