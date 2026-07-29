@@ -96,6 +96,12 @@ FROM ranked
 WHERE rank <= ${TOP_CONTRACTS_PER_FUNCTION}
 ORDER BY function_name, op_count DESC`;
 
+const transactionCountQuery = `
+SELECT COUNT(*) AS transaction_count
+FROM \`crypto-stellar.crypto_stellar.history_transactions\`
+WHERE closed_at BETWEEN @start AND @end
+  AND successful = true`;
+
 const end = new Date().toISOString();
 const start = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 const baseParams = { start, end };
@@ -118,6 +124,7 @@ const queries = [
     sql: sorobanFunctionContractQuery,
     params: baseParams,
   },
+  { name: "transactionCountQuery", sql: transactionCountQuery, params: baseParams },
 ];
 
 let failed = false;

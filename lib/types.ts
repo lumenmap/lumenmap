@@ -42,6 +42,10 @@ export interface SorobanFunctionContractRow {
   op_count: number;
 }
 
+export interface TransactionCountRow {
+  transaction_count: number;
+}
+
 export interface ActivityKpis {
   totalOps: number;
   sorobanShare: number;
