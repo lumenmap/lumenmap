@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { hierarchy, treemap, treemapSquarify } from "d3-hierarchy";
 import type { HierarchyNode } from "d3-hierarchy";
 import { ChevronRight } from "lucide-react";
@@ -38,12 +39,51 @@ function getNodeValue(node: TreemapNode): number {
   return node.value ?? node.meta?.opCount ?? 0;
 }
 
+function findNodeByPath(root: TreemapNode, pathNames: string[]): TreemapNode | null {
+  if (pathNames.length === 0) return root;
+  
+  const [firstName, ...restNames] = pathNames;
+  const child = root.children?.find(c => c.name === firstName);
+  
+  if (!child) return null;
+  if (restNames.length === 0) return child;
+  
+  return findNodeByPath(child, restNames);
+}
+
+function buildPathFromRoot(root: TreemapNode, targetNode: TreemapNode): TreemapNode[] {
+  const path: TreemapNode[] = [];
+  
+  function search(current: TreemapNode, currentPath: TreemapNode[]): boolean {
+    if (current === targetNode) {
+      path.push(...currentPath);
+      return true;
+    }
+    
+    if (current.children) {
+      for (const child of current.children) {
+        if (search(child, [...currentPath, child])) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  search(root, []);
+  return path;
+}
+
 export function D3Treemap({ root, onSelect }: D3TreemapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [size, setSize] = useState({ width: 800, height: 480 });
   const [path, setPath] = useState<TreemapNode[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const isUpdatingUrl = useRef(false);
 
   const currentNode = path.length > 0 ? path[path.length - 1] : root;
   const levelTotal = useMemo(() => {
@@ -82,6 +122,53 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (isUpdatingUrl.current) {
+      isUpdatingUrl.current = false;
+      return;
+    }
+
+    const pathParam = searchParams.get("path");
+    if (pathParam) {
+      const pathNames = pathParam.split(",").map(decodeURIComponent);
+      const restoredPath: TreemapNode[] = [];
+      
+      let current = root;
+      for (const name of pathNames) {
+        const child = current.children?.find(c => c.name === name);
+        if (child) {
+          restoredPath.push(child);
+          current = child;
+        } else {
+          break;
+        }
+      }
+      
+      if (restoredPath.length > 0) {
+        setPath(restoredPath);
+      }
+    }
+  }, [searchParams, root]);
+
+  useEffect(() => {
+    if (isUpdatingUrl.current) return;
+    
+    const pathNames = path.map((node: TreemapNode) => node.name);
+    const newPathParam = pathNames.length > 0 ? pathNames.map(encodeURIComponent).join(",") : null;
+    
+    const currentPathParam = searchParams.get("path");
+    if (currentPathParam !== newPathParam) {
+      isUpdatingUrl.current = true;
+      const newParams = new URLSearchParams(searchParams.toString());
+      if (newPathParam) {
+        newParams.set("path", newPathParam);
+      } else {
+        newParams.delete("path");
+      }
+      router.replace(`?${newParams.toString()}`, { scroll: false });
+    }
+  }, [path, searchParams, router]);
 
   const tiles = useMemo(
     () =>
