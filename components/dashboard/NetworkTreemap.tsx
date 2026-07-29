@@ -1,6 +1,12 @@
 "use client";
 
+<<<<<<< Updated upstream
 import { CATEGORY_COLORS } from "@/lib/constants";
+=======
+import { useMemo, useState } from "react";
+import { CATEGORY_COLORS, TREEMAP_VIEWS } from "@/lib/constants";
+import { PERIOD_OPTIONS } from "@/lib/periods";
+>>>>>>> Stashed changes
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { D3Treemap } from "@/components/dashboard/D3Treemap";
 import { TreemapViewSelector } from "@/components/dashboard/TreemapViewSelector";
@@ -55,7 +61,22 @@ export function NetworkTreemap() {
     );
   }
 
+<<<<<<< Updated upstream
   const activeTreemap = data.treemaps[treemapView];
+=======
+  const isZeroActivity =
+    !activeTreemap?.children || activeTreemap.children.length === 0;
+
+  const isFilteredEmpty =
+    !isZeroActivity && (!filteredTreemap.children || filteredTreemap.children.length === 0);
+
+  const activeViewLabel =
+    TREEMAP_VIEWS.find((v) => v.id === treemapView)?.label?.toLowerCase() ||
+    "activity";
+  const periodLabel =
+    PERIOD_OPTIONS.find((p) => p.value === period)?.label?.toLowerCase() ||
+    "this period";
+>>>>>>> Stashed changes
 
   return (
     <Card>
@@ -88,7 +109,40 @@ export function NetworkTreemap() {
           key={`${period}-${treemapView}`}
           className="h-[420px] sm:h-[520px] lg:h-[600px] overflow-hidden rounded-xl border border-white/5 bg-black/20 p-2 sm:p-3"
         >
+<<<<<<< Updated upstream
           <D3Treemap root={activeTreemap} onSelect={setSelectedNode} />
+=======
+          {isZeroActivity ? (
+            <div className="flex h-full flex-col items-center justify-center text-center p-6 space-y-2 text-zinc-400">
+              <svg
+                className="h-10 w-10 text-zinc-600 mb-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+              <p className="text-sm font-medium text-zinc-300">
+                No data available
+              </p>
+              <p className="text-xs">
+                There are no {activeViewLabel} for {periodLabel}.
+              </p>
+            </div>
+          ) : isFilteredEmpty ? (
+            <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+              No categories selected.
+            </div>
+          ) : (
+            <D3Treemap root={filteredTreemap} onSelect={setSelectedNode} />
+          )}
+>>>>>>> Stashed changes
         </div>
       </CardContent>
     </Card>
