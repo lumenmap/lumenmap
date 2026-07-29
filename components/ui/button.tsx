@@ -11,8 +11,11 @@ const buttonVariants = cva(
         outline: "border border-white/15 text-zinc-200 hover:bg-white/5",
       },
       size: {
-        default: "h-9 px-4",
-        sm: "h-8 rounded-md px-3 text-xs",
+        // 44px height satisfies the minimum touch-target requirement (WCAG 2.5.5)
+        default: "h-11 px-4",
+        sm: "h-11 rounded-md px-3 text-xs",
+        // Icon-only buttons: 44×44 hit area, no padding gap compression
+        icon: "h-11 w-11 rounded-lg",
       },
     },
     defaultVariants: {

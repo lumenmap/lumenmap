@@ -46,9 +46,10 @@ export function DetailPanel() {
             <Badge variant="secondary">{selectedNode.meta.category}</Badge>
           ) : null}
         </div>
+        {/* size="icon" gives a 44×44 hit area (h-11 w-11) to meet touch target requirements */}
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           className="shrink-0"
           onClick={() => setSelectedNode(null)}
           aria-label="Close details"

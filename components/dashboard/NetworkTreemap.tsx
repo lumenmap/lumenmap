@@ -68,14 +68,21 @@ export function NetworkTreemap() {
           </p>
         </div>
         <TreemapViewSelector />
-        <div className="flex flex-wrap gap-2">
+        <div
+          className="flex flex-wrap gap-2"
+          role="list"
+          aria-label="Category legend"
+        >
           {CATEGORY_LEGEND.map((item) => (
             <span
               key={item.key}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300"
+              role="listitem"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300 select-none"
             >
+              {/* Decorative color swatch — hidden from screen readers */}
               <span
-                className="h-2.5 w-2.5 rounded-full"
+                aria-hidden="true"
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: CATEGORY_COLORS[item.key] }}
               />
               {item.label}
