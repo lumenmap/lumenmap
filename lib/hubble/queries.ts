@@ -9,6 +9,7 @@ import type {
   AccountRow,
   CategoryRow,
   ContractRow,
+  DailyActivityRow,
   SorobanFunctionContractRow,
   SorobanFunctionRow,
 } from "@/lib/types";
@@ -119,12 +120,32 @@ export function getAccountQueryTypes(): string[] {
   return ACCOUNT_QUERY_TYPES;
 }
 
+export const dailyActivityQuery = `
+SELECT
+  TIMESTAMP_TRUNC(closed_at, DAY) AS date,
+  COUNT(*) AS op_count
+FROM \`crypto-stellar.crypto_stellar_dbt.enriched_history_operations\`
+WHERE closed_at BETWEEN @start AND @end
+GROUP BY date
+ORDER BY date
+`;
+
+export function mapDailyActivityRows(
+  rows: Record<string, unknown>[],
+): DailyActivityRow[] {
+  return rows.map((row) => ({
+    date: String(row.date),
+    op_count: Number(row.op_count),
+  }));
+}
+
 export type RawQueryResults = {
   categories: CategoryRow[];
   contracts: ContractRow[];
   accounts: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
   sorobanFunctionContracts: SorobanFunctionContractRow[];
+  dailyActivity: DailyActivityRow[];
 };
 
 export function mapCategoryRows(rows: Record<string, unknown>[]): CategoryRow[] {
