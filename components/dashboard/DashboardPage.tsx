@@ -10,6 +10,7 @@ import { DetailPanel } from "@/components/dashboard/DetailPanel";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { NetworkTreemap } from "@/components/dashboard/NetworkTreemap";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
+import { WeekHourHeatmap } from "@/components/dashboard/WeekHourHeatmap";
 
 function DataSourceNotice() {
   const { data } = useDashboard();
@@ -28,6 +29,8 @@ function DataSourceNotice() {
 }
 
 function DashboardContent() {
+  const { data, isLoading } = useDashboard();
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -62,6 +65,11 @@ function DashboardContent() {
         <NetworkTreemap />
         <DetailPanel />
       </div>
+
+      <WeekHourHeatmap
+        data={data?.weekHourActivity ?? []}
+        isLoading={isLoading}
+      />
     </div>
   );
 }
