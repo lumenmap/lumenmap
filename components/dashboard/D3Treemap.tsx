@@ -204,13 +204,32 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
 
           const canDrill = Boolean(original?.children?.length);
 
+          const labelParts: string[] = [data.name];
+          if (identity) {
+            labelParts.push(identity);
+          }
+          labelParts.push(`${formatNumber(value)} operations`);
+          if (canDrill) {
+            labelParts.push("press Enter or Space to drill in");
+          }
+          const ariaLabel = labelParts.join(", ");
+
           return (
             <g
               key={nodeId}
               transform={`translate(${node.x0},${node.y0})`}
+              tabIndex={0}
+              role="button"
+              aria-label={ariaLabel}
               onMouseEnter={() => setHoveredId(nodeId)}
               onMouseLeave={() => setHoveredId(null)}
               onClick={() => handleNodeClick(node)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleNodeClick(node);
+                }
+              }}
               style={{ cursor: canDrill ? "zoom-in" : "pointer" }}
             >
               <rect
