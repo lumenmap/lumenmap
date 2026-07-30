@@ -3,7 +3,7 @@
 import { CATEGORY_COLORS } from "@/lib/constants";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { D3Treemap } from "@/components/dashboard/D3Treemap";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const CATEGORY_LEGEND = [
@@ -29,11 +29,8 @@ export function NetworkTreemap() {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Network Treemap</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[520px] w-full rounded-xl" />
+        <CardContent className="p-4 sm:p-5">
+          <Skeleton className="h-[480px] w-full rounded-xl sm:h-[560px] lg:h-[640px]" />
         </CardContent>
       </Card>
     );
@@ -42,10 +39,7 @@ export function NetworkTreemap() {
   if (isError || !data) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Network Treemap</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-5">
           <div className="flex h-[360px] items-center justify-center rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center text-sm text-red-200">
             {error?.message ?? "Unable to load treemap data."}
           </div>
@@ -58,9 +52,7 @@ export function NetworkTreemap() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-4">
-        <CardTitle>Network Treemap</CardTitle>
-
+      <CardContent className="flex flex-col gap-4 p-4 sm:p-5">
         {/* Category colour legend */}
         <div
           className="flex flex-wrap gap-2"
@@ -83,12 +75,10 @@ export function NetworkTreemap() {
             </span>
           ))}
         </div>
-      </CardHeader>
 
-      <CardContent>
         <div
           key={`${period}-${treemapView}`}
-          className="h-[420px] overflow-hidden rounded-xl border border-white/5 bg-black/20 p-2 sm:h-[520px] sm:p-3 lg:h-[600px]"
+          className="h-[480px] overflow-hidden rounded-xl border border-white/5 bg-black/20 p-2 sm:h-[560px] sm:p-3 lg:h-[640px]"
         >
           <D3Treemap root={activeTreemap} onSelect={setSelectedNode} />
         </div>

@@ -29,7 +29,7 @@ function DataSourceNotice() {
 
 function DashboardContent() {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
       {/* ── 1. Site header (h1) ─────────────────────────────────────────── */}
       <header>
         <div className="flex flex-wrap items-center gap-3">
@@ -51,42 +51,56 @@ function DashboardContent() {
           </div>
           <Badge>Mainnet</Badge>
         </div>
-        <div className="mt-3">
-          <DataSourceNotice />
-        </div>
       </header>
 
-      {/* ── 2. Primary controls (metric view + period) ──────────────────── */}
+      {/* ── 2. Primary controls (metric + period) ───────────────────────── */}
       <ControlBar />
 
-      {/* ── 3. Primary visualization + detail sidebar (desktop) ─────────── */}
+      {/* ── 3. Primary visualization ────────────────────────────────────── */}
       {/*
-        Layout:
-          • Mobile:  treemap → detail panel → KPI cards (stacked)
-          • Desktop: [treemap  |  detail sidebar]  then KPI cards full-width below
-        The detail panel appears directly below the treemap on mobile so the
-        user can act on a selection without scrolling past KPIs first.
+        Full-width treemap dominates the initial viewport.
+        Detail panel is placed in the secondary context section below
+        so it does not compete with the primary visualization.
       */}
       <section aria-labelledby="treemap-heading">
-        <h2 id="treemap-heading" className="sr-only">
-          Network activity treemap
+        <h2
+          id="treemap-heading"
+          className="mb-4 text-lg font-semibold text-white"
+        >
+          Network Activity
         </h2>
-
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          {/* Treemap always renders first in DOM order (keyboard / screen reader) */}
-          <NetworkTreemap />
-
-          {/* Detail panel – sidebar on desktop, stacked below treemap on mobile */}
-          <DetailPanel />
-        </div>
+        <NetworkTreemap />
       </section>
 
-      {/* ── 4. Secondary context: KPI summary cards ─────────────────────── */}
-      <section aria-labelledby="kpis-heading">
-        <h2 id="kpis-heading" className="sr-only">
-          Key metrics
+      {/* ── 4. Secondary context: details + KPIs + methodology ──────────── */}
+      {/*
+        Layout:
+          • Mobile: detail panel first (user sees selection immediately),
+            then KPIs, then data-source notice (stacked).
+          • Desktop: KPIs + notice on the left, detail panel on the right.
+        The detail panel appears before KPIs on mobile so the user can act
+        on a selection without scrolling past KPI cards first.
+      */}
+      <section aria-labelledby="details-heading">
+        <h2
+          id="details-heading"
+          className="mb-4 text-lg font-semibold text-white"
+        >
+          Details & Metrics
         </h2>
-        <KpiCards />
+
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_320px]">
+          {/* Detail panel – first on mobile (order-1), right column on desktop (order-2) */}
+          <div className="order-1 lg:order-2">
+            <DetailPanel />
+          </div>
+
+          {/* KPIs + methodology – second on mobile (order-2), left column on desktop (order-1) */}
+          <div className="order-2 lg:order-1 flex flex-col gap-6">
+            <KpiCards />
+            <DataSourceNotice />
+          </div>
+        </div>
       </section>
     </div>
   );

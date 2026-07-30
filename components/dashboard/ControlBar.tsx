@@ -13,8 +13,8 @@ import { useDashboard } from "@/components/dashboard/DashboardProvider";
  *   - Metric view  (Operation Types / Accounts & Contracts)
  *   - Time period  (Today / 7 Days / 30 Days / This Month)
  *
- * The section is labelled as an h2 landmark so keyboard and screen-reader
- * users encounter controls before the treemap in reading order.
+ * Uses a visible h2 heading so the control hierarchy is clear in the
+ * document outline and for all users.
  */
 export function ControlBar() {
   const { period, setPeriod, treemapView, setTreemapView } = useDashboard();
@@ -23,8 +23,11 @@ export function ControlBar() {
 
   return (
     <section aria-labelledby="controls-heading">
-      <h2 id="controls-heading" className="sr-only">
-        Dashboard controls
+      <h2
+        id="controls-heading"
+        className="mb-3 text-lg font-semibold text-white"
+      >
+        Controls
       </h2>
 
       <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 sm:flex-row sm:items-start sm:gap-6">
