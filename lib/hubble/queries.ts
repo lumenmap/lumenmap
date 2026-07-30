@@ -119,6 +119,92 @@ export function getAccountQueryTypes(): string[] {
   return ACCOUNT_QUERY_TYPES;
 }
 
+// ---------------------------------------------------------------------------
+// Validation helpers for BigQuery row values
+// ---------------------------------------------------------------------------
+
+/**
+ * Unwrap a BigQuery numeric wrapper if present (e.g. { value: 42 }),
+ * otherwise return the value as-is.
+ */
+function unwrapNumeric(value: unknown): unknown {
+  if (
+    value !== null &&
+    value !== undefined &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    "value" in (value as Record<string, unknown>)
+  ) {
+    return (value as Record<string, unknown>).value;
+  }
+  return value;
+}
+
+/**
+ * Extract a non-empty string identifier from a row field.
+ * Throws if the field is null, undefined, or an empty string.
+ */
+function requireStringField(
+  row: Record<string, unknown>,
+  field: string,
+): string {
+  const raw = row[field];
+  if (raw === null || raw === undefined) {
+    throw new Error(
+      `Row mapper: missing required string field "${field}" (got ${String(raw)})`,
+    );
+  }
+  const str = String(raw);
+  if (str === "") {
+    throw new Error(
+      `Row mapper: field "${field}" must not be empty`,
+    );
+  }
+  return str;
+}
+
+/**
+ * Extract a non-empty string from a row field that may be empty (e.g. type labels).
+ * Returns the string or an empty string. Throws only on null/undefined.
+ */
+function optionalStringField(
+  row: Record<string, unknown>,
+  field: string,
+): string {
+  const raw = row[field];
+  if (raw === null || raw === undefined) {
+    throw new Error(
+      `Row mapper: missing required string field "${field}" (got ${String(raw)})`,
+    );
+  }
+  return String(raw);
+}
+
+/**
+ * Extract a finite, non-NaN number from a row field.
+ * Supports BigQuery numeric wrappers (objects with a `value` property).
+ * Throws if value is null, undefined, NaN, Infinity, or not coercible to a
+ * finite number.
+ */
+function requireFiniteNumber(
+  row: Record<string, unknown>,
+  field: string,
+): number {
+  const raw = unwrapNumeric(row[field]);
+  if (raw === null || raw === undefined) {
+    throw new Error(
+      `Row mapper: missing required numeric field "${field}" (got ${String(raw)})`,
+    );
+  }
+  const num = Number(raw);
+  if (!Number.isFinite(num)) {
+    throw new Error(
+      `Row mapper: field "${field}" must be a finite number (got ${String(raw)})`,
+    );
+  }
+  return num;
+}
+
 export type RawQueryResults = {
   categories: CategoryRow[];
   contracts: ContractRow[];
@@ -129,23 +215,23 @@ export type RawQueryResults = {
 
 export function mapCategoryRows(rows: Record<string, unknown>[]): CategoryRow[] {
   return rows.map((row) => ({
-    type_string: String(row.type_string),
-    op_count: Number(row.op_count),
+    type_string: optionalStringField(row, "type_string"),
+    op_count: requireFiniteNumber(row, "op_count"),
   }));
 }
 
 export function mapContractRows(rows: Record<string, unknown>[]): ContractRow[] {
   return rows.map((row) => ({
-    contract_id: String(row.contract_id),
-    op_count: Number(row.op_count),
+    contract_id: requireStringField(row, "contract_id"),
+    op_count: requireFiniteNumber(row, "op_count"),
   }));
 }
 
 export function mapAccountRows(rows: Record<string, unknown>[]): AccountRow[] {
   return rows.map((row) => ({
-    account_id: String(row.account_id),
-    type_string: String(row.type_string),
-    op_count: Number(row.op_count),
+    account_id: requireStringField(row, "account_id"),
+    type_string: optionalStringField(row, "type_string"),
+    op_count: requireFiniteNumber(row, "op_count"),
   }));
 }
 
@@ -153,8 +239,8 @@ export function mapSorobanFunctionRows(
   rows: Record<string, unknown>[],
 ): SorobanFunctionRow[] {
   return rows.map((row) => ({
-    function_name: String(row.function_name),
-    op_count: Number(row.op_count),
+    function_name: optionalStringField(row, "function_name"),
+    op_count: requireFiniteNumber(row, "op_count"),
   }));
 }
 
@@ -162,9 +248,9 @@ export function mapSorobanFunctionContractRows(
   rows: Record<string, unknown>[],
 ): SorobanFunctionContractRow[] {
   return rows.map((row) => ({
-    function_name: String(row.function_name),
-    contract_id: String(row.contract_id),
-    op_count: Number(row.op_count),
+    function_name: optionalStringField(row, "function_name"),
+    contract_id: requireStringField(row, "contract_id"),
+    op_count: requireFiniteNumber(row, "op_count"),
   }));
 }
 
@@ -182,7 +268,7 @@ export function mapAccountMetadataRows(
   rows: Record<string, unknown>[],
 ): { account_id: string; home_domain: string }[] {
   return rows.map((row) => ({
-    account_id: String(row.account_id),
-    home_domain: String(row.home_domain),
+    account_id: requireStringField(row, "account_id"),
+    home_domain: optionalStringField(row, "home_domain"),
   }));
 }
