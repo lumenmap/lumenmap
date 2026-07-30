@@ -7,7 +7,8 @@ export type TreemapNodeType =
   | "category"
   | "entity"
   | "contract"
-  | "account";
+  | "account"
+  | "remainder";
 
 export interface EntityInfo {
   name: string;
@@ -58,6 +59,11 @@ export interface TreemapNodeMeta {
   opCount?: number;
   childCount?: number;
   eventType?: string;
+  /**
+   * True only for synthetic remainder nodes representing activity omitted
+   * by an upstream top-N cap. Never has an `id`, never drillable.
+   */
+  remainder?: boolean;
 }
 
 export interface TreemapNode {

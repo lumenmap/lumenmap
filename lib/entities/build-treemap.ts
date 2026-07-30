@@ -1,8 +1,10 @@
 import {
   CATEGORY_COLORS,
   GROUP_LABELS,
+  REMAINDER_COLOR,
   TYPE_TO_GROUP,
 } from "@/lib/constants";
+
 import { getDisplayName, lookupEntity } from "@/lib/entities/registry";
 import type {
   AccountRow,
@@ -247,9 +249,65 @@ function buildCategoryGroupChildren(
   return buildTypeLeaves(input, group);
 }
 
+function getChildrenTotal(children: TreemapNode[]): number {
+  return children.reduce((sum, child) => sum + (child.value ?? 0), 0);
+}
+
+function buildRemainderNode(group: string, omittedValue: number): TreemapNode {
+  return {
+    name: "Other (unlisted actors)",
+    value: omittedValue,
+    color: REMAINDER_COLOR,
+    // Intentionally no `id` and no `children`: this keeps the node
+    // non-drillable and prevents it from ever being mistaken for a real
+    // account or contract tile.
+    meta: {
+      type: "remainder",
+      category: group,
+      opCount: omittedValue,
+      remainder: true,
+    },
+  };
+}
+
+/**
+ * Appends a synthetic remainder node when a group's listed children were
+ * capped upstream (e.g. top-N account/contract queries) and therefore sum
+ * to less than the group's true total.
+ *
+ * All inputs here are integer operation counts, so the precision rule is
+ * exact equality — no floating-point tolerance is applied.
+ *
+ * Throws if listed children exceed the parent total: that can only mean
+ * a double-counting bug or a metric mismatch upstream, and should fail
+ * loudly rather than render a nonsensical negative remainder.
+ */
+function withRemainder(
+  group: string,
+  parentValue: number,
+  children: TreemapNode[],
+): TreemapNode[] {
+  const listedTotal = getChildrenTotal(children);
+  const omitted = parentValue - listedTotal;
+
+  if (omitted < 0) {
+    throw new Error(
+      `Treemap invariant violated: listed children (${listedTotal}) exceed ` +
+        `parent total (${parentValue}) for actor group "${group}"`,
+    );
+  }
+
+  if (omitted === 0) {
+    return children;
+  }
+
+  return [...children, buildRemainderNode(group, omitted)];
+}
+
 function buildGroupedTreemap(
   input: BuildTreemapInput,
   getCategoryChildren: (group: string) => TreemapNode[],
+  options: { applyRemainder: boolean } = { applyRemainder: false },
 ): TreemapNode {
   const groupTotals = getGroupTotals(input.categories);
   const totalOps = categoriesTotal(input.categories);
@@ -260,7 +318,10 @@ function buildGroupedTreemap(
       return [];
     }
 
-    const categoryChildren = getCategoryChildren(group);
+    const rawChildren = getCategoryChildren(group);
+    const categoryChildren = options.applyRemainder
+      ? withRemainder(group, value, rawChildren)
+      : rawChildren;
 
     return [
       {
@@ -295,11 +356,12 @@ export function buildEventTypeTreemap(input: BuildTreemapInput): TreemapNode {
 }
 
 export function buildActorTreemap(input: BuildTreemapInput): TreemapNode {
-  return buildGroupedTreemap(input, (group) =>
-    buildCategoryGroupChildren(group, input),
+  return buildGroupedTreemap(
+    input,
+    (group) => buildCategoryGroupChildren(group, input),
+    { applyRemainder: true },
   );
 }
-
 export function buildAllTreemaps(input: BuildTreemapInput) {
   return {
     events: buildEventTypeTreemap(input),

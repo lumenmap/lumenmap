@@ -7,6 +7,10 @@ export const CATEGORY_COLORS: Record<string, string> = {
   other: "#6B7280",
 };
 
+// Distinct, desaturated color for synthetic remainder tiles so they read
+// as "not a real actor" at a glance, independent of the group's color.
+export const REMAINDER_COLOR = "#3F3F46";
+
 export const GROUP_LABELS: Record<string, string> = {
   soroban: "Soroban Contracts",
   payments: "Payments",
