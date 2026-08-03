@@ -5,11 +5,13 @@ import {
   accountMetadataQuery,
   categoryQuery,
   contractQuery,
+  dailyActivityQuery,
   getAccountQueryTypes,
   mapAccountMetadataRows,
   mapAccountRows,
   mapCategoryRows,
   mapContractRows,
+  mapDailyActivityRows,
   mapSorobanFunctionContractRows,
   mapSorobanFunctionRows,
   sorobanFunctionContractQuery,
@@ -55,6 +57,7 @@ async function fetchFromHubble(
     accountRows,
     sorobanFunctionRows,
     sorobanFunctionContractRows,
+    dailyActivityRows,
   ] = await Promise.all([
     runQuery<Record<string, unknown>>(categoryQuery, params),
     runQuery<Record<string, unknown>>(contractQuery, params),
@@ -64,6 +67,7 @@ async function fetchFromHubble(
     }),
     runQuery<Record<string, unknown>>(sorobanFunctionQuery, params),
     runQuery<Record<string, unknown>>(sorobanFunctionContractQuery, params),
+    runQuery<Record<string, unknown>>(dailyActivityQuery, params),
   ]);
 
   return {
@@ -74,6 +78,7 @@ async function fetchFromHubble(
     sorobanFunctionContracts: mapSorobanFunctionContractRows(
       sorobanFunctionContractRows,
     ),
+    dailyActivity: mapDailyActivityRows(dailyActivityRows),
   };
 }
 
@@ -97,7 +102,7 @@ export async function getActivityData(period: Period): Promise<ActivityResponse>
   }
 
   const range = resolvePeriod(period);
-  const cacheKey = `activity:v10:${period}:${range.start.toISOString()}`;
+  const cacheKey = `activity:v11:${period}:${range.start.toISOString()}`;
 
   const cached = getCached<ActivityResponse>(cacheKey);
   if (cached) {
@@ -123,6 +128,7 @@ export async function getActivityData(period: Period): Promise<ActivityResponse>
     accounts: raw.accounts,
     sorobanFunctions: raw.sorobanFunctions,
     sorobanFunctionContracts: raw.sorobanFunctionContracts,
+    dailyActivity: raw.dailyActivity,
     kpis,
     treemaps,
   };

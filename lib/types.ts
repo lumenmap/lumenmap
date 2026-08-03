@@ -74,6 +74,11 @@ export interface ActivityTreemaps {
   actors: TreemapNode;
 }
 
+export interface DailyActivityRow {
+  date: string;
+  op_count: number;
+}
+
 export interface ActivityResponse {
   period: Period;
   start: string;
@@ -84,6 +89,7 @@ export interface ActivityResponse {
   accounts: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
   sorobanFunctionContracts: SorobanFunctionContractRow[];
+  dailyActivity: DailyActivityRow[];
   kpis: ActivityKpis;
   treemaps: ActivityTreemaps;
 }
