@@ -11,6 +11,7 @@ import type {
   ContractRow,
   SorobanFunctionContractRow,
   SorobanFunctionRow,
+  WeekHourRow,
 } from "@/lib/types";
 
 export interface QueryParams {
@@ -119,12 +120,34 @@ export function getAccountQueryTypes(): string[] {
   return ACCOUNT_QUERY_TYPES;
 }
 
+export const weekHourQuery = `
+SELECT
+  EXTRACT(DAYOFWEEK FROM closed_at) - 1 AS weekday,
+  EXTRACT(HOUR FROM closed_at) AS hour,
+  COUNT(*) AS op_count
+FROM \`crypto-stellar.crypto_stellar_dbt.enriched_history_operations\`
+WHERE closed_at BETWEEN @start AND @end
+GROUP BY weekday, hour
+ORDER BY weekday, hour
+`;
+
+export function mapWeekHourRows(
+  rows: Record<string, unknown>[],
+): WeekHourRow[] {
+  return rows.map((row) => ({
+    weekday: Number(row.weekday),
+    hour: Number(row.hour),
+    op_count: Number(row.op_count),
+  }));
+}
+
 export type RawQueryResults = {
   categories: CategoryRow[];
   contracts: ContractRow[];
   accounts: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
   sorobanFunctionContracts: SorobanFunctionContractRow[];
+  weekHourActivity: WeekHourRow[];
 };
 
 export function mapCategoryRows(rows: Record<string, unknown>[]): CategoryRow[] {
