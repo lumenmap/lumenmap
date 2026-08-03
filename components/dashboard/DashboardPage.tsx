@@ -58,7 +58,7 @@ function DashboardContent() {
 
       <KpiCards />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(280px,380px)]">
         <NetworkTreemap />
         <DetailPanel />
       </div>
