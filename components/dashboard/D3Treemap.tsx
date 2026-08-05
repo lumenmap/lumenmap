@@ -9,6 +9,7 @@ import { CATEGORY_COLORS } from "@/lib/constants";
 import type { SelectedNode, TreemapNode } from "@/lib/types";
 import { formatNumber, formatPercent, truncateAddress } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useDashboard } from "@/components/dashboard/DashboardProvider";
 
 interface D3TreemapProps {
   root: TreemapNode;
@@ -84,6 +85,7 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
   const [path, setPath] = useState<TreemapNode[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const isUpdatingUrl = useRef(false);
+  const { metric } = useDashboard();
 
   const currentNode = path.length > 0 ? path[path.length - 1] : root;
   const levelTotal = useMemo(() => {
@@ -345,7 +347,7 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
                     fontWeight={600}
                     pointerEvents="none"
                   >
-                    {formatNumber(value)}
+                    {formatNumber(value)} {metric === "xlm_volume" ? "XLM" : ""}
                   </text>
                   <text
                     x={10}
@@ -360,8 +362,8 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
               ) : null}
               <title>
                 {identity
-                  ? `${data.name}\n${identity}\n${formatNumber(value)} ops · ${formatPercent(share)}`
-                  : `${data.name}\n${formatNumber(value)} ops · ${formatPercent(share)}`}
+                  ? `${data.name}\n${identity}\n${formatNumber(value)} ${metric === "xlm_volume" ? "XLM" : "ops"} · ${formatPercent(share)}`
+                  : `${data.name}\n${formatNumber(value)} ${metric === "xlm_volume" ? "XLM" : "ops"} · ${formatPercent(share)}`}
               </title>
             </g>
           );

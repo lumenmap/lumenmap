@@ -21,7 +21,8 @@ export interface QueryParams {
 export const categoryQuery = `
 SELECT
   type_string,
-  COUNT(*) AS op_count
+  COUNT(*) AS op_count,
+  SUM(CASE WHEN asset_type = 'native' THEN CAST(amount AS FLOAT64) ELSE 0 END) AS xlm_volume
 FROM \`crypto-stellar.crypto_stellar_dbt.enriched_history_operations\`
 WHERE closed_at BETWEEN @start AND @end
 GROUP BY type_string
@@ -47,6 +48,7 @@ WITH ranked AS (
     op_source_account AS account_id,
     type_string,
     COUNT(*) AS op_count,
+    SUM(CASE WHEN asset_type = 'native' THEN CAST(amount AS FLOAT64) ELSE 0 END) AS xlm_volume,
     ROW_NUMBER() OVER (
       PARTITION BY type_string
       ORDER BY COUNT(*) DESC
@@ -56,7 +58,7 @@ WITH ranked AS (
     AND type_string IN UNNEST(@types)
   GROUP BY account_id, type_string
 )
-SELECT account_id, type_string, op_count
+SELECT account_id, type_string, op_count, xlm_volume
 FROM ranked
 WHERE rank <= ${TOP_ACCOUNTS_PER_TYPE}
 ORDER BY type_string, op_count DESC
@@ -131,6 +133,7 @@ export function mapCategoryRows(rows: Record<string, unknown>[]): CategoryRow[] 
   return rows.map((row) => ({
     type_string: String(row.type_string),
     op_count: Number(row.op_count),
+    xlm_volume: Number(row.xlm_volume) || 0,
   }));
 }
 
@@ -146,6 +149,7 @@ export function mapAccountRows(rows: Record<string, unknown>[]): AccountRow[] {
     account_id: String(row.account_id),
     type_string: String(row.type_string),
     op_count: Number(row.op_count),
+    xlm_volume: Number(row.xlm_volume) || 0,
   }));
 }
 
@@ -167,6 +171,11 @@ export function mapSorobanFunctionContractRows(
     op_count: Number(row.op_count),
   }));
 }
+
+export const latestDataTimestampQuery = `
+SELECT MAX(closed_at) AS latest_timestamp
+FROM \`crypto-stellar.crypto_stellar_dbt.enriched_history_operations\`
+`;
 
 export const accountMetadataQuery = `
 SELECT
