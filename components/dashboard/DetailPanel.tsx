@@ -34,7 +34,7 @@ function getStatusIcon(status: string | undefined) {
 }
 
 export function DetailPanel() {
-  const { selectedNode, setSelectedNode, data } = useDashboard();
+  const { selectedNode, setSelectedNode, data, metric } = useDashboard();
 
   if (!selectedNode) {
     return (
@@ -97,6 +97,7 @@ export function DetailPanel() {
           <div className="rounded-lg border border-white/10 bg-black/20 p-3">
             <p className="text-xs text-zinc-500">
               {isProtocol ? "TVL (USD)" : "Operations"}
+              {metric === "xlm_volume" ? "XLM volume" : "Activity count"}
             </p>
             <p className="text-lg font-semibold text-white">
               {isProtocol
