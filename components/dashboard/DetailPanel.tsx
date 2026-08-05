@@ -8,7 +8,7 @@ import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { formatNumber, formatPercent } from "@/lib/utils";
 
 export function DetailPanel() {
-  const { selectedNode, setSelectedNode, data } = useDashboard();
+  const { selectedNode, setSelectedNode, data, metric } = useDashboard();
 
   if (!selectedNode) {
     return (
@@ -59,7 +59,9 @@ export function DetailPanel() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-            <p className="text-xs text-zinc-500">Operations</p>
+            <p className="text-xs text-zinc-500">
+              {metric === "xlm_volume" ? "XLM volume" : "Activity count"}
+            </p>
             <p className="text-lg font-semibold text-white">
               {formatNumber(selectedNode.value)}
             </p>

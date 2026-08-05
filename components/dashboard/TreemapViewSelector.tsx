@@ -1,6 +1,6 @@
 "use client";
 
-import { TREEMAP_VIEWS, type TreemapViewId } from "@/lib/constants";
+import { TREEMAP_VIEWS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 

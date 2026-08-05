@@ -57,7 +57,8 @@ export function KpiCards() {
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {KPI_CONFIG.map((item) => {
         const Icon = item.icon;
-        const value = data.kpis[item.key];
+        const kpi = data.kpis[item.key];
+        const value = typeof kpi === "string" ? kpi : kpi.value;
 
         return (
           <Card key={item.key}>
