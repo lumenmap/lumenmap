@@ -75,10 +75,10 @@ export function KpiCards() {
           <Card key={item.key}>
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle>{item.title}</CardTitle>
-              <Icon className="h-4 w-4 text-stellar-light" />
+              <Icon className="h-4 w-4 text-surface-accent" />
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-semibold text-white">
+              <p className="text-2xl font-semibold text-text-primary">
                 {item.format(value as never)}
               </p>
               {freshnessState === "stale" ? (

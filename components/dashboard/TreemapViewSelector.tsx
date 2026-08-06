@@ -58,7 +58,7 @@ export function TreemapViewSelector() {
         ))}
       </div>
       {activeView ? (
-        <p className="text-xs text-zinc-500">{activeView.description}</p>
+        <p className="text-xs text-text-muted">{activeView.description}</p>
       ) : null}
     </div>
   );

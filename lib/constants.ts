@@ -1,10 +1,10 @@
 export const CATEGORY_COLORS: Record<string, string> = {
-  soroban: "#7B61FF",
-  payments: "#14B8A6",
-  dex: "#F59E0B",
-  trustlines: "#3B82F6",
-  account: "#EC4899",
-  other: "#6B7280",
+  soroban: "var(--color-soroban)",
+  payments: "var(--color-payments)",
+  dex: "var(--color-dex)",
+  trustlines: "var(--color-trustlines)",
+  account: "var(--color-account)",
+  other: "var(--color-other)",
 };
 
 /** Pattern variant used as secondary non-color category cue in the treemap. */

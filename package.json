@@ -25,7 +25,8 @@
     "smoke": "node scripts/smoke-check.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:freshness": "node --test scripts/test-freshness.mjs"
+    "test:freshness": "node --test scripts/test-freshness.mjs",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.3.1",
@@ -53,6 +54,11 @@
     "tsx": "^4.23.5",
     "typescript": "^5",
     "vitest": "^4.1.10",
-    "@playwright/test": "^1.52"
+    "@playwright/test": "^1.52",
+    "jsdom": "^22.0.0",
+    "@testing-library/dom": "^9.0.0",
+    "@types/testing-library__dom": "^7.5.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/jest-dom": "^6.6.3"
   }
 }
