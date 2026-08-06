@@ -306,7 +306,7 @@ export async function getActivityData(
   const range = resolvePeriod(period);
   const cacheKey = `activity:v12:${period}:${range.start.toISOString()}`;
 
-  const cached = getCached<ActivityDataset>(cacheKey);
+  const cached = getCached<ActivityDataset>(cacheKey, { track: true });
   if (cached) {
     logInfo({
       event: "activity.cache.hit",
@@ -318,7 +318,7 @@ export async function getActivityData(
 
   return coalesceInflight(inflightActivityRequests, cacheKey, async () => {
     // Re-check cache after winning/joining the in-flight slot.
-    const cachedAfterWait = getCached<ActivityDataset>(cacheKey);
+    const cachedAfterWait = getCached<ActivityDataset>(cacheKey, { track: true });
     if (cachedAfterWait) {
       return cachedAfterWait;
     }
