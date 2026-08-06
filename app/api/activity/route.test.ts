@@ -34,6 +34,13 @@ function mockActivityDataset(period: Period): ActivityDataset {
     accounts: [],
     sorobanFunctions: [],
     sorobanFunctionContracts: [],
+    usdcPaymentVolume: {
+      amount: 0,
+      unit: "USDC",
+      assetSetId: "stellar-mainnet-usdc-v1",
+      methodology: "docs/metric-methodology.md#usdc-payment-volume",
+      assets: [],
+    },
     kpis: {
       totalOps: { kind: "operations", unit: "ops", value: 0 },
       sorobanShare: { kind: "share", unit: "percent", value: 0 },

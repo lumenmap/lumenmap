@@ -16,7 +16,9 @@
     "test": "tsx --test lib/**/*.test.ts app/api/activity/route.test.ts",
     "protect:main": "node scripts/configure-main-protection.mjs",
     "sync:directory": "node scripts/sync-stellar-directory.mjs",
-    "test:hubble": "node scripts/test-hubble-queries.mjs"
+    "test:hubble": "node scripts/test-hubble-queries.mjs",
+    "test:mapper": "node tests/test-destination-mapper.mjs",
+    "test:usdc-volume": "node scripts/test-usdc-volume.mjs"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.3.1",

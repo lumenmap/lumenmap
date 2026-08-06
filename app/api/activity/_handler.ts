@@ -72,6 +72,7 @@ export function toRawResearchResponse(
       accounts: data.accounts,
       sorobanFunctions: data.sorobanFunctions,
       sorobanFunctionContracts: data.sorobanFunctionContracts,
+      usdcPaymentVolume: data.usdcPaymentVolume,
     },
   };
 }

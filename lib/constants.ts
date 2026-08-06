@@ -46,6 +46,14 @@ export const TYPE_TO_GROUP: Record<string, string> = {
   restore_footprint: "soroban",
 };
 
+export const DESTINATION_QUERY_TYPES = [
+  "payment",
+  "path_payment_strict_receive",
+  "path_payment_strict_send",
+  "create_account",
+  "account_merge",
+];
+
 export const ACCOUNT_QUERY_TYPES = [
   "payment",
   "path_payment_strict_receive",

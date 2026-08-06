@@ -103,6 +103,41 @@ export function DetailPanel() {
           </div>
         ) : null}
 
+        {selectedNode.meta?.coverage ? (
+          <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+            <p className="mb-2 text-xs font-semibold text-zinc-400">
+              Top-N Coverage
+            </p>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-500">Coverage</span>
+                <span className="text-xs font-medium text-white">
+                  {formatPercent(selectedNode.meta.coverage.coveragePercent)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-500">Named entities</span>
+                <span className="text-xs font-medium text-white">
+                  {selectedNode.meta.coverage.namedEntityCount}{" "}
+                  of {selectedNode.meta.coverage.configuredLimit}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-500">Named ops</span>
+                <span className="text-xs font-medium text-white">
+                  {formatNumber(selectedNode.meta.coverage.namedChildValue)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-500">Total ops</span>
+                <span className="text-xs font-medium text-white">
+                  {formatNumber(selectedNode.meta.coverage.parentValue)}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {selectedNode.meta?.childCount ? (
           <p className="text-xs text-stellar-light">
             Click this tile again in the treemap to explore{" "}

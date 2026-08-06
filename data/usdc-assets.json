@@ -1,0 +1,21 @@
+{
+  "id": "stellar-mainnet-circle-usdc-v1",
+  "methodology": "canonical-payment-volume-v1",
+  "assets": [
+    {
+      "code": "USDC",
+      "issuer": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+      "name": "Circle USDC on Stellar mainnet",
+      "provenance": [
+        {
+          "label": "Stellar Horizon asset docs",
+          "url": "https://developers.stellar.org/docs/tools/lab/api-explorer/horizon-endpoint"
+        },
+        {
+          "label": "Circle USDC on Stellar",
+          "url": "https://www.circle.com/multi-chain-usdc/stellar"
+        }
+      ]
+    }
+  ]
+}

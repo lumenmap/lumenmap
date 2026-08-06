@@ -364,6 +364,9 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
                 {identity
                   ? `${data.name}\n${identity}\n${formatNumber(value)} ${metric === "xlm_volume" ? "XLM" : "ops"} · ${formatPercent(share)}`
                   : `${data.name}\n${formatNumber(value)} ${metric === "xlm_volume" ? "XLM" : "ops"} · ${formatPercent(share)}`}
+                {original.meta?.coverage
+                  ? `\nCoverage: ${formatPercent(original.meta.coverage.coveragePercent)} (${formatNumber(original.meta.coverage.namedChildValue)} of ${formatNumber(original.meta.coverage.parentValue)}) · ${original.meta.coverage.namedEntityCount} entities · limit ${original.meta.coverage.configuredLimit}`
+                  : ""}
               </title>
             </g>
           );
