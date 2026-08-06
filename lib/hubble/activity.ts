@@ -1,5 +1,6 @@
 import { getBigQueryClient } from "@/lib/hubble/client";
 import { getCached, setCache } from "@/lib/hubble/cache";
+import { coalesceInflight } from "@/lib/hubble/inflight";
 import {
   accountQuery,
   accountMetadataQuery,
@@ -46,6 +47,8 @@ import {
   logInfo,
   startTimer,
 } from "@/lib/log";
+
+const inflightActivityRequests = new Map<string, Promise<ActivityDataset>>();
 
 async function runQuery<T>(
   name: string,
@@ -272,83 +275,92 @@ export async function getActivityData(
     return cached;
   }
 
-  logInfo({
-    event: "activity.cache.miss",
-    correlationId,
-    period,
+  return coalesceInflight(inflightActivityRequests, cacheKey, async () => {
+    // Re-check cache after winning/joining the in-flight slot.
+    const cachedAfterWait = getCached<ActivityDataset>(cacheKey);
+    if (cachedAfterWait) {
+      return cachedAfterWait;
+    }
+
+    logInfo({
+      event: "activity.cache.miss",
+      correlationId,
+      period,
+    });
+
+    const start = range.start.toISOString();
+    const end = range.end.toISOString();
+
+    const fetchTimer = startTimer();
+    const raw = await fetchFromHubble(start, end, correlationId);
+    logInfo({
+      event: "activity.fetch.complete",
+      correlationId,
+      period,
+      durationMs: endTimer(fetchTimer),
+    });
+
+    const kpiTimer = startTimer();
+    const activeContractCount = await getActiveContractCount(start, end, correlationId);
+    const kpis = buildKpis(
+      raw.categories,
+      raw.contracts,
+      raw.activeSourceAccounts,
+      activeContractCount.active_contract_count,
+    );
+    logInfo({
+      event: "activity.kpi.build",
+      correlationId,
+      period,
+      durationMs: endTimer(kpiTimer),
+    });
+
+    const labelTimer = startTimer();
+    const labels = await resolveEntityLabels(collectTreemapIds(raw), {
+      fetchHomeDomains: (ids) => fetchHomeDomains(ids, correlationId),
+    });
+    logInfo({
+      event: "activity.label.resolve",
+      correlationId,
+      period,
+      durationMs: endTimer(labelTimer),
+    });
+
+    const treemapTimer = startTimer();
+    const treemaps = buildAllTreemaps({ ...raw, labels });
+    logInfo({
+      event: "activity.treemap.build",
+      correlationId,
+      period,
+      durationMs: endTimer(treemapTimer),
+    });
+
+    const sourceTimestamp = await fetchLatestDataTimestamp(correlationId);
+    const now = new Date();
+    const isPeriodComplete = range.end.getTime() <= now.getTime();
+
+    const response: ActivityDataset = {
+      period,
+      start,
+      end,
+      source: "hubble",
+      sourceTimestamp: sourceTimestamp ?? "",
+      isPeriodComplete,
+      categories: raw.categories,
+      contracts: raw.contracts,
+      accounts: raw.accounts,
+      sorobanFunctions: raw.sorobanFunctions,
+      sorobanFunctionContracts: raw.sorobanFunctionContracts,
+      usdcPaymentVolume: raw.usdcPaymentVolume,
+      usdcCategories: raw.usdcCategories,
+      usdcAccounts: raw.usdcAccounts,
+      kpis,
+      treemaps,
+      metricProvenance: buildActivityMetricProvenance(),
+    };
+
+    setCache(cacheKey, response);
+    return response;
   });
 
-  const start = range.start.toISOString();
-  const end = range.end.toISOString();
-
-  const fetchTimer = startTimer();
-  const raw = await fetchFromHubble(start, end, correlationId);
-  logInfo({
-    event: "activity.fetch.complete",
-    correlationId,
-    period,
-    durationMs: endTimer(fetchTimer),
-  });
-
-  const kpiTimer = startTimer();
-  const activeContractCount = await getActiveContractCount(start, end, correlationId);
-  const kpis = buildKpis(
-    raw.categories,
-    raw.contracts,
-    raw.activeSourceAccounts,
-    activeContractCount.active_contract_count,
-  );
-  logInfo({
-    event: "activity.kpi.build",
-    correlationId,
-    period,
-    durationMs: endTimer(kpiTimer),
-  });
-
-  const labelTimer = startTimer();
-  const labels = await resolveEntityLabels(collectTreemapIds(raw), {
-    fetchHomeDomains: (ids) => fetchHomeDomains(ids, correlationId),
-  });
-  logInfo({
-    event: "activity.label.resolve",
-    correlationId,
-    period,
-    durationMs: endTimer(labelTimer),
-  });
-
-  const treemapTimer = startTimer();
-  const treemaps = buildAllTreemaps({ ...raw, labels });
-  logInfo({
-    event: "activity.treemap.build",
-    correlationId,
-    period,
-    durationMs: endTimer(treemapTimer),
-  });
-
-  const sourceTimestamp = await fetchLatestDataTimestamp(correlationId);
-  const now = new Date();
-  const isPeriodComplete = range.end.getTime() <= now.getTime();
-
-  const response: ActivityDataset = {
-    period,
-    start,
-    end,
-    source: "hubble",
-    sourceTimestamp: sourceTimestamp ?? "",
-    isPeriodComplete,
-    categories: raw.categories,
-    contracts: raw.contracts,
-    accounts: raw.accounts,
-    sorobanFunctions: raw.sorobanFunctions,
-    sorobanFunctionContracts: raw.sorobanFunctionContracts,
-    usdcPaymentVolume: raw.usdcPaymentVolume,
-    usdcCategories: raw.usdcCategories,
-    usdcAccounts: raw.usdcAccounts,
-    kpis,
-    treemaps,
-    metricProvenance: buildActivityMetricProvenance(),
-  };
-
-  setCache(cacheKey, response);
-  return response;
 }

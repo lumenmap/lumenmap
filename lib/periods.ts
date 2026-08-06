@@ -1,7 +1,3 @@
-// All time intervals use the half-open convention [start, end):
-//   start <= event_time < end
-// This prevents double-counting boundary events across adjacent periods.
-
 import type { Period } from "@/lib/types";
 
 export interface PeriodRange {
@@ -18,44 +14,70 @@ export const PERIOD_OPTIONS: { value: Period; label: string }[] = [
   { value: "month", label: "This Month" },
 ];
 
-function utcDate(y: number, m: number, d: number): Date {
-  return new Date(Date.UTC(y, m, d));
+function startOfDayUTC(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
 }
 
-function addDaysUTC(d: Date, days: number): Date {
-  return utcDate(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + days);
+function endOfDayUTC(date: Date): Date {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      23,
+      59,
+      59,
+      999,
+    ),
+  );
+}
+
+function subDaysUTC(date: Date, days: number): Date {
+  return new Date(date.getTime() - days * 86_400_000);
+}
+
+function startOfMonthUTC(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+function endOfMonthUTC(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999),
+  );
 }
 
 export function resolvePeriod(period: Period, now = new Date()): PeriodRange {
-  const base = utcDate(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const end = endOfDayUTC(now);
 
   switch (period) {
     case "1d":
       return {
         period,
-        start: base,
-        end: addDaysUTC(base, 1),
+        start: startOfDayUTC(now),
+        end,
         label: "Today",
       };
     case "7d":
       return {
         period,
-        start: addDaysUTC(base, -6),
-        end: addDaysUTC(base, 1),
+        start: startOfDayUTC(subDaysUTC(now, 6)),
+        end,
         label: "Last 7 Days",
       };
     case "30d":
       return {
         period,
-        start: addDaysUTC(base, -29),
-        end: addDaysUTC(base, 1),
+        start: startOfDayUTC(subDaysUTC(now, 29)),
+        end,
         label: "Last 30 Days",
       };
     case "month":
       return {
         period,
-        start: utcDate(now.getUTCFullYear(), now.getUTCMonth(), 1),
-        end: utcDate(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+        start: startOfMonthUTC(now),
+        end: endOfMonthUTC(now),
         label: "This Month",
       };
     default:

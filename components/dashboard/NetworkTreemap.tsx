@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { CATEGORY_COLORS, TREEMAP_VIEWS } from "@/lib/constants";
 import { PERIOD_OPTIONS } from "@/lib/periods";
@@ -39,6 +39,44 @@ function toChartNode(node: TreemapNode<number | string>): TreemapNode {
   };
 }
 
+
+function filterTreemapByCategories(
+  root: TreemapNode,
+  excludedCategories: Set<string>,
+): TreemapNode | null {
+  if (excludedCategories.size === 0) return root;
+
+  const filterNode = (node: TreemapNode): TreemapNode | null => {
+    const category = node.meta?.category;
+
+    if (category && excludedCategories.has(category)) {
+      return null;
+    }
+
+    if (node.children && node.children.length > 0) {
+      const filteredChildren = node.children
+        .map(filterNode)
+        .filter((child): child is TreemapNode => child !== null);
+
+      if (filteredChildren.length > 0) {
+        return { ...node, children: filteredChildren };
+      }
+
+      const val = node.value ?? node.meta?.opCount ?? 0;
+      if (val === 0) return null;
+    }
+
+    const effectiveCategory = category || "other";
+    if (excludedCategories.has(effectiveCategory)) {
+      return null;
+    }
+
+    return node;
+  };
+
+  return filterNode(root);
+}
+
 export function NetworkTreemap() {
   const {
     data,
@@ -53,7 +91,21 @@ export function NetworkTreemap() {
     setSelectedNode,
   } = useDashboard();
   const [isRetrying, setIsRetrying] = useState(false);
+  const [excludedCategories, setExcludedCategories] = useState<Set<string>>(
+    new Set(),
+  );
   const retryPending = isRetrying || isFetching;
+
+  const toggleCategory = (key: string) => {
+    setExcludedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const resetFilters = () => setExcludedCategories(new Set());
 
   const handleRetry = async () => {
     if (retryPending) {
@@ -78,6 +130,16 @@ export function NetworkTreemap() {
   const isEmpty =
     !!activeTreemap &&
     (!activeTreemap.children || activeTreemap.children.length === 0);
+  const filteredTreemap = useMemo(() => {
+    if (!activeTreemap) return null;
+    return filterTreemapByCategories(activeTreemap, excludedCategories);
+  }, [activeTreemap, excludedCategories]);
+
+  const filterAnnouncement =
+    excludedCategories.size === 0
+      ? "All categories visible"
+      : `Excluded categories: ${[...excludedCategories].join(", ")}`;
+
   const activeViewLabel =
     TREEMAP_VIEWS.find((v) => v.id === treemapView)?.label?.toLowerCase() ||
     "activity";
@@ -98,7 +160,7 @@ export function NetworkTreemap() {
           <CardTitle>Network Treemap</CardTitle>
           <p className="text-xs text-zinc-500">
             Switch views to explore operation types or top accounts and
-            contracts.
+            contracts. Click legend items to filter categories.
           </p>
         </div>
         <TreemapViewSelector />
@@ -131,10 +193,19 @@ export function NetworkTreemap() {
           </svg>
           {CATEGORY_LEGEND.map((item) => {
             const patternId = getCategoryPatternId(item.key);
+            const isExcluded = excludedCategories.has(item.key);
             return (
-              <span
+              <button
                 key={item.key}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300"
+                type="button"
+                onClick={() => toggleCategory(item.key)}
+                aria-pressed={!isExcluded}
+                aria-label={`${item.label} category filter${isExcluded ? ", excluded" : ", included"}`}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 ${
+                  isExcluded
+                    ? "border-transparent bg-white/5 text-zinc-500 opacity-50 hover:bg-white/10"
+                    : "border-white/10 bg-white/10 text-zinc-300 hover:bg-white/20"
+                }`}
               >
                 {/* Compound swatch: color fill + pattern overlay */}
                 <svg
@@ -160,9 +231,22 @@ export function NetworkTreemap() {
                   ) : null}
                 </svg>
                 {item.label}
-              </span>
+              </button>
             );
           })}
+          {excludedCategories.size > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="h-6 px-2 text-xs text-zinc-400 hover:text-white"
+            >
+              Reset
+            </Button>
+          ) : null}
+        </div>
+        <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {filterAnnouncement}
         </div>
       </CardHeader>
       <CardContent>
@@ -170,7 +254,7 @@ export function NetworkTreemap() {
           <div className={CHART_FRAME_CLASS}>
             <Skeleton className="h-full w-full rounded-lg" />
           </div>
-        ) : isError || !data || !activeTreemap ? (
+        ) : isError || !data || !activeTreemap || !filteredTreemap ? (
           <div className="flex h-[420px] flex-col items-center justify-center gap-4 rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center text-sm text-red-200 sm:h-[520px] lg:h-[600px]">
             <p role="alert">{error?.message ?? "Unable to load treemap data."}</p>
             <Button
@@ -195,20 +279,35 @@ export function NetworkTreemap() {
             </Button>
           </div>
         ) : (
-          <div key={`${period}-${treemapView}-${metric}`} className={CHART_FRAME_CLASS}>
+          <div key={`${period}-${treemapView}-${metric}-${excludedCategories.size}`} className={CHART_FRAME_CLASS}>
             {!isEmpty ? (
-              <D3Treemap root={activeTreemap} onSelect={setSelectedNode} />
+              <D3Treemap root={filteredTreemap} onSelect={setSelectedNode} />
             ) : (
               <div
                 role="status"
                 aria-live="polite"
                 className="flex h-full flex-col items-center justify-center gap-1 p-6 text-center text-sm text-zinc-500"
               >
-                <p className="font-medium text-zinc-300">No activity available</p>
-                <p className="text-xs">
-                  There are no {activeViewLabel} with {metricLabel} for{" "}
-                  {periodLabel}. Try another view, metric, or time range.
+                <p className="font-medium text-zinc-300">
+                  {excludedCategories.size > 0
+                    ? "No categories selected."
+                    : "No activity available"}
                 </p>
+                <p className="text-xs">
+                  {excludedCategories.size > 0
+                    ? "Reset filters to show all categories again."
+                    : `There are no ${activeViewLabel} with ${metricLabel} for ${periodLabel}. Try another view, metric, or time range.`}
+                </p>
+                {excludedCategories.size > 0 ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetFilters}
+                    className="mt-2 text-xs text-zinc-400 hover:text-white"
+                  >
+                    Reset filters
+                  </Button>
+                ) : null}
               </div>
             )}
           </div>
