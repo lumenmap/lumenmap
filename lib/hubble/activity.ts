@@ -3,18 +3,25 @@ import { getCached, setCache } from "@/lib/hubble/cache";
 import {
   accountQuery,
   accountMetadataQuery,
+  activeContractCountQuery,
+  activeSourceAccountsQuery,
   categoryQuery,
   contractQuery,
   getAccountQueryTypes,
+  getUsdcPaymentVolumeParams,
   latestDataTimestampQuery,
   mapAccountMetadataRows,
   mapAccountRows,
+  mapActiveContractCountRow,
+  mapActiveSourceAccountsRows,
   mapCategoryRows,
   mapContractRows,
   mapSorobanFunctionContractRows,
   mapSorobanFunctionRows,
+  mapUsdcPaymentVolumeRows,
   sorobanFunctionContractQuery,
   sorobanFunctionQuery,
+  usdcPaymentVolumeQuery,
   type RawQueryResults,
 } from "@/lib/hubble/queries";
 import { hasBigQueryCredentials } from "@/lib/hubble/client";
@@ -26,7 +33,7 @@ import {
 } from "@/lib/entities/resolve-labels";
 import { resolvePeriod } from "@/lib/periods";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
-import type { ActivityDataset, Period } from "@/lib/types";
+import type { ActiveContractCountRow, ActivityDataset, Period } from "@/lib/types";
 
 async function runQuery<T>(
   query: string,
@@ -57,6 +64,8 @@ async function fetchFromHubble(
     accountRows,
     sorobanFunctionRows,
     sorobanFunctionContractRows,
+    activeSourceAccountRows,
+    usdcPaymentVolumeRows,
   ] = await Promise.all([
     runQuery<Record<string, unknown>>(categoryQuery, params),
     runQuery<Record<string, unknown>>(contractQuery, params),
@@ -66,6 +75,11 @@ async function fetchFromHubble(
     }),
     runQuery<Record<string, unknown>>(sorobanFunctionQuery, params),
     runQuery<Record<string, unknown>>(sorobanFunctionContractQuery, params),
+    runQuery<Record<string, unknown>>(activeSourceAccountsQuery, params),
+    runQuery<Record<string, unknown>>(usdcPaymentVolumeQuery, {
+      ...params,
+      assets: getUsdcPaymentVolumeParams(),
+    }),
   ]);
 
   return {
@@ -76,6 +90,8 @@ async function fetchFromHubble(
     sorobanFunctionContracts: mapSorobanFunctionContractRows(
       sorobanFunctionContractRows,
     ),
+    activeSourceAccounts: mapActiveSourceAccountsRows(activeSourceAccountRows),
+    usdcPaymentVolume: mapUsdcPaymentVolumeRows(usdcPaymentVolumeRows),
   };
 }
 
@@ -89,6 +105,21 @@ async function fetchHomeDomains(ids: string[]) {
   });
 
   return homeDomainsToEntities(mapAccountMetadataRows(rows));
+}
+
+// Uncapped distinct active-contract count for a period. Independent of the
+// capped contract leaderboard (contractQuery/TOP_CONTRACT_LIMIT) used for the
+// existing KPI card and treemaps.
+export async function getActiveContractCount(
+  start: string,
+  end: string,
+): Promise<ActiveContractCountRow> {
+  const rows = await runQuery<Record<string, unknown>>(activeContractCountQuery, {
+    start,
+    end,
+  });
+
+  return mapActiveContractCountRow(rows);
 }
 
 async function fetchLatestDataTimestamp(): Promise<string | null> {
@@ -121,7 +152,7 @@ export async function getActivityData(period: Period): Promise<ActivityDataset> 
   const start = range.start.toISOString();
   const end = range.end.toISOString();
   const raw = await fetchFromHubble(start, end);
-  const kpis = buildKpis(raw.categories, raw.contracts);
+  const kpis = buildKpis(raw.categories, raw.contracts, raw.activeSourceAccounts);
   const labels = await resolveEntityLabels(collectTreemapIds(raw), {
     fetchHomeDomains,
   });
@@ -142,6 +173,7 @@ export async function getActivityData(period: Period): Promise<ActivityDataset> 
     accounts: raw.accounts,
     sorobanFunctions: raw.sorobanFunctions,
     sorobanFunctionContracts: raw.sorobanFunctionContracts,
+    usdcPaymentVolume: raw.usdcPaymentVolume,
     kpis,
     treemaps,
     metricProvenance: buildActivityMetricProvenance(),
