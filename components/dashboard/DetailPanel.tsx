@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyableAddress } from "@/components/dashboard/CopyableAddress";
+import { StellarExpertLink } from "@/components/dashboard/StellarExpertLink";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { isEligibleAddress } from "@/lib/clipboard";
@@ -119,6 +120,10 @@ export function DetailPanel() {
                 : "ID"}
             </p>
             <CopyableAddress
+              address={address}
+              type={selectedNode.meta?.type}
+            />
+            <StellarExpertLink
               address={address}
               type={selectedNode.meta?.type}
             />
