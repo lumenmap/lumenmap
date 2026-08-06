@@ -4,8 +4,10 @@ import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyableAddress } from "@/components/dashboard/CopyableAddress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
+import { isEligibleAddress } from "@/lib/clipboard";
 import { formatNumber, formatPercent } from "@/lib/utils";
 
 export function DetailPanel() {
@@ -55,6 +57,8 @@ export function DetailPanel() {
         : data?.period === "30d"
           ? "Last 30 days"
           : "This month";
+
+  const address = selectedNode.meta?.id;
 
   return (
     <Card className="xl:h-full">
@@ -107,12 +111,17 @@ export function DetailPanel() {
           </div>
         ) : null}
 
-        {selectedNode.meta?.id ? (
+        {address ? (
           <div>
-            <p className="mb-1 text-xs text-zinc-500">Address</p>
-            <p className="break-all font-mono text-xs text-zinc-300">
-              {selectedNode.meta.id}
+            <p className="mb-1 text-xs text-zinc-500">
+              {isEligibleAddress(address, selectedNode.meta?.type)
+                ? "Address"
+                : "ID"}
             </p>
+            <CopyableAddress
+              address={address}
+              type={selectedNode.meta?.type}
+            />
           </div>
         ) : null}
 

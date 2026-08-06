@@ -1,5 +1,10 @@
 import { getBigQueryClient } from "@/lib/hubble/client";
 import { getCached, setCache } from "@/lib/hubble/cache";
+import { getMaxBytesBilledLimit } from "@/lib/hubble/config";
+import {
+  BigQueryLimitExceededError,
+  isBytesBilledLimitExceededError,
+} from "@/lib/hubble/errors";
 import { coalesceInflight } from "@/lib/hubble/inflight";
 import {
   accountQuery,
@@ -78,10 +83,13 @@ async function runQuery<T>(
     throw new Error(errorMsg);
   }
 
+  const limit = getMaxBytesBilledLimit();
+
   try {
     const [rows] = await client.query({
       query,
       params,
+      maximumBytesBilled: limit.toString(),
     });
 
     logInfo({
@@ -94,6 +102,29 @@ async function runQuery<T>(
 
     return rows as T[];
   } catch (error) {
+    if (isBytesBilledLimitExceededError(error)) {
+      logError({
+        event: "activity.query.error",
+        correlationId,
+        queryName: name,
+        durationMs: endTimer(timer),
+        errorClass: "provider",
+        errorMessage: `BigQuery bytes billed limit exceeded (limit=${limit})`,
+      });
+      console.error(
+        `BigQuery query limit exceeded (Limit: ${limit} bytes):\n` +
+          `Query: ${query.trim().replace(/\s+/g, " ")}\n` +
+          `Params: ${JSON.stringify(params)}`,
+      );
+      throw new BigQueryLimitExceededError(
+        "Query scan budget exceeded. Please narrow the time range or filters to reduce data usage.",
+        limit,
+        query,
+        params,
+        error instanceof Error ? error : undefined,
+      );
+    }
+
     const errorClass = classifyError(error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 

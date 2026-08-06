@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getActivityData } from "@/lib/hubble/activity";
+import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
 import { hasBigQueryCredentials } from "@/lib/hubble/client";
 import { buildFixtureDataset } from "@/lib/hubble/fixture";
 import {
@@ -140,6 +141,24 @@ export async function handleActivityRequest(
       headers: { "Cache-Control": "public, max-age=900, s-maxage=900" },
     });
   } catch (error) {
+    if (error instanceof BigQueryLimitExceededError) {
+      logError({
+        event: "activity.request.error",
+        correlationId,
+        period: parsed.period,
+        durationMs: endTimer(timer),
+        errorClass: "provider",
+        errorMessage: error.message,
+      });
+      return NextResponse.json(
+        {
+          code: "LIMIT_EXCEEDED",
+          message: error.message,
+        } satisfies ApiErrorResponse,
+        { status: 400 },
+      );
+    }
+
     if (error instanceof ActivityResponseValidationError) {
       console.error(`[activity] ${error.diagnostic}`);
       logError({
@@ -191,6 +210,16 @@ export async function handleRawActivityRequest(
       headers: { "Cache-Control": "public, max-age=900, s-maxage=900" },
     });
   } catch (error) {
+    if (error instanceof BigQueryLimitExceededError) {
+      return NextResponse.json(
+        {
+          code: "LIMIT_EXCEEDED",
+          message: error.message,
+        } satisfies ApiErrorResponse,
+        { status: 400 },
+      );
+    }
+
     const message =
       error instanceof Error ? error.message : "Failed to fetch activity data";
     console.error(
