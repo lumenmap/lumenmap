@@ -83,7 +83,10 @@ export function KpiCards() {
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-stellar-light" />
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-semibold text-white">
+              <p
+                data-testid={`kpi-value-${item.key}`}
+                className="text-2xl font-semibold text-white"
+              >
                 {item.format(value as never)}
               </p>
               {freshnessState === "stale" ? (

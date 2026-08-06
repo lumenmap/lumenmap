@@ -38,3 +38,12 @@ export function hasBigQueryCredentials(): boolean {
       process.env.GOOGLE_APPLICATION_CREDENTIALS,
   );
 }
+
+/**
+ * Fixture mode serves deterministic local data instead of querying
+ * BigQuery. Enabled with `LUMENMAP_DATA_SOURCE=fixture`; used by the
+ * Playwright e2e suite and for local development without GCP credentials.
+ */
+export function isFixtureMode(): boolean {
+  return process.env.LUMENMAP_DATA_SOURCE === "fixture";
+}

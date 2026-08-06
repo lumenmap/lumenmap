@@ -4,6 +4,7 @@ import { getActivityData } from "@/lib/hubble/activity";
 import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
 import { hasBigQueryCredentials } from "@/lib/hubble/client";
 import { buildFixtureDataset } from "@/lib/hubble/fixture";
+import { getFixtureActivityData } from "@/lib/fixtures/activity";
 import {
   classifyError,
   createCorrelationId,
@@ -126,10 +127,16 @@ export async function handleActivityRequest(
     period: parsed.period,
   });
 
-  // Fixture mode: no credentials configured, return static sample data so the
-  // dashboard is usable without a GCP project.
-  if (fetchActivityData === getActivityData && !hasBigQueryCredentials()) {
-    const data = buildFixtureDataset(parsed.period);
+  // Fixture mode: explicit LUMENMAP_DATA_SOURCE=fixture (e2e) or missing GCP creds.
+  const forceFixture =
+    (process.env.LUMENMAP_DATA_SOURCE ?? "").trim().toLowerCase() === "fixture";
+  if (
+    fetchActivityData === getActivityData &&
+    (forceFixture || !hasBigQueryCredentials())
+  ) {
+    const data = forceFixture
+      ? getFixtureActivityData(parsed.period)
+      : buildFixtureDataset(parsed.period);
     const validated = validateActivityResponse({
       ...toVisualizationResponse(data),
       fixture: true,

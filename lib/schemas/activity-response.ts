@@ -13,7 +13,7 @@ export const isoTimestampSchema = z.string().datetime({ offset: true });
 
 export const periodSchema = z.enum(["1d", "7d", "30d", "month"]);
 
-export const dataSourceSchema = z.literal("hubble");
+export const dataSourceSchema = z.enum(["hubble", "fixture"]);
 
 export const countUnitSchema = z.object({
   kind: z.literal("count"),

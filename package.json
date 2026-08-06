@@ -12,6 +12,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test lib/**/*.test.ts app/api/activity/route.test.ts",
     "protect:main": "node scripts/configure-main-protection.mjs",
@@ -23,7 +25,6 @@
     "test:usdc": "npx tsx scripts/test-usdc-metric.mjs",
     "test:issues": "npx tsx scripts/validate-yaml-templates.mjs",
     "smoke": "node scripts/smoke-check.mjs",
-    "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:freshness": "node --test scripts/test-freshness.mjs"
   },
@@ -42,6 +43,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52",
     "@tailwindcss/postcss": "^4",
     "@types/d3-hierarchy": "^3.1.7",
     "@types/node": "^20",
@@ -52,7 +54,6 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.5",
     "typescript": "^5",
-    "vitest": "^4.1.10",
-    "@playwright/test": "^1.52"
+    "vitest": "^4.1.10"
   }
 }
