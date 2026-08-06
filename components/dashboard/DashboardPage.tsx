@@ -35,6 +35,15 @@ function DashboardContent() {
             <Badge>Mainnet</Badge>
           </div>
           <FreshnessIndicator />
+            <p className="text-xs text-zinc-500">
+              <a
+                href="/methodology"
+                className="text-stellar-light hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stellar rounded-sm"
+              >
+                Metric methodology
+              </a>
+              {" · "}definitions on each KPI
+            </p>
         </div>
         <PeriodSelector />
       </header>

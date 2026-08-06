@@ -7,6 +7,7 @@ import { PERIOD_OPTIONS } from "@/lib/periods";
 import { PATTERN_DEFS, PATTERN_OPACITY, getCategoryPatternId } from "@/lib/treemap-patterns";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { D3Treemap } from "@/components/dashboard/D3Treemap";
+import { ExportControls } from "@/components/dashboard/ExportControls";
 import { TreemapViewSelector } from "@/components/dashboard/TreemapViewSelector";
 import { TreemapMetricSelector } from "@/components/dashboard/TreemapMetricSelector";
 import { Button } from "@/components/ui/button";
@@ -160,12 +161,15 @@ export function NetworkTreemap() {
   return (
     <Card aria-busy={isLoading || undefined}>
       <CardHeader className="flex flex-col gap-4">
-        <div>
-          <CardTitle>Network Treemap</CardTitle>
-          <p className="text-xs text-zinc-500">
-            Switch views to explore operation types or top accounts and
-            contracts. Click legend items to filter categories.
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle>Network Treemap</CardTitle>
+            <p className="text-xs text-zinc-500">
+              Switch views to explore operation types or top accounts and
+              contracts. Click legend items to filter categories.
+            </p>
+          </div>
+          <ExportControls />
         </div>
         <TreemapViewSelector />
         <TreemapMetricSelector />
@@ -255,7 +259,8 @@ export function NetworkTreemap() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className={CHART_FRAME_CLASS}>
+          <div data-treemap-container="true"
+            className={CHART_FRAME_CLASS}>
             <Skeleton className="h-full w-full rounded-lg" />
           </div>
         ) : isError || !data || !activeTreemap || !filteredTreemap ? (
