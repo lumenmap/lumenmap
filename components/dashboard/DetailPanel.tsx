@@ -86,7 +86,9 @@ export function DetailPanel() {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg border border-white/10 bg-black/20 p-3">
             <p className="text-xs text-zinc-500">
-              {metric === "xlm_volume"
+              {metric === "txn"
+                ? "Transactions"
+                : metric === "xlm_volume"
                 ? "XLM volume"
                 : metric === "usdc"
                   ? "USDC volume"

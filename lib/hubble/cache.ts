@@ -1,3 +1,4 @@
+import { metrics } from "@/lib/telemetry/metrics";
 export const DEFAULT_CACHE_TTL_SECONDS = 900;
 export const MIN_CACHE_TTL_SECONDS = 1;
 export const MAX_CACHE_TTL_SECONDS = 86_400;
@@ -38,17 +39,31 @@ export function clearCache(): void {
   cache.clear();
 }
 
-export function getCached<T>(key: string): T | null {
+export function getCached<T>(
+  key: string,
+  options?: { endpoint?: "activity"; track?: boolean },
+): T | null {
+  const track = options?.track === true;
+  const endpoint = options?.endpoint ?? "activity";
   const entry = cache.get(key);
   if (!entry) {
+    if (track) {
+      metrics.increment({ endpoint, cache_outcome: "miss" });
+    }
     return null;
   }
 
   if (now() > entry.expires) {
     cache.delete(key);
+    if (track) {
+      metrics.increment({ endpoint, cache_outcome: "miss" });
+    }
     return null;
   }
 
+  if (track) {
+    metrics.increment({ endpoint, cache_outcome: "hit" });
+  }
   return entry.data as T;
 }
 

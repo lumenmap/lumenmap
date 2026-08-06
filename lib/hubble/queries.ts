@@ -16,6 +16,7 @@ import {
   usdcPaymentVolumeQuery,
   usdcCategoryQuery,
   usdcAccountQuery,
+  transactionCategoryQuery,
 } from "./shared-queries.mjs";
 import { SUPPORTED_USDC_ASSET_SET } from "@/lib/assets/usdc";
 import type {
@@ -31,6 +32,7 @@ import type {
   UsdcCategoryRow,
   UsdcPaymentVolume,
   UsdcPaymentVolumeAssetRow,
+  TransactionCategoryRow,
 } from "@/lib/types";
 
 export {
@@ -51,6 +53,7 @@ export {
   usdcPaymentVolumeQuery,
   usdcCategoryQuery,
   usdcAccountQuery,
+  transactionCategoryQuery,
   TOP_ACCOUNTS_PER_TYPE,
   TOP_CONTRACT_LIMIT,
   TOP_CONTRACTS_PER_FUNCTION,
@@ -89,7 +92,17 @@ export type RawQueryResults = {
   usdcPaymentVolume: UsdcPaymentVolume;
   usdcCategories: UsdcCategoryRow[];
   usdcAccounts: UsdcAccountRow[];
+  transactionCategories: TransactionCategoryRow[];
 };
+
+export function mapTransactionCategoryRows(
+  rows: Record<string, unknown>[],
+): TransactionCategoryRow[] {
+  return rows.map((row) => ({
+    type_string: String(row.type_string),
+    txn_count: Number(row.txn_count),
+  }));
+}
 
 export function mapCategoryRows(rows: Record<string, unknown>[]): CategoryRow[] {
   return rows.map((row) => ({

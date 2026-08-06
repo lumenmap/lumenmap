@@ -21,9 +21,11 @@ import type {
   TreemapNode,
   UsdcAccountRow,
   UsdcCategoryRow,
+  TransactionCategoryRow,
 } from "@/lib/types";
 import {
   OPERATION_COUNT_UNIT,
+  TRANSACTION_COUNT_UNIT,
   USDC_ASSET_UNIT,
   XLM_ASSET_UNIT,
 } from "@/lib/types";
@@ -38,6 +40,7 @@ interface BuildTreemapInput {
   sorobanFunctionContracts: SorobanFunctionContractRow[];
   usdcCategories?: UsdcCategoryRow[];
   usdcAccounts?: UsdcAccountRow[];
+  transactionCategories?: TransactionCategoryRow[];
   labels?: Record<string, EntityInfo>;
 }
 
@@ -647,6 +650,41 @@ export function buildUsdcActorTreemap(input: BuildTreemapInput): TreemapNode {
   };
 }
 
+
+function toTxnCategoriesAsOps(
+  rows: TransactionCategoryRow[] | undefined,
+): CategoryRow[] {
+  return (rows ?? []).map((row) => ({
+    type_string: row.type_string,
+    op_count: row.txn_count,
+  }));
+}
+
+export function buildTxnEventTypeTreemap(input: BuildTreemapInput): TreemapNode {
+  return buildEventTypeTreemap(
+    {
+      ...input,
+      categories: toTxnCategoriesAsOps(input.transactionCategories),
+      accounts: [],
+    },
+    "ops",
+  );
+}
+
+export function buildTxnActorTreemap(input: BuildTreemapInput): TreemapNode {
+  return buildActorTreemap(
+    {
+      ...input,
+      categories: toTxnCategoriesAsOps(input.transactionCategories),
+      accounts: [],
+      contracts: [],
+      sorobanFunctions: [],
+      sorobanFunctionContracts: [],
+    },
+    "ops",
+  );
+}
+
 export function buildAllTreemaps(input: BuildTreemapInput): ActivityTreemaps {
   const eventOperations = buildEventTypeTreemap(input, "ops");
   const actorOperations = buildActorTreemap(input, "ops");
@@ -658,6 +696,9 @@ export function buildAllTreemaps(input: BuildTreemapInput): ActivityTreemaps {
   );
   const eventUsdcVolume = serializeAssetValues(buildUsdcEventTypeTreemap(input));
   const actorUsdcVolume = serializeAssetValues(buildUsdcActorTreemap(input));
+
+  const eventTxn = buildTxnEventTypeTreemap(input);
+  const actorTxn = buildTxnActorTreemap(input);
 
   return {
     events: {
@@ -689,6 +730,16 @@ export function buildAllTreemaps(input: BuildTreemapInput): ActivityTreemaps {
       ...actorUsdcVolume,
       metric: "asset_volume",
       unit: USDC_ASSET_UNIT,
+    },
+    txn_events: {
+      ...eventTxn,
+      metric: "transaction_count",
+      unit: TRANSACTION_COUNT_UNIT,
+    },
+    txn_actors: {
+      ...actorTxn,
+      metric: "transaction_count",
+      unit: TRANSACTION_COUNT_UNIT,
     },
   };
 }

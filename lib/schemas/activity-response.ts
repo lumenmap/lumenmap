@@ -154,6 +154,16 @@ export const operationTreemapSchema = z.intersection(
   }),
 );
 
+export const transactionTreemapSchema = z.intersection(
+  countTreemapNodeSchema,
+  z.object({
+    metric: z.literal("transaction_count"),
+    unit: countUnitSchema.refine((unit) => unit.subject === "transaction", {
+      message: 'Transaction treemap must use count unit subject "transaction"',
+    }),
+  }),
+);
+
 export const assetVolumeTreemapSchema = z.intersection(
   assetTreemapNodeSchema,
   z.object({
@@ -264,6 +274,8 @@ export const activityResponseSchema = z.object({
     xlm_actors: assetVolumeTreemapSchema,
     usdc_events: assetVolumeTreemapSchema,
     usdc_actors: assetVolumeTreemapSchema,
+    txn_events: transactionTreemapSchema,
+    txn_actors: transactionTreemapSchema,
   }),
   metricProvenance: activityMetricProvenanceSchema,
   fixture: z.boolean().optional(),

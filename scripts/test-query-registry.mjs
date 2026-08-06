@@ -16,6 +16,7 @@ import {
   activeSourceAccountsQuery,
   usdcCategoryQuery,
   usdcAccountQuery,
+  transactionCategoryQuery,
 } from "../lib/hubble/shared-queries.mjs";
 
 const queryMap = {
@@ -33,6 +34,7 @@ const queryMap = {
   activeSourceAccountsQuery,
   usdcCategoryQuery,
   usdcAccountQuery,
+  transactionCategoryQuery,
 };
 
 const registeredNames = new Set(queryRegistry.map((e) => e.name));

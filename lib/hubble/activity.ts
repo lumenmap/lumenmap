@@ -27,11 +27,13 @@ import {
   mapUsdcAccountRows,
   mapUsdcCategoryRows,
   mapUsdcPaymentVolumeRows,
+  mapTransactionCategoryRows,
   sorobanFunctionContractQuery,
   sorobanFunctionQuery,
   usdcAccountQuery,
   usdcCategoryQuery,
   usdcPaymentVolumeQuery,
+  transactionCategoryQuery,
   type RawQueryResults,
 } from "@/lib/hubble/queries";
 import { hasBigQueryCredentials } from "@/lib/hubble/client";
@@ -158,6 +160,7 @@ async function fetchFromHubble(
     usdcPaymentVolumeRows,
     usdcCategoryRows,
     usdcAccountRows,
+    transactionCategoryRows,
   ] = await Promise.all([
     runQuery<Record<string, unknown>>("category", categoryQuery, params, correlationId),
     runQuery<Record<string, unknown>>("contract", contractQuery, params, correlationId),
@@ -215,6 +218,12 @@ async function fetchFromHubble(
       },
       correlationId,
     ).catch(() => [] as Record<string, unknown>[]),
+    runQuery<Record<string, unknown>>(
+      "transactionCategory",
+      transactionCategoryQuery,
+      params,
+      correlationId,
+    ),
   ]);
 
   return {
@@ -229,6 +238,7 @@ async function fetchFromHubble(
     usdcPaymentVolume: mapUsdcPaymentVolumeRows(usdcPaymentVolumeRows),
     usdcCategories: mapUsdcCategoryRows(usdcCategoryRows),
     usdcAccounts: mapUsdcAccountRows(usdcAccountRows),
+    transactionCategories: mapTransactionCategoryRows(transactionCategoryRows),
   };
 }
 
@@ -385,6 +395,7 @@ export async function getActivityData(
       usdcPaymentVolume: raw.usdcPaymentVolume,
       usdcCategories: raw.usdcCategories,
       usdcAccounts: raw.usdcAccounts,
+      transactionCategories: raw.transactionCategories,
       kpis,
       treemaps,
       metricProvenance: buildActivityMetricProvenance(),

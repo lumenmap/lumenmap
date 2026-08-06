@@ -200,6 +200,34 @@ export const validActivityResponseFixture: ActivityResponse = {
       meta: { type: "root", usdcVolume: 100.5 },
       children: [],
     },
+    txn_events: {
+      name: "Network Activity",
+      value: 10,
+      metric: "transaction_count",
+      unit: { kind: "count", subject: "transaction" },
+      meta: { type: "root", opCount: 10 },
+      children: [
+        {
+        name: "Payments",
+        value: 10,
+        meta: { type: "category", category: "payments", opCount: 10 },
+        },
+      ],
+    },
+    txn_actors: {
+      name: "Network Activity",
+      value: 10,
+      metric: "transaction_count",
+      unit: { kind: "count", subject: "transaction" },
+      meta: { type: "root", opCount: 10 },
+      children: [
+        {
+        name: "Payments",
+        value: 10,
+        meta: { type: "category", category: "payments", opCount: 10 },
+        },
+      ],
+    },
   },
   metricProvenance: buildActivityMetricProvenance(),
 };

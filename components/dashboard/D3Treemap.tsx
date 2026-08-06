@@ -69,8 +69,14 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
   }, []);
   const { metric } = useDashboard();
   const metricUnit =
-    metric === "xlm_volume" ? "XLM" : metric === "usdc" ? "USDC" : "ops";
-  const metricUnitSuffix = metric === "ops" ? "" : metricUnit;
+    metric === "xlm_volume"
+      ? "XLM"
+      : metric === "usdc"
+        ? "USDC"
+        : metric === "txn"
+          ? "txns"
+          : "ops";
+  const metricUnitSuffix = metric === "ops" || metric === "txn" ? "" : metricUnit;
 
   const currentNode = path.length > 0 ? path[path.length - 1] : root;
   const levelTotal = useMemo(() => {

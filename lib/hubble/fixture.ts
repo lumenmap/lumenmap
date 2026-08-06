@@ -74,6 +74,10 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
       { type_string: "payment", amount: 100000.5 },
       { type_string: "path_payment_strict_receive", amount: 25000 },
     ],
+    transactionCategories: [
+      { type_string: "payment", txn_count: 90000 },
+      { type_string: "invoke_host_function", txn_count: 210000 },
+    ],
     usdcAccounts: [
       {
         account_id: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
@@ -212,6 +216,34 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
             issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
           },
         },
+      },
+      txn_events: {
+        name: "Network Activity",
+        value: 300000,
+        metric: "transaction_count",
+        unit: { kind: "count", subject: "transaction" },
+        meta: { type: "root", opCount: 300000 },
+        children: [
+          {
+            name: "Payments",
+            value: 90000,
+            meta: { type: "category", category: "payments", opCount: 90000 },
+          },
+        ],
+      },
+      txn_actors: {
+        name: "Network Activity",
+        value: 300000,
+        metric: "transaction_count",
+        unit: { kind: "count", subject: "transaction" },
+        meta: { type: "root", opCount: 300000 },
+        children: [
+          {
+            name: "Payments",
+            value: 90000,
+            meta: { type: "category", category: "payments", opCount: 90000 },
+          },
+        ],
       },
     },
     metricProvenance: buildActivityMetricProvenance(),
