@@ -39,7 +39,8 @@ export function getFixtureActivityData(period: Period): ActivityDataset {
       assets: [],
     },
     usdcCategories: [],
-    usdcAccounts: [],
+    transactionCategories: [],
+  usdcAccounts: [],
     metricProvenance: buildActivityMetricProvenance(),
   };
 }
