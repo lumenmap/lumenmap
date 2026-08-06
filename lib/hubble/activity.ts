@@ -12,6 +12,7 @@ import {
   activeContractCountQuery,
   activeSourceAccountsQuery,
   categoryQuery,
+  transactionCategoryQuery,
   contractQuery,
   getAccountQueryTypes,
   getUsdcPaymentVolumeParams,
@@ -21,19 +22,18 @@ import {
   mapActiveContractCountRow,
   mapActiveSourceAccountsRows,
   mapCategoryRows,
+  mapTransactionCategoryRows,
   mapContractRows,
   mapSorobanFunctionContractRows,
   mapSorobanFunctionRows,
   mapUsdcAccountRows,
   mapUsdcCategoryRows,
   mapUsdcPaymentVolumeRows,
-  mapTransactionCategoryRows,
   sorobanFunctionContractQuery,
   sorobanFunctionQuery,
   usdcAccountQuery,
   usdcCategoryQuery,
   usdcPaymentVolumeQuery,
-  transactionCategoryQuery,
   type RawQueryResults,
 } from "@/lib/hubble/queries";
 import { hasBigQueryCredentials } from "@/lib/hubble/client";
@@ -152,6 +152,7 @@ async function fetchFromHubble(
 
   const [
     categoryRows,
+    transactionCategoryRows,
     contractRows,
     accountRows,
     sorobanFunctionRows,
@@ -160,9 +161,14 @@ async function fetchFromHubble(
     usdcPaymentVolumeRows,
     usdcCategoryRows,
     usdcAccountRows,
-    transactionCategoryRows,
   ] = await Promise.all([
     runQuery<Record<string, unknown>>("category", categoryQuery, params, correlationId),
+    runQuery<Record<string, unknown>>(
+      "transactionCategory",
+      transactionCategoryQuery,
+      params,
+      correlationId,
+    ).catch(() => [] as Record<string, unknown>[]),
     runQuery<Record<string, unknown>>("contract", contractQuery, params, correlationId),
     runQuery<Record<string, unknown>>(
       "account",
@@ -218,16 +224,11 @@ async function fetchFromHubble(
       },
       correlationId,
     ).catch(() => [] as Record<string, unknown>[]),
-    runQuery<Record<string, unknown>>(
-      "transactionCategory",
-      transactionCategoryQuery,
-      params,
-      correlationId,
-    ),
   ]);
 
   return {
     categories: mapCategoryRows(categoryRows),
+    transactionCategories: mapTransactionCategoryRows(transactionCategoryRows),
     contracts: mapContractRows(contractRows),
     accounts: mapAccountRows(accountRows),
     sorobanFunctions: mapSorobanFunctionRows(sorobanFunctionRows),
@@ -238,7 +239,6 @@ async function fetchFromHubble(
     usdcPaymentVolume: mapUsdcPaymentVolumeRows(usdcPaymentVolumeRows),
     usdcCategories: mapUsdcCategoryRows(usdcCategoryRows),
     usdcAccounts: mapUsdcAccountRows(usdcAccountRows),
-    transactionCategories: mapTransactionCategoryRows(transactionCategoryRows),
   };
 }
 
@@ -304,7 +304,7 @@ export async function getActivityData(
   }
 
   const range = resolvePeriod(period);
-  const cacheKey = `activity:v12:${period}:${range.start.toISOString()}`;
+  const cacheKey = `activity:v13:${period}:${range.start.toISOString()}`;
 
   const cached = getCached<ActivityDataset>(cacheKey, { track: true });
   if (cached) {
@@ -388,6 +388,7 @@ export async function getActivityData(
       sourceTimestamp: sourceTimestamp ?? "",
       isPeriodComplete,
       categories: raw.categories,
+    transactionCategories: raw.transactionCategories,
       contracts: raw.contracts,
       accounts: raw.accounts,
       sorobanFunctions: raw.sorobanFunctions,
@@ -395,7 +396,6 @@ export async function getActivityData(
       usdcPaymentVolume: raw.usdcPaymentVolume,
       usdcCategories: raw.usdcCategories,
       usdcAccounts: raw.usdcAccounts,
-      transactionCategories: raw.transactionCategories,
       kpis,
       treemaps,
       metricProvenance: buildActivityMetricProvenance(),

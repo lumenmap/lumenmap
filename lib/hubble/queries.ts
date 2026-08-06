@@ -7,6 +7,7 @@ import {
   activeDestinationCountQuery,
   activeSourceAccountsQuery,
   categoryQuery,
+  transactionCategoryQuery,
   contractQuery,
   latestDataTimestampQuery,
   nativePaymentVolumeQuery,
@@ -16,7 +17,6 @@ import {
   usdcPaymentVolumeQuery,
   usdcCategoryQuery,
   usdcAccountQuery,
-  transactionCategoryQuery,
 } from "./shared-queries.mjs";
 import { SUPPORTED_USDC_ASSET_SET } from "@/lib/assets/usdc";
 import type {
@@ -24,6 +24,7 @@ import type {
   ActiveContractCountRow,
   ActiveSourceAccountsRow,
   CategoryRow,
+  TransactionCategoryRow,
   ContractRow,
   SorobanFunctionContractRow,
   SorobanFunctionRow,
@@ -32,7 +33,6 @@ import type {
   UsdcCategoryRow,
   UsdcPaymentVolume,
   UsdcPaymentVolumeAssetRow,
-  TransactionCategoryRow,
 } from "@/lib/types";
 
 export {
@@ -44,6 +44,7 @@ export {
   activeDestinationCountQuery,
   activeSourceAccountsQuery,
   categoryQuery,
+  transactionCategoryQuery,
   contractQuery,
   latestDataTimestampQuery,
   nativePaymentVolumeQuery,
@@ -53,7 +54,6 @@ export {
   usdcPaymentVolumeQuery,
   usdcCategoryQuery,
   usdcAccountQuery,
-  transactionCategoryQuery,
   TOP_ACCOUNTS_PER_TYPE,
   TOP_CONTRACT_LIMIT,
   TOP_CONTRACTS_PER_FUNCTION,
@@ -84,6 +84,7 @@ export function getUsdcPaymentVolumeParams(): { code: string; issuer: string }[]
 
 export type RawQueryResults = {
   categories: CategoryRow[];
+  transactionCategories: TransactionCategoryRow[];
   contracts: ContractRow[];
   accounts: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
@@ -92,7 +93,6 @@ export type RawQueryResults = {
   usdcPaymentVolume: UsdcPaymentVolume;
   usdcCategories: UsdcCategoryRow[];
   usdcAccounts: UsdcAccountRow[];
-  transactionCategories: TransactionCategoryRow[];
 };
 
 export function mapTransactionCategoryRows(

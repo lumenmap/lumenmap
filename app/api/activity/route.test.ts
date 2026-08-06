@@ -30,6 +30,7 @@ function mockActivityDataset(period: Period): ActivityDataset {
     sourceTimestamp: "2026-08-03T12:00:00.000Z",
     isPeriodComplete: false,
     categories: [],
+      transactionCategories: [],
     contracts: [],
     accounts: [],
     sorobanFunctions: [],
@@ -43,7 +44,6 @@ function mockActivityDataset(period: Period): ActivityDataset {
     },
     usdcCategories: [],
     usdcAccounts: [],
-    transactionCategories: [],
     kpis: {
       totalOps: { kind: "operations", unit: "ops", value: 0 },
       sorobanShare: { kind: "share", unit: "percent", value: 0 },
@@ -62,6 +62,18 @@ function mockActivityDataset(period: Period): ActivityDataset {
         value: 0,
         metric: "operation_count",
         unit: { kind: "count", subject: "operation" },
+      },
+      tx_events: {
+        name: "Tx Events",
+        value: 0,
+        metric: "transaction_count",
+        unit: { kind: "count", subject: "transaction" },
+      },
+      tx_actors: {
+        name: "Tx Actors",
+        value: 0,
+        metric: "transaction_count",
+        unit: { kind: "count", subject: "transaction" },
       },
       xlm_events: {
         name: "XLM Events",
@@ -106,18 +118,6 @@ function mockActivityDataset(period: Period): ActivityDataset {
             issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
           },
         },
-      },
-      txn_events: {
-        name: "Txn Events",
-        value: 0,
-        metric: "transaction_count",
-        unit: { kind: "count", subject: "transaction" },
-      },
-      txn_actors: {
-        name: "Txn Actors",
-        value: 0,
-        metric: "transaction_count",
-        unit: { kind: "count", subject: "transaction" },
       },
     },
     metricProvenance: buildActivityMetricProvenance(),

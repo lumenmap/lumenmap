@@ -4,20 +4,16 @@ import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 
 export function TreemapMetricSelector() {
-  const { metric, setMetric, data } = useDashboard();
-
-  const hasTransactionData =
-    (data?.treemaps.txn_events.children?.length ?? 0) > 0 ||
-    Number(data?.treemaps.txn_events.value ?? 0) > 0;
+  const { metric, setMetric } = useDashboard();
 
   const description =
     metric === "ops"
       ? "Tile size is proportional to the number of operations."
-      : metric === "xlm_volume"
-        ? "Tile size is proportional to XLM payment volume. Other operation types are hidden."
-        : metric === "usdc"
-          ? "Tile size is proportional to verified USDC payment volume. Unsupported same-code assets are excluded."
-          : "Tile size is proportional to the number of distinct transactions.";
+      : metric === "transactions"
+        ? "Tile size is proportional to the number of distinct transactions."
+        : metric === "xlm_volume"
+          ? "Tile size is proportional to XLM payment volume. Other operation types are hidden."
+          : "Tile size is proportional to verified USDC payment volume. Unsupported same-code assets are excluded.";
 
   return (
     <div className="flex flex-col gap-2 sm:gap-3">
@@ -30,10 +26,9 @@ export function TreemapMetricSelector() {
           Operation Count
         </Button>
         <Button
-          variant={metric === "txn" ? "default" : "outline"}
+          variant={metric === "transactions" ? "default" : "outline"}
           size="sm"
-          onClick={() => setMetric("txn")}
-          disabled={!hasTransactionData}
+          onClick={() => setMetric("transactions")}
         >
           Transaction Count
         </Button>

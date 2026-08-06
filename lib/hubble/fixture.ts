@@ -22,6 +22,13 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
       { type_string: "path_payment_strict_receive", op_count: 62000, xlm_volume: 15000 },
       { type_string: "change_trust", op_count: 31000, xlm_volume: 0 },
     ],
+    transactionCategories: [
+      { type_string: "invoke_host_function", txn_count: 210000 },
+      { type_string: "payment", txn_count: 150000 },
+      { type_string: "manage_sell_offer", txn_count: 40000 },
+      { type_string: "path_payment_strict_receive", txn_count: 30000 },
+      { type_string: "change_trust", txn_count: 20000 },
+    ],
     contracts: [
       {
         contract_id: "CA4HEQTL2WPEUYKYKCDOHCDNIV4QHNJ7EL4J4NQ6VADP7SYHVRYZ7AW2",
@@ -74,10 +81,6 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
       { type_string: "payment", amount: 100000.5 },
       { type_string: "path_payment_strict_receive", amount: 25000 },
     ],
-    transactionCategories: [
-      { type_string: "payment", txn_count: 90000 },
-      { type_string: "invoke_host_function", txn_count: 210000 },
-    ],
     usdcAccounts: [
       {
         account_id: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
@@ -92,6 +95,46 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
       activeContracts: { kind: "entity_count", unit: "count", value: 2 },
     },
     treemaps: {
+      tx_events: {
+        name: "Network Activity",
+        metric: "transaction_count",
+        unit: { kind: "count", subject: "transaction" },
+        value: 450000,
+        meta: { type: "root", opCount: 450000 },
+        children: [
+          {
+            name: "Soroban Contracts",
+            value: 210000,
+            meta: {
+              type: "category",
+              category: "soroban",
+              opCount: 210000,
+              share: 46.7,
+              childCount: 1,
+            },
+            children: [
+              {
+                name: "invoke_host_function",
+                value: 210000,
+                meta: {
+                  type: "entity",
+                  category: "soroban",
+                  opCount: 210000,
+                  eventType: "invoke_host_function",
+                },
+              },
+            ],
+          },
+        ],
+      },
+      tx_actors: {
+        name: "Network Activity",
+        metric: "transaction_count",
+        unit: { kind: "count", subject: "transaction" },
+        value: 450000,
+        meta: { type: "root", opCount: 450000 },
+        children: [],
+      },
       events: {
         name: "Network Activity",
         metric: "operation_count",
@@ -216,34 +259,6 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
             issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
           },
         },
-      },
-      txn_events: {
-        name: "Network Activity",
-        value: 300000,
-        metric: "transaction_count",
-        unit: { kind: "count", subject: "transaction" },
-        meta: { type: "root", opCount: 300000 },
-        children: [
-          {
-            name: "Payments",
-            value: 90000,
-            meta: { type: "category", category: "payments", opCount: 90000 },
-          },
-        ],
-      },
-      txn_actors: {
-        name: "Network Activity",
-        value: 300000,
-        metric: "transaction_count",
-        unit: { kind: "count", subject: "transaction" },
-        meta: { type: "root", opCount: 300000 },
-        children: [
-          {
-            name: "Payments",
-            value: 90000,
-            meta: { type: "category", category: "payments", opCount: 90000 },
-          },
-        ],
       },
     },
     metricProvenance: buildActivityMetricProvenance(),

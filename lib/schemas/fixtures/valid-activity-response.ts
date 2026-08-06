@@ -71,6 +71,46 @@ export const validActivityResponseFixture: ActivityResponse = {
         },
       ],
     },
+    tx_events: {
+      name: "Network Activity",
+      metric: "transaction_count",
+      unit: { kind: "count", subject: "transaction" },
+      value: 80,
+      meta: { type: "root", opCount: 80 },
+      children: [
+        {
+          name: "Payments",
+          value: 50,
+          meta: {
+            type: "category",
+            category: "payments",
+            opCount: 50,
+            share: 62.5,
+            childCount: 1,
+          },
+          children: [
+            {
+              name: "payment",
+              value: 50,
+              meta: {
+                type: "entity",
+                category: "payments",
+                opCount: 50,
+                eventType: "payment",
+              },
+            },
+          ],
+        },
+      ],
+    },
+    tx_actors: {
+      name: "Network Activity",
+      metric: "transaction_count",
+      unit: { kind: "count", subject: "transaction" },
+      value: 80,
+      meta: { type: "root", opCount: 80 },
+      children: [],
+    },
     actors: {
       name: "Network Activity",
       metric: "operation_count",
@@ -199,34 +239,6 @@ export const validActivityResponseFixture: ActivityResponse = {
       value: "100.5",
       meta: { type: "root", usdcVolume: 100.5 },
       children: [],
-    },
-    txn_events: {
-      name: "Network Activity",
-      value: 10,
-      metric: "transaction_count",
-      unit: { kind: "count", subject: "transaction" },
-      meta: { type: "root", opCount: 10 },
-      children: [
-        {
-        name: "Payments",
-        value: 10,
-        meta: { type: "category", category: "payments", opCount: 10 },
-        },
-      ],
-    },
-    txn_actors: {
-      name: "Network Activity",
-      value: 10,
-      metric: "transaction_count",
-      unit: { kind: "count", subject: "transaction" },
-      meta: { type: "root", opCount: 10 },
-      children: [
-        {
-        name: "Payments",
-        value: 10,
-        meta: { type: "category", category: "payments", opCount: 10 },
-        },
-      ],
     },
   },
   metricProvenance: buildActivityMetricProvenance(),

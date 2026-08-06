@@ -73,10 +73,11 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
       ? "XLM"
       : metric === "usdc"
         ? "USDC"
-        : metric === "txn"
+        : metric === "transactions"
           ? "txns"
           : "ops";
-  const metricUnitSuffix = metric === "ops" || metric === "txn" ? "" : metricUnit;
+  const metricUnitSuffix =
+    metric === "ops" ? "" : metric === "transactions" ? "txns" : metricUnit;
 
   const currentNode = path.length > 0 ? path[path.length - 1] : root;
   const levelTotal = useMemo(() => {

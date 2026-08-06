@@ -90,6 +90,7 @@ export function toRawResearchResponse(
     isPeriodComplete: data.isPeriodComplete,
     rows: {
       categories: data.categories,
+      transactionCategories: data.transactionCategories ?? [],
       contracts: data.contracts,
       accounts: data.accounts,
       sorobanFunctions: data.sorobanFunctions,
@@ -97,7 +98,6 @@ export function toRawResearchResponse(
       usdcPaymentVolume: data.usdcPaymentVolume,
       usdcCategories: data.usdcCategories,
       usdcAccounts: data.usdcAccounts,
-      transactionCategories: data.transactionCategories,
     },
   };
 }
