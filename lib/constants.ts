@@ -17,7 +17,6 @@ export const CATEGORY_PATTERNS: Record<string, string> = {
   other: "none",
 };
 
-
 export const GROUP_LABELS: Record<string, string> = {
   soroban: "Soroban Contracts",
   payments: "Payments",
@@ -60,7 +59,6 @@ export const TYPE_TO_GROUP: Record<string, string> = {
 export function getCategoryForOperation(type_string: string): string {
   return TYPE_TO_GROUP[type_string] ?? "other";
 }
-
 
 export {
   ACCOUNT_QUERY_TYPES,

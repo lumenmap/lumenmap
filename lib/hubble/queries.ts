@@ -33,6 +33,7 @@ import type {
   UsdcCategoryRow,
   UsdcPaymentVolume,
   UsdcPaymentVolumeAssetRow,
+  TimeseriesRawRow,
 } from "@/lib/types";
 
 export {
@@ -82,7 +83,44 @@ export function getUsdcPaymentVolumeParams(): { code: string; issuer: string }[]
   }));
 }
 
+
+export const hourlyTimeseriesQuery = `
+SELECT
+  TIMESTAMP_TRUNC(closed_at, HOUR) AS bucket_time,
+  COUNT(DISTINCT transaction_id) AS tx_count,
+  COUNT(*) AS op_count
+FROM \`crypto-stellar.crypto_stellar_dbt.enriched_history_operations\`
+WHERE closed_at BETWEEN @start AND @end
+GROUP BY bucket_time
+ORDER BY bucket_time ASC
+`;
+
+export const dailyTimeseriesQuery = `
+SELECT
+  TIMESTAMP_TRUNC(closed_at, DAY) AS bucket_time,
+  COUNT(DISTINCT transaction_id) AS tx_count,
+  COUNT(*) AS op_count
+FROM \`crypto-stellar.crypto_stellar_dbt.enriched_history_operations\`
+WHERE closed_at BETWEEN @start AND @end
+GROUP BY bucket_time
+ORDER BY bucket_time ASC
+`;
+
+export function mapTimeseriesRows(
+  rows: Record<string, unknown>[],
+): TimeseriesRawRow[] {
+  return rows.map((row) => ({
+    bucket_time:
+      row.bucket_time && typeof row.bucket_time === "object" && "value" in row.bucket_time
+        ? String((row.bucket_time as { value: string }).value)
+        : String(row.bucket_time ?? ""),
+    tx_count: Number(row.tx_count ?? 0),
+    op_count: Number(row.op_count ?? 0),
+  }));
+}
+
 export type RawQueryResults = {
+  timeseries: TimeseriesRawRow[];
   categories: CategoryRow[];
   transactionCategories: TransactionCategoryRow[];
   contracts: ContractRow[];

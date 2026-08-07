@@ -75,6 +75,8 @@ export function toVisualizationResponse(
     isPeriodComplete: data.isPeriodComplete,
     kpis: data.kpis,
     treemaps: data.treemaps,
+    protocols: data.protocols,
+    timeseries: data.timeseries,
     metricProvenance: data.metricProvenance,
   };
 }

@@ -308,6 +308,7 @@ export interface TreemapNodeMeta {
   usdcVolume?: number;
   childCount?: number;
   eventType?: string;
+  nodeId?: string;
   /** Coverage metadata for capped (top-N) treemap parents. */
   coverage?: TreemapCoverage;
   /** Marks a synthetic aggregate (e.g. remainder) rather than a real entity. */
@@ -327,6 +328,30 @@ export type TreemapPayload<M extends MetricId> = TreemapNode<MetricValue<M>> & {
   metric: M;
   unit: MetricUnit<M>;
 };
+
+
+export interface TimeseriesBucket {
+  timestamp: string;
+  label: string;
+  transactions: number;
+  operations: number;
+  isPartial?: boolean;
+}
+
+export interface ActivityTimeseries {
+  granularity: "hour" | "day";
+  buckets: TimeseriesBucket[];
+  totals: {
+    transactions: number;
+    operations: number;
+  };
+}
+
+export interface TimeseriesRawRow {
+  bucket_time: string;
+  tx_count: number;
+  op_count: number;
+}
 
 export interface ActivityTreemaps {
   events: TreemapPayload<"operation_count">;
@@ -365,6 +390,7 @@ export interface ActivityVisualizationResponse extends ActivityResponseMetadata 
   treemaps: ActivityTreemaps;
   protocols?: ProtocolSummary;
   metricProvenance: ActivityMetricProvenance;
+  timeseries?: ActivityTimeseries;
   /** Present and true when the API returned static fixture data (no GCP credentials). */
   fixture?: boolean;
 }
@@ -397,6 +423,7 @@ export interface ActivityDataset
   treemaps: ActivityTreemaps;
   protocols?: ProtocolSummary;
   metricProvenance: ActivityMetricProvenance;
+  timeseries?: ActivityTimeseries;
 }
 
 export interface ApiErrorResponse {

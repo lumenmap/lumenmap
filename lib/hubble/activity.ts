@@ -13,6 +13,8 @@ import {
   activeSourceAccountsQuery,
   categoryQuery,
   contractQuery,
+  dailyTimeseriesQuery,
+  hourlyTimeseriesQuery,
   getAccountQueryTypes,
   getUsdcPaymentVolumeParams,
   latestDataTimestampQuery,
@@ -25,6 +27,7 @@ import {
   mapSorobanFunctionContractRows,
   mapSorobanFunctionRows,
   mapTransactionCategoryRows,
+  mapTimeseriesRows,
   mapUsdcAccountRows,
   mapUsdcCategoryRows,
   mapUsdcPaymentVolumeRows,
@@ -44,8 +47,16 @@ import {
   resolveEntityLabels,
 } from "@/lib/entities/resolve-labels";
 import { resolvePeriod } from "@/lib/periods";
+import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
-import type { ActiveContractCountRow, ActivityDataset, Period } from "@/lib/types";
+import type {
+  ActiveContractCountRow,
+  ActivityDataset,
+  Period,
+  ActivityTimeseries,
+  TimeseriesBucket,
+  TimeseriesRawRow,
+} from "@/lib/types";
 import {
   classifyError,
   createCorrelationId,
@@ -147,8 +158,11 @@ async function fetchFromHubble(
   start: string,
   end: string,
   correlationId: string,
+  period: Period,
 ): Promise<RawQueryResults> {
   const params = { start, end };
+  const timeseriesQuery =
+    period === "1d" ? hourlyTimeseriesQuery : dailyTimeseriesQuery;
 
   const [
     categoryRows,
@@ -161,6 +175,7 @@ async function fetchFromHubble(
     usdcPaymentVolumeRows,
     usdcCategoryRows,
     usdcAccountRows,
+    timeseriesRows,
   ] = await Promise.all([
     runQuery<Record<string, unknown>>("category", categoryQuery, params, correlationId),
     runQuery<Record<string, unknown>>(
@@ -224,6 +239,12 @@ async function fetchFromHubble(
       },
       correlationId,
     ).catch(() => [] as Record<string, unknown>[]),
+    runQuery<Record<string, unknown>>(
+      "timeseries",
+      timeseriesQuery,
+      params,
+      correlationId,
+    ),
   ]);
 
   return {
@@ -239,6 +260,7 @@ async function fetchFromHubble(
     usdcPaymentVolume: mapUsdcPaymentVolumeRows(usdcPaymentVolumeRows),
     usdcCategories: mapUsdcCategoryRows(usdcCategoryRows),
     usdcAccounts: mapUsdcAccountRows(usdcAccountRows),
+    timeseries: mapTimeseriesRows(timeseriesRows),
   };
 }
 
@@ -293,6 +315,103 @@ async function fetchLatestDataTimestamp(correlationId: string): Promise<string |
   return String(rows[0].latest_timestamp);
 }
 
+export function buildTimeseries(
+  period: Period,
+  start: Date,
+  end: Date,
+  rawRows: TimeseriesRawRow[],
+  now = new Date(),
+): ActivityTimeseries {
+  const granularity = period === "1d" ? "hour" : "day";
+  const buckets: TimeseriesBucket[] = [];
+
+  const lookup = new Map<string, { tx_count: number; op_count: number }>();
+  for (const row of rawRows) {
+    if (!row.bucket_time) continue;
+    const dt = new Date(row.bucket_time);
+    if (isNaN(dt.getTime())) continue;
+    const key =
+      granularity === "hour"
+        ? dt.toISOString().substring(0, 13)
+        : dt.toISOString().substring(0, 10);
+
+    const existing = lookup.get(key) ?? { tx_count: 0, op_count: 0 };
+    lookup.set(key, {
+      tx_count: existing.tx_count + row.tx_count,
+      op_count: existing.op_count + row.op_count,
+    });
+  }
+
+  const currentHourKey = now.toISOString().substring(0, 13);
+  const currentDayKey = now.toISOString().substring(0, 10);
+
+  if (granularity === "hour") {
+    let curr = startOfHour(start);
+    const limit = end;
+    while (curr <= limit) {
+      const iso = curr.toISOString();
+      const hourKey = iso.substring(0, 13);
+      const data = lookup.get(hourKey) ?? { tx_count: 0, op_count: 0 };
+
+      const isCurrentHour = hourKey === currentHourKey;
+      const isPastNow = curr > now;
+
+      if (!isPastNow || buckets.length === 0 || curr <= addHours(now, 1)) {
+        const utcHour = String(curr.getUTCHours()).padStart(2, "0");
+        buckets.push({
+          timestamp: iso,
+          label: `${utcHour}:00 UTC`,
+          transactions: data.tx_count,
+          operations: data.op_count,
+          isPartial: isCurrentHour || (curr <= now && addHours(curr, 1) > now),
+        });
+      }
+
+      curr = addHours(curr, 1);
+    }
+  } else {
+    let curr = startOfDay(start);
+    const limit = end;
+    while (curr <= limit) {
+      const iso = curr.toISOString();
+      const dayKey = iso.substring(0, 10);
+      const data = lookup.get(dayKey) ?? { tx_count: 0, op_count: 0 };
+
+      const isCurrentDay = dayKey === currentDayKey;
+      const isPastNow = curr > startOfDay(now);
+
+      if (!isPastNow || buckets.length === 0 || curr <= now) {
+        const monthStr = curr.toLocaleString("en-US", {
+          month: "short",
+          timeZone: "UTC",
+        });
+        const dayNum = curr.getUTCDate();
+        buckets.push({
+          timestamp: iso,
+          label: `${monthStr} ${dayNum}`,
+          transactions: data.tx_count,
+          operations: data.op_count,
+          isPartial: isCurrentDay || (curr <= now && addDays(curr, 1) > now),
+        });
+      }
+
+      curr = addDays(curr, 1);
+    }
+  }
+
+  const totalTx = buckets.reduce((acc, b) => acc + b.transactions, 0);
+  const totalOps = buckets.reduce((acc, b) => acc + b.operations, 0);
+
+  return {
+    granularity,
+    buckets,
+    totals: {
+      transactions: totalTx,
+      operations: totalOps,
+    },
+  };
+}
+
 export async function getActivityData(
   period: Period,
   correlationId: string = createCorrelationId(),
@@ -333,7 +452,7 @@ export async function getActivityData(
     const end = range.end.toISOString();
 
     const fetchTimer = startTimer();
-    const raw = await fetchFromHubble(start, end, correlationId);
+    const raw = await fetchFromHubble(start, end, correlationId, period);
     logInfo({
       event: "activity.fetch.complete",
       correlationId,
@@ -370,6 +489,7 @@ export async function getActivityData(
     const treemapTimer = startTimer();
     const treemaps = buildAllTreemaps({ ...raw, labels });
   const protocols = buildProtocolSummary(raw.accounts, raw.contracts, labels);
+  const timeseries = buildTimeseries(period, range.start, range.end, raw.timeseries);
     logInfo({
       event: "activity.treemap.build",
       correlationId,
@@ -399,6 +519,8 @@ export async function getActivityData(
       usdcAccounts: raw.usdcAccounts,
       kpis,
       treemaps,
+      protocols,
+      timeseries,
       metricProvenance: buildActivityMetricProvenance(),
     };
 

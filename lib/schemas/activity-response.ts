@@ -279,6 +279,40 @@ export const activityMetricProvenanceSchema = z.object({
   asset_volume: assetVolumeMetricProvenanceSchema,
 });
 
+
+const timeseriesBucketSchema = z.object({
+  timestamp: z.string(),
+  label: z.string(),
+  transactions: z.number(),
+  operations: z.number(),
+  isPartial: z.boolean().optional(),
+});
+
+const activityTimeseriesSchema = z.object({
+  granularity: z.enum(["hour", "day"]),
+  buckets: z.array(timeseriesBucketSchema),
+  totals: z.object({
+    transactions: z.number(),
+    operations: z.number(),
+  }),
+});
+
+const protocolBarSchema = z.object({
+  protocol: z.string(),
+  opCount: z.number(),
+  share: z.number(),
+  rank: z.number(),
+  entityCount: z.number(),
+});
+
+const protocolSummarySchema = z.object({
+  bars: z.array(protocolBarSchema),
+  totalOps: z.number(),
+  labeledOps: z.number(),
+  coverage: z.number(),
+  unknownCount: z.number(),
+});
+
 export const activityResponseSchema = z.object({
   period: periodSchema,
   start: isoTimestampSchema,
@@ -298,6 +332,8 @@ export const activityResponseSchema = z.object({
     usdc_actors: assetVolumeTreemapSchema,
   }),
   metricProvenance: activityMetricProvenanceSchema,
+  protocols: protocolSummarySchema.optional(),
+  timeseries: activityTimeseriesSchema.optional(),
   fixture: z.boolean().optional(),
 });
 

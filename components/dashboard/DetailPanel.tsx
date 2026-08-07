@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,23 @@ import { formatNumber, formatPercent } from "@/lib/utils";
 export function DetailPanel() {
   const { selectedNode, setSelectedNode, data, metric, isLoading } =
     useDashboard();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.innerWidth < 1280) {
+      document
+        .getElementById("detail-panel-container")
+        ?.scrollIntoView({ behavior: "smooth" });
+    }
+    const nodeId = selectedNode?.meta?.nodeId;
+    return () => {
+      if (nodeId) {
+        setTimeout(() => {
+          document.getElementById(`node-${nodeId}`)?.focus();
+        }, 0);
+      }
+    };
+  }, [selectedNode?.meta?.nodeId]);
 
   if (isLoading) {
     return (
@@ -34,21 +52,7 @@ export function DetailPanel() {
   }
 
   if (!selectedNode) {
-    return (
-      /* On mobile the empty state is compact so it doesn't push KPIs far down.
-         On xl screens it stretches to fill the sidebar column (h-full). */
-      <Card className="xl:h-full">
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-zinc-500">
-            Select a treemap tile to view operation volume, category, and
-            identity details.
-          </p>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   const periodLabel =
