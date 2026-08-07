@@ -59,6 +59,46 @@ function toSelectedNode(node: TreemapNode, share: number): SelectedNode {
   };
 }
 
+
+function SortableHeader({
+  label,
+  sortByKey,
+  sortKey,
+  sortDirection,
+  onSort,
+}: {
+  label: string;
+  sortByKey: SortKey;
+  sortKey: SortKey;
+  sortDirection: SortDirection;
+  onSort: (key: SortKey) => void;
+}) {
+  const ariaSort: "ascending" | "descending" | "none" =
+    sortByKey !== sortKey ? "none" : sortDirection === "asc" ? "ascending" : "descending";
+
+  const icon =
+    sortByKey !== sortKey ? (
+      <ArrowUpDown className="h-3 w-3 text-zinc-600" aria-hidden="true" />
+    ) : sortDirection === "asc" ? (
+      <ArrowUp className="h-3 w-3 text-white" aria-hidden="true" />
+    ) : (
+      <ArrowDown className="h-3 w-3 text-white" aria-hidden="true" />
+    );
+
+  return (
+    <th scope="col" aria-sort={ariaSort} className="p-0">
+      <button
+        type="button"
+        onClick={() => onSort(sortByKey)}
+        className="flex w-full items-center gap-1 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-stellar-light"
+      >
+        {label}
+        {icon}
+      </button>
+    </th>
+  );
+}
+
 export function TreemapDataTable({
   levelName,
   nodes,
@@ -107,36 +147,6 @@ export function TreemapDataTable({
     setSortDirection("desc");
   };
 
-  const ariaSort = (key: SortKey): "ascending" | "descending" | "none" => {
-    if (key !== sortKey) return "none";
-    return sortDirection === "asc" ? "ascending" : "descending";
-  };
-
-  const renderSortIcon = (key: SortKey) => {
-    if (key !== sortKey) {
-      return <ArrowUpDown className="h-3 w-3 text-zinc-600" aria-hidden="true" />;
-    }
-    return sortDirection === "asc" ? (
-      <ArrowUp className="h-3 w-3 text-white" aria-hidden="true" />
-    ) : (
-      <ArrowDown className="h-3 w-3 text-white" aria-hidden="true" />
-    );
-  };
-
-  function SortableHeader({ label, sortByKey }: { label: string; sortByKey: SortKey }) {
-    return (
-      <th scope="col" aria-sort={ariaSort(sortByKey)} className="p-0">
-        <button
-          type="button"
-          onClick={() => handleSort(sortByKey)}
-          className="flex w-full items-center gap-1 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-stellar-light"
-        >
-          {label}
-          {renderSortIcon(sortByKey)}
-        </button>
-      </th>
-    );
-  }
 
   if (nodes.length === 0) {
     return (
@@ -156,16 +166,16 @@ export function TreemapDataTable({
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-white/10">
-              <SortableHeader label="Name" sortByKey="name" />
-              <SortableHeader label="Type" sortByKey="type" />
-              <SortableHeader label="Value" sortByKey="value" />
+              <SortableHeader label="Name" sortByKey="name" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader label="Type" sortByKey="type" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader label="Value" sortByKey="value" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
               <th
                 scope="col"
                 className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-400"
               >
                 Unit
               </th>
-              <SortableHeader label="Share" sortByKey="share" />
+              <SortableHeader label="Share" sortByKey="share" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
               <th
                 scope="col"
                 className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-400"
