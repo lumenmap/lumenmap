@@ -7,6 +7,8 @@ import { PERIOD_OPTIONS } from "@/lib/periods";
 import { PATTERN_DEFS, PATTERN_OPACITY, getCategoryPatternId } from "@/lib/treemap-patterns";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { D3Treemap } from "@/components/dashboard/D3Treemap";
+import { TreemapDataTable } from "@/components/dashboard/TreemapDataTable";
+import { resolveActiveLevel } from "@/lib/entities/treemap-level";
 import { ExportControls } from "@/components/dashboard/ExportControls";
 import { TreemapViewSelector } from "@/components/dashboard/TreemapViewSelector";
 import { TreemapMetricSelector } from "@/components/dashboard/TreemapMetricSelector";
@@ -90,6 +92,9 @@ export function NetworkTreemap() {
     treemapView,
     metric,
     setSelectedNode,
+    selectedNode,
+    activeLevelPath,
+    setActiveLevelPath,
   } = useDashboard();
   const [isRetrying, setIsRetrying] = useState(false);
   const [excludedCategories, setExcludedCategories] = useState<Set<string>>(
@@ -257,7 +262,7 @@ export function NetworkTreemap() {
           {filterAnnouncement}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         {isLoading ? (
           <div data-treemap-container="true"
             className={CHART_FRAME_CLASS}>
@@ -290,7 +295,12 @@ export function NetworkTreemap() {
         ) : (
           <div key={`${period}-${treemapView}-${metric}-${excludedCategories.size}`} className={CHART_FRAME_CLASS}>
             {!isEmpty ? (
-              <D3Treemap root={filteredTreemap} onSelect={setSelectedNode} />
+              <D3Treemap
+                root={filteredTreemap}
+                onSelect={setSelectedNode}
+                path={activeLevelPath}
+                onPathChange={setActiveLevelPath}
+              />
             ) : (
               <div
                 role="status"
@@ -321,6 +331,20 @@ export function NetworkTreemap() {
             )}
           </div>
         )}
+        {!isLoading && !isError && filteredTreemap
+          ? (() => {
+              const level = resolveActiveLevel(filteredTreemap, activeLevelPath);
+              return (
+                <TreemapDataTable
+                  levelName={level.currentNode.name}
+                  nodes={level.children}
+                  levelTotal={level.levelTotal}
+                  selectedNode={selectedNode}
+                  onSelect={setSelectedNode}
+                />
+              );
+            })()
+          : null}
       </CardContent>
     </Card>
   );

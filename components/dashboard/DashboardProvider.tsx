@@ -34,6 +34,8 @@ interface DashboardContextValue {
   refetch: () => Promise<unknown>;
   selectedNode: SelectedNode | null;
   setSelectedNode: (node: SelectedNode | null) => void;
+  activeLevelPath: TreemapNode[];
+  setActiveLevelPath: (path: TreemapNode[]) => void;
   /** Active search focus used to open treemap context. */
   focusRequest: SearchResult | null;
   selectSearchResult: (result: SearchResult) => void;
@@ -104,22 +106,26 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [treemapView, setTreemapViewState] = useState<TreemapViewId>("events");
   const [metric, setMetricState] = useState<DashboardMetricId>("ops");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
+  const [activeLevelPath, setActiveLevelPath] = useState<TreemapNode[]>([]);
   const [focusRequest, setFocusRequest] = useState<SearchResult | null>(null);
 
   const handleSetPeriod = useCallback((newPeriod: Period) => {
     setSelectedNode(null);
+    setActiveLevelPath([]);
     setFocusRequest(null);
     setPeriodState(newPeriod);
   }, []);
 
   const handleSetTreemapView = useCallback((newView: TreemapViewId) => {
     setSelectedNode(null);
+    setActiveLevelPath([]);
     setFocusRequest(null);
     setTreemapViewState(newView);
   }, []);
 
   const handleSetMetric = useCallback((newMetric: DashboardMetricId) => {
     setSelectedNode(null);
+    setActiveLevelPath([]);
     setFocusRequest(null);
     setMetricState(newMetric);
   }, []);
@@ -155,6 +161,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       refetch: query.refetch,
       selectedNode,
       setSelectedNode,
+      activeLevelPath,
+      setActiveLevelPath,
       focusRequest,
       selectSearchResult,
     }),
@@ -172,6 +180,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       query.error,
       query.refetch,
       selectedNode,
+      activeLevelPath,
       focusRequest,
       selectSearchResult,
     ],

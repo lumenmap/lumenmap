@@ -20,6 +20,8 @@ import { useDashboard } from "@/components/dashboard/DashboardProvider";
 interface D3TreemapProps {
   root: TreemapNode;
   onSelect: (node: SelectedNode) => void;
+  path?: TreemapNode[];
+  onPathChange?: (path: TreemapNode[]) => void;
 }
 
 interface LayoutNode extends HierarchyNode<TreemapNode> {
@@ -56,11 +58,21 @@ interface TooltipData {
   unit: string;
 }
 
-export function D3Treemap({ root, onSelect }: D3TreemapProps) {
+export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3TreemapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 400, height: 400 });
-  const [path, setPath] = useState<TreemapNode[]>([]);
+  const [uncontrolledPath, setUncontrolledPath] = useState<TreemapNode[]>([]);
+  const path = pathProp ?? uncontrolledPath;
+  const setPath = useCallback(
+    (next: TreemapNode[] | ((current: TreemapNode[]) => TreemapNode[])) => {
+      const current = pathProp ?? uncontrolledPath;
+      const resolved = typeof next === "function" ? next(current) : next;
+      if (onPathChange) onPathChange(resolved);
+      else setUncontrolledPath(resolved);
+    },
+    [onPathChange, pathProp, uncontrolledPath],
+  );
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const reducedMotion = useReducedMotion();
