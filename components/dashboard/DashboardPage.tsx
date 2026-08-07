@@ -62,10 +62,18 @@ function DashboardContent() {
 
       <CategoryShareChart />
 
-      <div className={`grid grid-cols-1 gap-6 transition-all duration-300 ${selectedNode ? "xl:grid-cols-[minmax(0,1fr)_320px]" : "xl:grid-cols-1"}`}>
-        <NetworkTreemap />
+      <div
+        className={`grid grid-cols-1 gap-6 transition-all duration-300 ${
+          selectedNode
+            ? "min-w-0 xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]"
+            : "min-w-0 xl:grid-cols-1"
+        }`}
+      >
+        <div className="min-w-0">
+          <NetworkTreemap />
+        </div>
         {selectedNode && (
-          <div className="scroll-mt-4" id="detail-panel-container">
+          <div className="min-w-0 scroll-mt-4" id="detail-panel-container">
             <DetailPanel />
           </div>
         )}

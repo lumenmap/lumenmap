@@ -262,20 +262,22 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
     (e: React.MouseEvent, data: Omit<TooltipData, "x" | "y">) => {
       const tooltipWidth = 280;
       const tooltipHeight = 140;
-      const margin = 16;
+      const margin = 12;
 
       let x = e.clientX + margin;
       let y = e.clientY + margin;
 
       if (typeof window !== "undefined") {
-        if (x + tooltipWidth > window.innerWidth) {
+        const maxX = Math.max(margin, window.innerWidth - tooltipWidth - margin);
+        const maxY = Math.max(margin, window.innerHeight - tooltipHeight - margin);
+        if (x > maxX) {
           x = e.clientX - tooltipWidth - margin;
         }
-        if (y + tooltipHeight > window.innerHeight) {
+        if (y > maxY) {
           y = e.clientY - tooltipHeight - margin;
         }
-        x = Math.max(margin, x);
-        y = Math.max(margin, y);
+        x = Math.min(maxX, Math.max(margin, x));
+        y = Math.min(maxY, Math.max(margin, y));
       }
 
       setTooltip({ x, y, ...data });

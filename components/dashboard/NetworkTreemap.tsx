@@ -29,7 +29,7 @@ const CATEGORY_LEGEND = [
 // Shared with the loading skeleton so reserved space matches the rendered
 // chart at every breakpoint.
 const CHART_FRAME_CLASS =
-  "h-[420px] sm:h-[520px] lg:h-[600px] overflow-x-auto overflow-y-hidden rounded-xl border border-white/5 bg-black/20 p-2 sm:p-3";
+  "h-[min(70vh,420px)] sm:h-[min(70vh,520px)] lg:h-[min(75vh,600px)] min-h-[280px] overflow-x-auto overflow-y-auto rounded-xl border border-white/5 bg-black/20 p-2 sm:p-3";
 
 function toChartNode(node: TreemapNode<number | string>): TreemapNode {
   const { value, children, ...rest } = node;
@@ -166,8 +166,8 @@ export function NetworkTreemap() {
   return (
     <Card aria-busy={isLoading || undefined}>
       <CardHeader className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 basis-[16rem]">
             <CardTitle>Network Treemap</CardTitle>
             <p className="text-xs text-zinc-500">
               Switch views to explore operation types or top accounts and
@@ -269,7 +269,7 @@ export function NetworkTreemap() {
             <Skeleton className="h-full w-full rounded-lg" />
           </div>
         ) : isError || !data || !activeTreemap || !filteredTreemap ? (
-          <div className="flex h-[420px] flex-col items-center justify-center gap-4 rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center text-sm text-red-200 sm:h-[520px] lg:h-[600px]">
+          <div className="flex h-[min(70vh,420px)] min-h-[280px] flex-col items-center justify-center gap-4 rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center text-sm text-red-200 sm:h-[min(70vh,520px)] lg:h-[min(75vh,600px)]">
             <p role="alert">{error?.message ?? "Unable to load treemap data."}</p>
             <Button
               type="button"

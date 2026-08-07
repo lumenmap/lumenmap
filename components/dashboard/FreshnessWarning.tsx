@@ -77,7 +77,7 @@ export function FreshnessWarning() {
           Data may be stale.
         </strong>{" "}
         Hubble has not refreshed within the expected window.{" "}
-        <span className="whitespace-nowrap font-mono text-xs text-amber-300/80">
+        <span className="break-words font-mono text-xs text-amber-300/80">
           Data through: {formatDataThrough(data.sourceTimestamp)} UTC
         </span>
       </span>
