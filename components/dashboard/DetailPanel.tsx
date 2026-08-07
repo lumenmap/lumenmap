@@ -9,7 +9,6 @@ import { StellarExpertLink } from "@/components/dashboard/StellarExpertLink";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { isEligibleAddress } from "@/lib/clipboard";
-import { getMetricUnit } from "@/lib/metrics/units";
 import { formatNumber, formatPercent } from "@/lib/utils";
 
 export function DetailPanel() {
