@@ -1,6 +1,6 @@
 export type Period = "1d" | "7d" | "30d" | "month";
 
-export type DataSource = "hubble";
+export type DataSource = "hubble" | "fixture";
 
 /** Stable identifiers used by the public treemap contract. */
 export type MetricId =

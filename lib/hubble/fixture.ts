@@ -1,7 +1,6 @@
 /**
- * Fixture data returned by /api/activity when BigQuery credentials are absent.
- * Used for front-end development and contributor onboarding without GCP access.
- * Values are illustrative; they do not reflect real network state.
+ * Illustrative fixture dataset for opt-in local/e2e mode (LUMENMAP_DATA_SOURCE=fixture).
+ * Values do not reflect real network state and must never be selected silently in production.
  */
 
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
@@ -12,7 +11,7 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
     period,
     start: "2026-01-01T00:00:00.000Z",
     end: "2026-01-01T23:59:59.999Z",
-    source: "hubble",
+    source: "fixture",
     sourceTimestamp: "2026-01-02T00:00:00.000Z",
     isPeriodComplete: true,
     categories: [

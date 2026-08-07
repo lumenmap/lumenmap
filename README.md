@@ -145,6 +145,20 @@ Dataset: `crypto-stellar.crypto_stellar_dbt`
 - Google Cloud project with BigQuery API enabled
 - Service account with BigQuery User role
 
+### Install and run (fixture mode, no GCP)
+
+Fixture mode serves checked-in, schema-validated activity sample data so you can run the dashboard without BigQuery credentials. **This is not live mainnet / Hubble data.**
+
+```bash
+cp .env.example .env.local
+# In .env.local:
+# LUMENMAP_DATA_SOURCE=fixture
+npm install
+npm run dev
+```
+
+Live mode still requires GCP credentials. Setting `LUMENMAP_DATA_SOURCE=fixture` in production (`NODE_ENV` or `VERCEL_ENV`) fails closed.
+
 ### Install and run
 
 ```bash
@@ -159,12 +173,11 @@ Set GCP credentials in `.env.local`, then open [http://localhost:3000](http://lo
 
 | Variable | Description |
 | --- | --- |
+| `LUMENMAP_DATA_SOURCE` | `live` (default) or `fixture`. Fixture is opt-in only and **blocked in production**. Non-live sample data for local onboarding and e2e. |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Path to service account JSON |
 | `GCP_SERVICE_ACCOUNT_KEY` | Base64-encoded service account JSON |
 
 | `CACHE_TTL_SECONDS` | Cache TTL in seconds. Default: 900 |
-| `LUMENMAP_DATA_SOURCE` | Set to `fixture` to serve deterministic local fixture data instead of querying BigQuery. No GCP credentials required. Used by the e2e suite. |
-
 | `CACHE_TTL_SECONDS` | Cache TTL in seconds. Supported range: 1–86,400. Default: 900 (invalid, negative, zero, or over-limit values fall back to default) |
 
 

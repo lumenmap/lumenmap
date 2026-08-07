@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { metrics } from "@/lib/telemetry/metrics";
 import { getActivityData } from "@/lib/hubble/activity";
 import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
-import { hasBigQueryCredentials } from "@/lib/hubble/client";
-import { buildFixtureDataset } from "@/lib/hubble/fixture";
+import { resolveDataSource } from "@/lib/data-source";
 import { getFixtureActivityData } from "@/lib/fixtures/activity";
 import {
   classifyError,
@@ -129,18 +128,31 @@ export async function handleActivityRequest(
     period: parsed.period,
   });
 
-  // Fixture mode: explicit LUMENMAP_DATA_SOURCE=fixture (e2e) or missing GCP creds.
-  const forceFixture =
-    (process.env.LUMENMAP_DATA_SOURCE ?? "").trim().toLowerCase() === "fixture";
-  if (
-    fetchActivityData === getActivityData &&
-    (forceFixture || !hasBigQueryCredentials())
-  ) {
-    const data = forceFixture
-      ? getFixtureActivityData(parsed.period)
-      : buildFixtureDataset(parsed.period);
+  // Fixture mode is opt-in only (LUMENMAP_DATA_SOURCE=fixture) and blocked in production.
+  let dataSourceMode: "live" | "fixture" = "live";
+  try {
+    dataSourceMode = resolveDataSource();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logError({
+      event: "activity.request.error",
+      correlationId,
+      period: parsed.period,
+      durationMs: endTimer(timer),
+      errorClass: "validation",
+      errorMessage: message,
+    });
+    return NextResponse.json(
+      { code: "INVALID_DATA_SOURCE", message },
+      { status: 400 },
+    );
+  }
+
+  if (fetchActivityData === getActivityData && dataSourceMode === "fixture") {
+    const data = getFixtureActivityData(parsed.period);
     const validated = validateActivityResponse({
       ...toVisualizationResponse(data),
+      source: "fixture",
       fixture: true,
     });
     logInfo({

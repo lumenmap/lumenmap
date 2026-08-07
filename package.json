@@ -15,7 +15,7 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/**/*.test.ts app/api/activity/route.test.ts",
+    "test": "tsx --test lib/*.test.ts lib/**/*.test.ts app/api/activity/route.test.ts",
     "protect:main": "node scripts/configure-main-protection.mjs",
     "sync:directory": "node scripts/sync-stellar-directory.mjs",
     "test:hubble": "node scripts/test-hubble-queries.mjs",
@@ -30,7 +30,8 @@
     "test:visual": "npx tsx scripts/test-visual-regression.mjs",
     "test:visual:update": "npx tsx scripts/test-visual-regression.mjs --update",
     "test:mappings": "npx tsx scripts/test-category-mappings.mjs",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "test:fixtures": "npx tsx scripts/verify-fixture-mode.ts"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.3.1",

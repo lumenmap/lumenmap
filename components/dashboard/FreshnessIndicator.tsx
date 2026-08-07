@@ -51,6 +51,7 @@ export function FreshnessIndicator() {
     );
   }
 
+  const isFixture = data.source === "fixture" || data.fixture === true;
   const sourceTime = data.sourceTimestamp
     ? new Date(data.sourceTimestamp)
     : null;
@@ -60,6 +61,18 @@ export function FreshnessIndicator() {
     sourceTime && !Number.isNaN(sourceTime.getTime())
       ? formatLag(data.sourceTimestamp)
       : null;
+
+  if (isFixture) {
+    return (
+      <div className="flex flex-col gap-1">
+        <p className="text-xs text-amber-400/90">
+          Data source:{" "}
+          <span className="text-amber-300">Local fixture data</span>
+          {" · Deterministic data for local development and tests — not Hubble / mainnet"}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-1">

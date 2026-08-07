@@ -21,7 +21,7 @@ export function getFixtureActivityData(period: Period): ActivityDataset {
     period,
     start: range.start.toISOString(),
     end: range.end.toISOString(),
-    source: "hubble",
+    source: "fixture",
     sourceTimestamp: range.end.toISOString(),
     isPeriodComplete: true,
     categories: raw.categories,
