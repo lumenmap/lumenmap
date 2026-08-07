@@ -1,3 +1,4 @@
+import { resolveDataSource } from "@/lib/data-source";
 import { BigQuery } from "@google-cloud/bigquery";
 
 let client: BigQuery | null = null;
@@ -45,5 +46,5 @@ export function hasBigQueryCredentials(): boolean {
  * Playwright e2e suite and for local development without GCP credentials.
  */
 export function isFixtureMode(): boolean {
-  return process.env.LUMENMAP_DATA_SOURCE === "fixture";
+  return resolveDataSource() === "fixture";
 }

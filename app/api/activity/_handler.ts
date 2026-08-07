@@ -4,6 +4,7 @@ import { getActivityData } from "@/lib/hubble/activity";
 import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
 import { hasBigQueryCredentials } from "@/lib/hubble/client";
 import { buildFixtureDataset } from "@/lib/hubble/fixture";
+import { resolveDataSource } from "@/lib/data-source";
 import { getFixtureActivityData } from "@/lib/fixtures/activity";
 import {
   classifyError,
@@ -129,12 +130,16 @@ export async function handleActivityRequest(
     period: parsed.period,
   });
 
-  // Fixture mode: explicit LUMENMAP_DATA_SOURCE=fixture (e2e) or missing GCP creds.
-  const forceFixture =
-    (process.env.LUMENMAP_DATA_SOURCE ?? "").trim().toLowerCase() === "fixture";
+  // Fixture mode is opt-in via LUMENMAP_DATA_SOURCE=fixture (blocked in production).
+  // Missing GCP credentials still serve fixtures in non-production for local DX.
+  const dataSource = resolveDataSource();
+  const forceFixture = dataSource === "fixture";
+  const allowMissingCredsFallback =
+    process.env.NODE_ENV !== "production" &&
+    process.env.VERCEL_ENV !== "production";
   if (
     fetchActivityData === getActivityData &&
-    (forceFixture || !hasBigQueryCredentials())
+    (forceFixture || (!hasBigQueryCredentials() && allowMissingCredsFallback))
   ) {
     const data = forceFixture
       ? getFixtureActivityData(parsed.period)
