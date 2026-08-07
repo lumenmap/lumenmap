@@ -37,6 +37,9 @@ interface DashboardContextValue {
   /** Active search focus used to open treemap context. */
   focusRequest: SearchResult | null;
   selectSearchResult: (result: SearchResult) => void;
+  /** Breadcrumb path for the active treemap level (shared with data table). */
+  activeLevelPath: TreemapNode[];
+  setActiveLevelPath: (path: TreemapNode[]) => void;
 }
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
@@ -105,22 +108,26 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [metric, setMetricState] = useState<DashboardMetricId>("ops");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
   const [focusRequest, setFocusRequest] = useState<SearchResult | null>(null);
+  const [activeLevelPath, setActiveLevelPath] = useState<TreemapNode[]>([]);
 
   const handleSetPeriod = useCallback((newPeriod: Period) => {
     setSelectedNode(null);
     setFocusRequest(null);
+    setActiveLevelPath([]);
     setPeriodState(newPeriod);
   }, []);
 
   const handleSetTreemapView = useCallback((newView: TreemapViewId) => {
     setSelectedNode(null);
     setFocusRequest(null);
+    setActiveLevelPath([]);
     setTreemapViewState(newView);
   }, []);
 
   const handleSetMetric = useCallback((newMetric: DashboardMetricId) => {
     setSelectedNode(null);
     setFocusRequest(null);
+    setActiveLevelPath([]);
     setMetricState(newMetric);
   }, []);
 
@@ -157,6 +164,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setSelectedNode,
       focusRequest,
       selectSearchResult,
+      activeLevelPath,
+      setActiveLevelPath,
     }),
     [
       period,
@@ -174,6 +183,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       selectedNode,
       focusRequest,
       selectSearchResult,
+      activeLevelPath,
     ],
   );
 

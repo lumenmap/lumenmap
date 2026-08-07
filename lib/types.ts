@@ -310,6 +310,8 @@ export interface TreemapNodeMeta {
   eventType?: string;
   /** Coverage metadata for capped (top-N) treemap parents. */
   coverage?: TreemapCoverage;
+  /** Marks a synthetic aggregate (e.g. remainder) rather than a real entity. */
+  synthetic?: boolean;
 }
 
 export interface TreemapNode<TValue extends number | string = number> {

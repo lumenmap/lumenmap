@@ -5,6 +5,7 @@ import { hierarchy, treemap, treemapSquarify } from "d3-hierarchy";
 import type { HierarchyNode } from "d3-hierarchy";
 import { ChevronRight } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/constants";
+import { resolveActiveLevel, getNodeValue } from "@/lib/entities/treemap-level";
 import { PATTERN_DEFS, PATTERN_OPACITY, getCategoryPatternId } from "@/lib/treemap-patterns";
 import type { SelectedNode, TreemapNode } from "@/lib/types";
 import { getMetricUnit } from "@/lib/metrics/units";
@@ -20,6 +21,8 @@ import { useDashboard } from "@/components/dashboard/DashboardProvider";
 interface D3TreemapProps {
   root: TreemapNode;
   onSelect: (node: SelectedNode) => void;
+  path: TreemapNode[];
+  onPathChange: (path: TreemapNode[]) => void;
 }
 
 interface LayoutNode extends HierarchyNode<TreemapNode> {
@@ -42,9 +45,6 @@ function resolveColor(node: TreemapNode): string {
   return CATEGORY_COLORS.other;
 }
 
-function getNodeValue(node: TreemapNode): number {
-  return node.value ?? node.meta?.opCount ?? 0;
-}
 
 interface TooltipData {
   x: number;
@@ -56,11 +56,11 @@ interface TooltipData {
   unit: string;
 }
 
-export function D3Treemap({ root, onSelect }: D3TreemapProps) {
+export function D3Treemap({ root, onSelect, path, onPathChange }: D3TreemapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 400, height: 400 });
-  const [path, setPath] = useState<TreemapNode[]>([]);
+  // path lifted to DashboardProvider so the data table stays in sync
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const reducedMotion = useReducedMotion();
@@ -90,20 +90,10 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
   const metricUnit = metricUnitInfo.unitLabel;
   const metricUnitSuffix = metricUnitInfo.unitSuffix;
 
-  const currentNode = path.length > 0 ? path[path.length - 1] : root;
-  const levelTotal = useMemo(() => {
-    const children = currentNode.children ?? [];
-    if (children.length > 0) {
-      const childSum = children.reduce(
-        (sum, child) => sum + getNodeValue(child),
-        0,
-      );
-      if (childSum > 0) {
-        return childSum;
-      }
-    }
-    return getNodeValue(currentNode);
-  }, [currentNode]);
+  const { currentNode, levelTotal } = useMemo(
+    () => resolveActiveLevel(root, path),
+    [root, path],
+  );
 
   useEffect(() => {
     const element = chartRef.current;
@@ -203,12 +193,12 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
         const newPath = [root, ...path, original];
         const pathString = newPath.map((n) => n.name).join(" > ");
         announce(`${selectionText} Drilled down. New path: ${pathString}.`);
-        setPath((current) => [...current, original]);
+        onPathChange([...path, original]);
       } else {
         announce(selectionText);
       }
     },
-    [levelTotal, onSelect, tileLookup, path, root, announce],
+    [levelTotal, onSelect, tileLookup, path, root, announce, onPathChange],
   );
 
   const navigateTo = useCallback(
@@ -236,12 +226,12 @@ export function D3Treemap({ root, onSelect }: D3TreemapProps) {
       );
 
       if (index < 0) {
-        setPath([]);
+        onPathChange([]);
         return;
       }
-      setPath((current) => current.slice(0, index + 1));
+      onPathChange(path.slice(0, index + 1));
     },
-    [root, path, announce],
+    [root, path, announce, onPathChange],
   );
 
   
