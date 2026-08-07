@@ -9,25 +9,91 @@
 @import "tailwindcss";
 
 :root {
-  /* Neutral canvas: page background, deliberately desaturated so dense
-     data and chart surfaces are the visual focus (no decorative glow). */
-  --canvas: #09090b;
-  --background: var(--canvas);
-  --foreground: #f4f4f5;
-  --stellar: #6f52f0;
-  --stellar-light: #8f78f0;
-  --card: rgba(255, 255, 255, 0.05);
+  /* Interface palette */
+  --background: #0b0e14;
+  --canvas: #10131a;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-muted: rgba(255, 255, 255, 0.04);
+  --surface-soft: rgba(255, 255, 255, 0.08);
+  --surface-accent: #7b61ff;
+  --surface-accent-hover: #927cff;
+  --surface-accent-muted: rgba(123, 97, 255, 0.14);
   --border: rgba(255, 255, 255, 0.1);
+  --border-muted: rgba(255, 255, 255, 0.06);
+
+  --foreground: #f4f4f5;
+  --text-primary: #f4f4f5;
+  --text-secondary: #c6c6d0;
+  --text-muted: #8d8e98;
+  --text-link: #d6d5ff;
+  --focus: #8e7cff;
+
+  /* Back-compat aliases used by existing dashboard chrome */
+  --stellar: var(--surface-accent);
+  --stellar-light: var(--surface-accent-hover);
+
+  --status-success: #22c55e;
+  --status-warning: #f59e0b;
+  --status-danger: #f97316;
+  --status-info: #0ea5e9;
+
+  /* Data categories remain distinct from interface accent colors */
+  --data-soroban: #7b61ff;
+  --data-payments: #14b8a6;
+  --data-dex: #f59e0b;
+  --data-trustlines: #3b82f6;
+  --data-account: #ec4899;
+  --data-other: #6b7280;
+
+  /* Typography roles */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --line-height-base: 1.5;
+
+  /* Spacing roles */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
 }
 
 @theme inline {
-  --color-canvas: var(--canvas);
   --color-background: var(--background);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-accent: var(--surface-accent);
+  --color-surface-accent-hover: var(--surface-accent-hover);
+  --color-surface-accent-muted: var(--surface-accent-muted);
+  --color-border: var(--border);
+  --color-border-muted: var(--border-muted);
   --color-foreground: var(--foreground);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-link: var(--text-link);
+  --color-focus: var(--focus);
   --color-stellar: var(--stellar);
   --color-stellar-light: var(--stellar-light);
-  --color-card: var(--card);
-  --color-border: var(--border);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-danger: var(--status-danger);
+  --color-status-info: var(--status-info);
+  --color-soroban: var(--data-soroban);
+  --color-payments: var(--data-payments);
+  --color-dex: var(--data-dex);
+  --color-trustlines: var(--data-trustlines);
+  --color-account: var(--data-account);
+  --color-other: var(--data-other);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -42,8 +108,7 @@ body {
 }
 
 body {
-  overflow-x: hidden;
-  background: var(--canvas);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
@@ -52,40 +117,4 @@ button,
 input,
 textarea {
   font: inherit;
-}
-
-/* ─── Touch target utilities ─────────────────────────────────────────────────
- *
- * All interactive controls must present a minimum 44×44 CSS-pixel hit area
- * as recommended by WCAG 2.5.5 (Target Size, AAA) and Apple / Google HIG.
- *
- * The .touch-target class can be applied to any element whose visual size
- * is smaller than 44px. It expands the clickable area via a transparent
- * pseudo-element overlay without altering layout or visual density.
- *
- * Usage:  <button class="touch-target …">…</button>
- *
- * Note: the Button component already enforces h-11 (44px) for all sizes so
- * .touch-target is a supplementary escape hatch for custom interactive elements
- * (e.g., bare <a> tags, SVG hit areas, third-party components).
- * ─────────────────────────────────────────────────────────────────────────── */
-.touch-target {
-  position: relative;
-}
-
-.touch-target::after {
-  content: "";
-  position: absolute;
-  /* Expand hit area to at least 44×44px centered on the element */
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -50%);
-  min-width: 44px;
-  min-height: 44px;
-  width: 100%;
-  height: 100%;
-}
-
-/* Prevent accidental multi-touch zoom on interactive dashboard controls */
-.touch-manipulation {
-  touch-action: manipulation;
 }

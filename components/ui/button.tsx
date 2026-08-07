@@ -4,13 +4,16 @@ import { cn } from "@/lib/utils";
 const buttonVariants = cva(
   // touch-manipulation eliminates the 300ms double-tap delay on mobile browsers
   // so button presses feel immediate on touch screens.
-  "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors motion-reduce:transition-none touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stellar disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors motion-reduce:transition-none touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-stellar text-white hover:bg-stellar-light",
-        ghost: "text-zinc-300 hover:bg-white/10 hover:text-white",
-        outline: "border border-white/15 text-zinc-200 hover:bg-white/5",
+        default:
+          "bg-surface-accent text-foreground hover:bg-surface-accent-hover",
+        ghost:
+          "text-text-secondary hover:bg-surface-soft hover:text-text-primary",
+        outline:
+          "border border-border text-text-secondary hover:bg-surface-soft",
       },
       size: {
         // 44px height satisfies the minimum touch-target requirement (WCAG 2.5.5)

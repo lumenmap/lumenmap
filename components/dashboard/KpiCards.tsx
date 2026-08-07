@@ -3,37 +3,36 @@
 import { Activity, Boxes, Layers, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MetricInfo } from "@/components/metrics/MetricInfo";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { classifyFreshness } from "@/lib/freshness";
-import {
-  METRIC_DEFINITIONS,
-  type KpiMetricId,
-} from "@/lib/metrics/definitions";
 import { formatNumber, formatPercent } from "@/lib/utils";
 
 const KPI_CONFIG = [
   {
-    key: "totalOps" as const satisfies KpiMetricId,
+    key: "totalOps",
+    title: "Total Operations",
     icon: Activity,
     format: (value: number) => formatNumber(value),
   },
   {
-    key: "sorobanShare" as const satisfies KpiMetricId,
+    key: "sorobanShare",
+    title: "Soroban Share",
     icon: Zap,
     format: (value: number) => formatPercent(value),
   },
   {
-    key: "topCategory" as const satisfies KpiMetricId,
+    key: "topCategory",
+    title: "Top Category",
     icon: Layers,
     format: (value: string) => value,
   },
   {
-    key: "activeContracts" as const satisfies KpiMetricId,
+    key: "activeContracts",
+    title: "Active Contracts",
     icon: Boxes,
     format: (value: number) => formatNumber(value),
   },
-];
+] as const;
 
 export function KpiCards() {
   const { data, isLoading } = useDashboard();
@@ -69,24 +68,17 @@ export function KpiCards() {
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
       {KPI_CONFIG.map((item) => {
         const Icon = item.icon;
-        const metric = METRIC_DEFINITIONS[item.key];
         const kpi = data.kpis[item.key];
         const value = typeof kpi === "string" ? kpi : kpi.value;
 
         return (
           <Card key={item.key}>
-            <CardHeader className="flex-row items-start justify-between space-y-0 gap-2">
-              <div className="flex min-w-0 items-center gap-1.5">
-                <CardTitle>{metric.title}</CardTitle>
-                <MetricInfo metric={metric} />
-              </div>
-              <Icon className="mt-0.5 h-4 w-4 shrink-0 text-stellar-light" />
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle>{item.title}</CardTitle>
+              <Icon className="h-4 w-4 text-surface-accent" />
             </CardHeader>
             <CardContent>
-              <p
-                data-testid={`kpi-value-${item.key}`}
-                className="text-2xl font-semibold text-white"
-              >
+              <p className="text-2xl font-semibold text-text-primary">
                 {item.format(value as never)}
               </p>
               {freshnessState === "stale" ? (
