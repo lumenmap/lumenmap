@@ -4,6 +4,7 @@ import {
   TOP_ACCOUNTS_PER_TYPE,
   TOP_CONTRACTS_PER_FUNCTION,
   TOP_CONTRACT_LIMIT,
+  TOP_FUNCTIONS_PER_CONTRACT,
   TYPE_TO_GROUP,
 } from "@/lib/constants";
 import { getDisplayName, lookupEntity } from "@/lib/entities/registry";
@@ -77,6 +78,7 @@ function buildContractLeaves(
   contracts: ContractRow[],
   labels?: BuildTreemapInput["labels"],
   metric: BuildMetricId = "ops",
+  functionContracts?: SorobanFunctionContractRow[],
 ): TreemapNode[] {
   if (metric === "xlm_volume") return []; // No XLM volume for contracts
 
@@ -84,6 +86,15 @@ function buildContractLeaves(
     .sort((a, b) => b.op_count - a.op_count)
     .map((row) => {
       const entity = lookupEntity(row.contract_id, labels);
+      const breakdown = functionContracts
+        ?.filter((fc) => fc.contract_id === row.contract_id)
+        .sort((a, b) => b.op_count - a.op_count)
+        .slice(0, TOP_FUNCTIONS_PER_CONTRACT)
+        .map((fc) => ({
+          functionName: fc.function_name,
+          opCount: fc.op_count,
+          share: row.op_count > 0 ? fc.op_count / row.op_count : 0,
+        }));
       return {
         id: row.contract_id,
         name: entity?.name ?? getDisplayName(row.contract_id, labels),
@@ -95,6 +106,9 @@ function buildContractLeaves(
           category: "soroban",
           protocol: entity?.protocol,
           opCount: row.op_count,
+          ...(breakdown && breakdown.length > 0
+            ? { sorobanFunctionBreakdown: breakdown }
+            : {}),
         },
       };
     });
@@ -348,7 +362,12 @@ function buildCategoryGroupChildren(
   metric: BuildMetricId = "ops",
 ): TreemapNode[] {
   if (group === "soroban") {
-    return buildContractLeaves(input.contracts, input.labels, metric);
+    return buildContractLeaves(
+      input.contracts,
+      input.labels,
+      metric,
+      input.sorobanFunctionContracts,
+    );
   }
 
   if (group === "payments" || group === "dex" || group === "trustlines") {

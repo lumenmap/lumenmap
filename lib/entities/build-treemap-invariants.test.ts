@@ -4,6 +4,7 @@ import { describe, test } from "node:test";
 import {
   buildCoverage,
   buildEventTypeTreemap,
+  buildActorTreemap,
 } from "@/lib/entities/build-treemap";
 import type { CategoryRow, TreemapNode } from "@/lib/types";
 
@@ -152,5 +153,51 @@ describe("buildEventTypeTreemap parent/remainder invariants", () => {
     assert.equal(root.value, 100);
     // Event-type treemap may not create remainders from contracts; still valid structure
     assert.ok(root.children);
+  });
+});
+
+describe("buildActorTreemap Soroban function breakdown", () => {
+  test("attaches top functions to contract leaves", () => {
+    const root = buildActorTreemap({
+      categories: [{ type_string: "invoke_host_function", op_count: 100 }],
+      contracts: [{ contract_id: "C1", op_count: 100 }],
+      accounts: [],
+      sorobanFunctions: [
+        { function_name: "mint", op_count: 60 },
+        { function_name: "transfer", op_count: 40 },
+      ],
+      sorobanFunctionContracts: [
+        { function_name: "mint", contract_id: "C1", op_count: 60 },
+        { function_name: "transfer", contract_id: "C1", op_count: 40 },
+      ],
+    });
+
+    const sorobanGroup = root.children?.find((child) => child.name === "Soroban Contracts");
+    assert.ok(sorobanGroup);
+    const contract = sorobanGroup?.children?.find((child) => child.meta?.id === "C1");
+    assert.ok(contract);
+    assert.ok(contract?.meta?.sorobanFunctionBreakdown);
+    assert.equal(contract?.meta?.sorobanFunctionBreakdown?.length, 2);
+    const [first, second] = contract!.meta!.sorobanFunctionBreakdown!;
+    assert.equal(first.functionName, "mint");
+    assert.equal(first.opCount, 60);
+    assert.equal(first.share, 0.6);
+    assert.equal(second.functionName, "transfer");
+    assert.equal(second.opCount, 40);
+    assert.equal(second.share, 0.4);
+  });
+
+  test("omits breakdown when no function contracts are present", () => {
+    const root = buildActorTreemap({
+      categories: [{ type_string: "invoke_host_function", op_count: 100 }],
+      contracts: [{ contract_id: "C1", op_count: 100 }],
+      accounts: [],
+      sorobanFunctions: [],
+      sorobanFunctionContracts: [],
+    });
+
+    const sorobanGroup = root.children?.find((child) => child.name === "Soroban Contracts");
+    const contract = sorobanGroup?.children?.find((child) => child.meta?.id === "C1");
+    assert.equal(contract?.meta?.sorobanFunctionBreakdown, undefined);
   });
 });

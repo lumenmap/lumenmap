@@ -46,6 +46,8 @@ interface DashboardContextValue {
   /** Active search focus used to open treemap context. */
   focusRequest: SearchResult | null;
   selectSearchResult: (result: SearchResult) => void;
+  /** Switch to the events view and focus the given Soroban function. */
+  drillToFunction: (functionName: string) => void;
 }
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
@@ -219,6 +221,30 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     [query.data],
   );
 
+  const drillToFunction = useCallback(
+    (functionName: string) => {
+      const root = activeTreemapRoot(query.data, "events", metric);
+      if (!root) return;
+
+      const functionNode = root.children?.find(
+        (child) => child.meta?.eventType === functionName,
+      );
+      if (!functionNode) return;
+
+      pendingPathSegments.current = null;
+      setFocusRequest(null);
+      setTreemapViewState("events");
+      setActiveLevelPath([root, functionNode]);
+      setSelectedNode({
+        name: functionNode.name,
+        value: functionNode.value ?? functionNode.meta?.opCount ?? 0,
+        share: functionNode.meta?.share ?? 0,
+        meta: functionNode.meta,
+      });
+    },
+    [query.data, metric],
+  );
+
   const value = useMemo(
     () => ({
       period,
@@ -239,6 +265,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setActiveLevelPath,
       focusRequest,
       selectSearchResult,
+      drillToFunction,
     }),
     [
       period,
@@ -257,6 +284,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       activeLevelPath,
       focusRequest,
       selectSearchResult,
+      drillToFunction,
     ],
   );
 

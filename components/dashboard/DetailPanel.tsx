@@ -14,8 +14,9 @@ import { getMetricUnit } from "@/lib/metrics/units";
 import { formatNumber, formatPercent } from "@/lib/utils";
 
 export function DetailPanel() {
-  const { selectedNode, setSelectedNode, data, metric, isLoading } =
+  const { selectedNode, setSelectedNode, data, metric, isLoading, drillToFunction } =
     useDashboard();
+  const breakdown = selectedNode?.meta?.sorobanFunctionBreakdown;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -165,6 +166,30 @@ export function DetailPanel() {
             <p className="font-mono text-xs text-zinc-300">
               {selectedNode.meta.eventType}
             </p>
+          </div>
+        ) : null}
+
+        {breakdown && breakdown.length > 0 ? (
+          <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+            <p className="mb-2 text-xs font-semibold text-zinc-400">
+              Top functions
+            </p>
+            <ul className="space-y-1.5">
+              {breakdown.map((item) => (
+                <li key={item.functionName} className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    className="text-left font-mono text-xs text-zinc-300 underline decoration-zinc-600 underline-offset-2 hover:text-white"
+                    onClick={() => drillToFunction(item.functionName)}
+                  >
+                    {item.functionName}
+                  </button>
+                  <span className="text-xs font-medium text-white">
+                    {formatNumber(item.opCount)} ({formatPercent(item.share)})
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
 

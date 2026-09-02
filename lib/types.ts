@@ -332,6 +332,15 @@ export interface TreemapNodeMeta {
   nodeId?: string;
   /** Coverage metadata for capped (top-N) treemap parents. */
   coverage?: TreemapCoverage;
+  /** Top Soroban host functions contributing to a contract node's operation share. */
+  sorobanFunctionBreakdown?: SorobanFunctionBreakdownItem[];
+}
+
+/** Breakdown of Soroban host functions driving a contract's operation share. */
+export interface SorobanFunctionBreakdownItem {
+  functionName: string;
+  opCount: number;
+  share: number;
 }
 
 export interface TreemapNode<TValue extends number | string = number> {

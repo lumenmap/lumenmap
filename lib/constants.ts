@@ -69,6 +69,9 @@ export {
   TOP_SOROBAN_FUNCTIONS,
 } from "@/lib/hubble/shared-queries.mjs";
 
+/** Number of Soroban functions shown in the contract detail panel breakdown. */
+export const TOP_FUNCTIONS_PER_CONTRACT = 10;
+
 export const TREEMAP_VIEWS = [
   {
     id: "events",
