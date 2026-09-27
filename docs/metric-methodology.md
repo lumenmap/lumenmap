@@ -1,8 +1,19 @@
 # LumenMap metric methodology
 
-**Methodology version:** 1.0.0  
-**Status:** Canonical for the current mainnet dashboard and its planned metrics  
-**Last updated:** 2026-07-28
+**Methodology version:** 1.1.0  
+**Status:** Canonical for the current mainnet dashboard — search, URL state, category share, time series, protocol TVL, and fixture mode are shipped  
+**Last updated:** 2026-09-27
+
+### What's shipped
+
+| Feature | PR | Status |
+| --- | --- | --- |
+| Search | [#21](../../pull/21) | Shipped (backend indexing in progress) |
+| URL state | [#28](../../pull/28) | Shipped (deep-link edge cases in progress) |
+| Category share | — | Shipped |
+| Time series | — | Shipped |
+| Protocol TVL | — | Shipped |
+| Fixture mode | — | Shipped |
 
 This document is the authoritative definition of LumenMap metrics. A label in the
 application, API, README, or a future chart must use the definition here. A metric
