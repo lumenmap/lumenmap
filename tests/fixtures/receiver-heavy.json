@@ -1,0 +1,30 @@
+[
+  {
+    "op_source_account": "centralized_exchange",
+    "op_source_amount": 1000,
+    "op_destination_account": "user_123",
+    "op_destination_amount": 500,
+    "type": "Transfer"
+  },
+  {
+    "op_source_account": "centralized_exchange",
+    "op_source_amount": 800,
+    "op_destination_account": "user_456",
+    "op_destination_amount": 400,
+    "type": "Transfer"
+  },
+  {
+    "op_source_account": "user_123",
+    "op_source_amount": 200,
+    "op_destination_account": "user_789",
+    "op_destination_amount": 100,
+    "type": "Payment"
+  },
+  {
+    "op_source_account": "user_456",
+    "op_source_amount": 300,
+    "op_destination_account": "user_123",
+    "op_destination_amount": 150,
+    "type": "Payment"
+  }
+]
