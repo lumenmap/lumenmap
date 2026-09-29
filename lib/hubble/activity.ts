@@ -10,6 +10,7 @@ import {
   isBytesBilledLimitExceededError,
 } from "@/lib/hubble/errors";
 import { coalesceInflight } from "@/lib/hubble/inflight";
+import { runOptionalQuery } from "@/lib/hubble/soft-fail";
 import {
   accountQuery,
   assetPaymentVolumeQuery,
@@ -225,12 +226,18 @@ async function fetchFromHubble(
       params,
       correlationId,
     ),
-    runQuery<Record<string, unknown>>(
+    runOptionalQuery(
       "transactionCategory",
-      transactionCategoryQuery,
-      params,
+      () =>
+        runQuery<Record<string, unknown>>(
+          "transactionCategory",
+          transactionCategoryQuery,
+          params,
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
       correlationId,
-    ).catch(() => [] as Record<string, unknown>[]),
+    ),
     runQuery<Record<string, unknown>>(
       "contract",
       contractQuery,
@@ -282,24 +289,36 @@ async function fetchFromHubble(
       },
       correlationId,
     ),
-    runQuery<Record<string, unknown>>(
+    runOptionalQuery(
       "usdcCategory",
-      usdcCategoryQuery,
-      {
-        ...params,
-        assets: getUsdcPaymentVolumeParams(),
-      },
+      () =>
+        runQuery<Record<string, unknown>>(
+          "usdcCategory",
+          usdcCategoryQuery,
+          {
+            ...params,
+            assets: getUsdcPaymentVolumeParams(),
+          },
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
       correlationId,
-    ).catch(() => [] as Record<string, unknown>[]),
-    runQuery<Record<string, unknown>>(
+    ),
+    runOptionalQuery(
       "usdcAccount",
-      usdcAccountQuery,
-      {
-        ...params,
-        assets: getUsdcPaymentVolumeParams(),
-      },
+      () =>
+        runQuery<Record<string, unknown>>(
+          "usdcAccount",
+          usdcAccountQuery,
+          {
+            ...params,
+            assets: getUsdcPaymentVolumeParams(),
+          },
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
       correlationId,
-    ).catch(() => [] as Record<string, unknown>[]),
+    ),
     runQuery<Record<string, unknown>>(
       "timeseries",
       timeseriesQuery,
@@ -341,10 +360,16 @@ async function fetchHomeDomains(ids: string[], correlationId: string) {
     return {};
   }
 
-  const rows = await runQuery<Record<string, unknown>>(
+  const rows = await runOptionalQuery(
     "accountMetadata",
-    accountMetadataQuery,
-    { ids },
+    () =>
+      runQuery<Record<string, unknown>>(
+        "accountMetadata",
+        accountMetadataQuery,
+        { ids },
+        correlationId,
+      ),
+    () => [] as Record<string, unknown>[],
     correlationId,
   );
 
