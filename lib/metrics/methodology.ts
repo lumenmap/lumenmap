@@ -1,9 +1,9 @@
 /**
- * Canonical metric methodology (v0.1).
+ * Canonical metric methodology (v2.0.0).
  * Inline UI definitions link to these section ids via /methodology#<id>.
  */
 
-export const METHODOLOGY_VERSION = "0.1";
+export const METHODOLOGY_VERSION = "2.0.0";
 
 export type MethodologySectionId =
   | "operations"

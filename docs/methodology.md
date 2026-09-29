@@ -1,4 +1,4 @@
-# LumenMap metric methodology (v0.1)
+# LumenMap metric methodology (v2.0.0)
 
 Canonical counting rules for LumenMap metrics. These definitions describe how the product measures activity. They are **not** marketing claims about network health or protocol performance.
 
@@ -22,6 +22,6 @@ The interactive copy lives at [`/methodology`](/methodology). Section anchors:
 | Flow · sampling and coverage | `#flow-sampling` |
 | Flow · asset modes | `#flow-asset-modes` |
 
-Source of truth for section bodies: [`lib/metrics/methodology.ts`](../lib/metrics/methodology.ts).
+Source of truth for metric section bodies: [`lib/metrics/methodology.ts`](../lib/metrics/methodology.ts).
 
-Payment-flow graph anchors are exported from [`lib/metrics/flow-methodology-anchors.ts`](../lib/metrics/flow-methodology-anchors.ts) so the Flow legend and coverage badge link to stable ids. The interpretation rules are summarised in [`metric-methodology.md`](./metric-methodology.md#payment-flow-graph).
+Payment-flow graph anchors are exported from [`lib/metrics/flow-methodology-anchors.ts`](../lib/metrics/flow-methodology-anchors.ts) so the Flow legend and coverage badge link to stable ids. The canonical edge rules are in [`metric-methodology.md`](./metric-methodology.md#payment-flow-graph).
