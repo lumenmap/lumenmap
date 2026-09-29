@@ -14,6 +14,11 @@ export interface LogEntry {
   cacheHit?: boolean;
   errorClass?: ErrorClass;
   errorMessage?: string;
+  start?: string;
+  end?: string;
+  assetMode?: string;
+  network?: string;
+  edgeCount?: number;
 }
 
 export function createCorrelationId(): string {

@@ -300,6 +300,8 @@ export function FlowDataTable({
 
 export type FlowView = "graph" | "table";
 
+export type FlowAssetMode = "xlm" | "usdc" | "op_count";
+
 /** "Graph / Table" toggle meant to sit beside the Flow canvas. */
 export function FlowViewToggle({
   view,
@@ -323,6 +325,39 @@ export function FlowViewToggle({
           className={cn(
             "rounded-md px-3 py-1 text-xs font-medium text-zinc-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-stellar-light",
             view === option.value && "bg-white/10 text-white",
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Asset mode selector for Flow edges (XLM, USDC, or operation count). */
+export function FlowAssetModeSelector({
+  assetMode,
+  onChange,
+}: {
+  assetMode: FlowAssetMode;
+  onChange: (mode: FlowAssetMode) => void;
+}) {
+  const options: { value: FlowAssetMode; label: string }[] = [
+    { value: "xlm", label: "XLM" },
+    { value: "usdc", label: "USDC" },
+    { value: "op_count", label: "Operations" },
+  ];
+  return (
+    <div role="group" aria-label="Flow asset mode" className="inline-flex rounded-lg border border-white/10 p-0.5">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={assetMode === option.value}
+          onClick={() => onChange(option.value)}
+          className={cn(
+            "rounded-md px-3 py-1 text-xs font-medium text-zinc-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-stellar-light",
+            assetMode === option.value && "bg-white/10 text-white",
           )}
         >
           {option.label}
