@@ -10,9 +10,11 @@ Thank you for your interest in contributing. This guide covers everything you ne
 - [Prerequisites](#prerequisites)
 - [Getting started](#getting-started)
 - [Fixture mode vs live mode](#fixture-mode-vs-live-mode)
+  - [Running fixture Flow demo](#running-fixture-flow-demo-without-gcp)
 - [Project structure](#project-structure)
 - [Available commands](#available-commands)
 - [Making changes](#making-changes)
+- [Hubble schema-drift incident playbook](#hubble-schema-drift-incident-playbook)
 - [Entity registry](#entity-registry)
 - [Branch and PR workflow](#branch-and-pr-workflow)
 - [Pull request expectations](#pull-request-expectations)
@@ -79,6 +81,33 @@ Fixture mode is sufficient for:
 - Treemap interaction and drill-down
 - Entity registry additions
 - Anything that does not involve query logic or real network numbers
+
+### Running fixture Flow demo (without GCP)
+
+You can demo and develop the Flow visualization without GCP credentials or BigQuery access:
+
+1. **Enable fixture mode:**
+   Fixture mode is enabled automatically when no GCP credentials are set. To explicitly force fixture mode, set `LUMENMAP_DATA_SOURCE=fixture` in `.env.local` or pass it inline when starting the dev server:
+
+   ```bash
+   LUMENMAP_DATA_SOURCE=fixture npm run dev
+   ```
+
+2. **Open the Flow view:**
+   Visit [`http://localhost:3000/?view=flow`](http://localhost:3000/?view=flow) in your browser. The page loads deterministic payment-flow fixtures without making external BigQuery requests.
+
+3. **Interact with Flow components:**
+   Explore Flow components such as `FlowDataTable` (table alternative to the canvas), test column sorting, keyboard navigation, and view switching.
+
+4. **Verify Flow fixtures and components:**
+   Run the following verification commands to ensure fixture and Flow integrity:
+
+   ```bash
+   npm run test:fixtures      # verifies fixture mode resolution and activity response
+   npm run test:unit          # runs component unit tests (including FlowDataTable.test.tsx)
+   npm run test:visual        # executes visual regression checks for Flow view
+   npm run lint               # ensures linting passes
+   ```
 
 ### Live mode (requires GCP)
 
@@ -209,6 +238,78 @@ npm run sync:directory
 ```
 
 This overwrites `data/directory.json`. Commit both the script run and any manual changes to `entities.json` together.
+
+---
+
+## Hubble schema-drift incident playbook
+
+Upstream Hubble tables in BigQuery can change without warning (for example, columns being renamed, removed, or struct definitions altered, such as the outage caused when `details` was removed from `enriched_history_operations`).
+
+Before making SQL changes, review the [Hubble column contract](docs/hubble-column-contract.md) which lists all columns and queries in scope.
+
+### ⚠️ The Health vs Activity split-brain symptom
+
+LumenMap's readiness probe (`/api/health?type=readiness`) executes a lightweight connectivity check:
+```sql
+SELECT 1 AS ok
+```
+Because `/api/health` only validates BigQuery connectivity and local data file loading, **`/api/health` will report healthy (`200 OK`) even when a schema-drift incident has broken queries**. Meanwhile, `/api/activity` and `/api/v1/activity` execute full queries (like `activeDestinationCountQuery`) against `enriched_history_operations` and will fail with `500 Internal Server Error`.
+
+This creates a split-brain condition where external uptime checks and deployment readiness probes report green while users experience broken cards or complete dashboard failures. **Never assume queries are functioning because `/api/health` returns 200.**
+
+### Incident response steps
+
+Follow these numbered steps to respond to a schema drift incident:
+
+1. **Identify the failing query and missing column:**
+   Check server logs or run `npm run smoke`. Look for BigQuery query syntax or column errors such as `Unrecognized name: <column>` or missing struct paths (e.g. `details.to`). Match the erroring SQL to the corresponding constant in `lib/hubble/shared-queries.mjs`.
+
+2. **Audit current table schema with `INFORMATION_SCHEMA`:**
+   Inspect current columns against the [Hubble column contract](docs/hubble-column-contract.md). If you have GCP credentials, verify the live schema:
+
+   ```sql
+   SELECT column_name, data_type, is_nullable
+   FROM `crypto-stellar.crypto_stellar_dbt.INFORMATION_SCHEMA.COLUMNS`
+   WHERE table_name = 'enriched_history_operations'
+   ORDER BY ordinal_position;
+   ```
+
+3. **Apply emergency soft-fail mitigation (if applicable):**
+   If the broken query is part of the `Promise.all` batch in `lib/hubble/activity.ts` and is non-critical, catch the error (e.g. `runQuery(...).catch(() => [])`) so that one broken query does not 500 the entire dashboard response while a permanent fix is prepared.
+
+4. **Patch the query in `lib/hubble/shared-queries.mjs`:**
+   Update the query string in `lib/hubble/shared-queries.mjs` (and any related query mappers in `lib/hubble/queries.ts`) to use the new column name or replacement aggregation logic.
+
+5. **Dry-run the patched query:**
+   Validate that BigQuery accepts the new SQL without incurring scan costs:
+
+   ```bash
+   bq query --dry_run --use_legacy_sql=false \
+     --parameter='start::2026-09-01T00:00:00Z' \
+     --parameter='end::2026-09-02T00:00:00Z' \
+     "<SQL query>"
+   ```
+
+   If you do not have GCP access, note this in your PR description and request maintainer verification.
+
+6. **Run required verification commands:**
+   Confirm local tests and registry checks pass:
+
+   ```bash
+   npm run test:hubble:registry   # verify query registry is in sync
+   npm run test:fixtures          # verify fixture mode is functional
+   npm run test                   # run test suite
+   npm run lint                   # verify ESLint passes
+   ```
+
+7. **Update fixtures and bump cache prefix:**
+   - If the query response shape changed, update `lib/hubble/fixture.ts` to reflect the changes.
+   - Bump the cache key prefix in `lib/hubble/activity.ts` (e.g., `activity:v10:` → `activity:v11:`) to invalidate stale or error responses in production caches.
+
+8. **Update contract documentation and submit PR:**
+   - Update `docs/hubble-column-contract.md` to reflect the updated columns.
+   - Copy the PR checklist from `docs/hubble-column-contract.md` into your pull request.
+   - Submit the PR with reference to the incident issue (`Closes #<issue>`).
 
 ---
 
