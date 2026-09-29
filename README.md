@@ -615,6 +615,14 @@ npm run test:e2e                 # builds and serves the app in fixture mode
 without a BigQuery service account and produces the same results on every
 run, locally and in CI (see `.github/workflows/e2e.yml`).
 
+### Experimental Flow view
+
+Flow is off by default in production. Maintainers can enable it by setting
+`LUMENMAP_ENABLE_FLOW_VIEW=true`. In development or fixture mode, use
+`?view=flow&flow=1` to preview it. When the view is disabled, a direct
+`?view=flow` URL redirects to the dashboard. The query opt-in is ignored in
+production, so public access requires the environment flag.
+
 ---
 
 ## Data notes
