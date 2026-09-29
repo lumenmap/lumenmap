@@ -146,7 +146,7 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
       "COUNT(DISTINCT destination_account) across payment-style operation types.",
     timeBasis: "Same selected period bounds as operations.",
     source:
-      "`enriched_history_operations` destination fields (`details.to`, `details.new_account`, `details.into`) for selected types.",
+      "`enriched_history_operations` destination fields (`to`, `account`, `into`) for selected types.",
     inclusions: [
       "G... accounts receiving payment, path payment, create_account, or account_merge",
     ],

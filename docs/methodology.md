@@ -11,6 +11,7 @@ The interactive copy lives at [`/methodology`](/methodology). Section anchors:
 | Payment volume | `#payment-volume` |
 | TVL | `#tvl` |
 | Active accounts | `#active-accounts` |
+| Active destination accounts | `#active-destination-accounts` |
 | Active contracts | `#active-contracts` |
 | Soroban share | `#soroban-share` |
 | Top category | `#top-category` |
