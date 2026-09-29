@@ -15,7 +15,7 @@ it("mounts the fixture graph and draws each node and directed edge", () => {
     closePath: vi.fn(), arc, fillText: vi.fn(),
   };
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context as unknown as CanvasRenderingContext2D);
-  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(900);
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1280);
   vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(520);
   const host = document.createElement("div");
   const root = createRoot(host);
@@ -24,10 +24,18 @@ it("mounts the fixture graph and draws each node and directed edge", () => {
   expect(canvas?.getAttribute("data-node-count")).toBe(String(FLOW_FIXTURE.nodes.length));
   expect(canvas?.getAttribute("data-edge-count")).toBe(String(FLOW_FIXTURE.edges.length));
   expect(canvas?.getAttribute("aria-label")).toContain("directed connections");
+  expect(canvas?.width).toBe(1280);
+  expect(canvas?.height).toBe(520);
   const draws = arc.mock.calls.length / FLOW_FIXTURE.nodes.length;
   expect(draws).toBeGreaterThanOrEqual(1);
   expect(Number.isInteger(draws)).toBe(true);
   expect(lineTo).toHaveBeenCalledTimes(FLOW_FIXTURE.edges.length * 3 * draws);
+  for (const [x, y, radius] of arc.mock.calls) {
+    expect(x - radius).toBeGreaterThanOrEqual(0);
+    expect(x + radius).toBeLessThanOrEqual(1280);
+    expect(y - radius).toBeGreaterThanOrEqual(0);
+    expect(y + radius).toBeLessThanOrEqual(520);
+  }
   act(() => root.unmount());
   vi.restoreAllMocks();
 });
