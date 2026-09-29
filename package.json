@@ -60,7 +60,7 @@
     "esbuild": "^0.28.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
-    "jsdom": "^22.1.0",
+    "jsdom": "^30.1.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.5",
     "typescript": "^5",
