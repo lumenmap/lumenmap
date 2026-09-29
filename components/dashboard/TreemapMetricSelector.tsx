@@ -24,10 +24,15 @@ export function TreemapMetricSelector() {
 
   return (
     <div className="flex flex-col gap-2 sm:gap-3">
-      <div className="flex flex-wrap gap-2">
+      <div
+        role="group"
+        aria-label="Treemap metric"
+        className="flex flex-wrap gap-2"
+      >
         <Button
           variant={metric === "ops" ? "default" : "outline"}
           size="sm"
+          aria-pressed={metric === "ops"}
           onClick={() => setMetric("ops")}
         >
           Operation Count
@@ -35,6 +40,7 @@ export function TreemapMetricSelector() {
         <Button
           variant={metric === "xlm_volume" ? "default" : "outline"}
           size="sm"
+          aria-pressed={metric === "xlm_volume"}
           onClick={() => setMetric("xlm_volume")}
         >
           XLM Volume
@@ -42,6 +48,7 @@ export function TreemapMetricSelector() {
         <Button
           variant={metric === "usdc" ? "default" : "outline"}
           size="sm"
+          aria-pressed={metric === "usdc"}
           onClick={() => setMetric("usdc")}
         >
           USDC Volume
@@ -49,6 +56,7 @@ export function TreemapMetricSelector() {
         <Button
           variant={metric === "transactions" ? "default" : "outline"}
           size="sm"
+          aria-pressed={metric === "transactions"}
           onClick={() => setMetric("transactions")}
           disabled={!transactionsAvailable}
           aria-disabled={!transactionsAvailable}
@@ -63,13 +71,14 @@ export function TreemapMetricSelector() {
         <Button
           variant={metric === "protocol_tvl" ? "default" : "outline"}
           size="sm"
+          aria-pressed={metric === "protocol_tvl"}
           onClick={() => setMetric("protocol_tvl")}
           title="Size tiles by adapter-backed protocol TVL in USD"
         >
           Protocol TVL
         </Button>
       </div>
-      <p className="text-xs text-zinc-500">{description}</p>
+      <p className="text-xs text-text-muted">{description}</p>
     </div>
   );
 }
