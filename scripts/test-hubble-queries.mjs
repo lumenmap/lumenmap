@@ -71,6 +71,7 @@ const queries = queryRegistry
       "sorobanFunctionContractQuery",
       "activeSourceAccountsQuery",
       "nativePaymentVolumeQuery",
+      "activeDestinationCountQuery",
     ].includes(entry.name),
   )
   .map((entry) => ({
