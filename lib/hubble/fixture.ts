@@ -306,33 +306,9 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
         name: "Network Activity",
         metric: "transaction_count",
         unit: { kind: "count", subject: "transaction" },
-        value: 285000,
-        meta: { type: "root", txnCount: 285000 },
-        children: [
-          {
-            name: "Payments",
-            value: 120000,
-            meta: {
-              type: "category",
-              category: "payments",
-              txnCount: 120000,
-              share: 42.1,
-              childCount: 1,
-            },
-            children: [
-              {
-                name: "payment",
-                value: 120000,
-                meta: {
-                  type: "entity",
-                  category: "payments",
-                  txnCount: 120000,
-                  eventType: "payment",
-                },
-              },
-            ],
-          },
-        ],
+        value: 0,
+        meta: { type: "root", txnCount: 0 },
+        children: [],
       },
       xlm_events: {
         name: "XLM Events",
