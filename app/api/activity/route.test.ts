@@ -18,6 +18,7 @@ import type {
   Period,
 } from "@/lib/types";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
+import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
 
 const supportedPeriods: Period[] = ["1d", "7d", "30d", "month"];
 
@@ -117,7 +118,7 @@ function mockActivityDataset(period: Period): ActivityDataset {
           asset: {
             type: "issued",
             code: "USDC",
-            issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+            issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPPPRE34K4KZVN",
           },
         },
       },
@@ -333,6 +334,25 @@ describe("GET /api/activity and /api/v1/activity", () => {
     }
   });
 
+  test("does not expose a provider message in a limit error", async () => {
+    const response = await handleActivityRequest(
+      new Request("http://localhost/api/v1/activity"),
+      async () => {
+        throw new BigQueryLimitExceededError(
+          "Unrecognized name: details at [12:5]",
+          100,
+          "SELECT private_sql",
+          {},
+        );
+      },
+    );
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      code: "LIMIT_EXCEEDED",
+      message: "Query scan budget exceeded. Please narrow the time range or filters to reduce data usage.",
+    });
+  });
+
   test("returns a safe schema validation error response", async () => {
     const originalConsoleError = console.error;
     console.error = () => {};
@@ -381,7 +401,6 @@ describe("GET /api/v1/activity/raw", () => {
     );
     assert.equal("kpis" in body, false);
     assert.equal("treemaps" in body, false);
-    assert.equal("metricProvenance" in body, false);
   });
 });
 

@@ -6,9 +6,11 @@ import {
   parseTimeseriesGranularity,
   parseTimeseriesPeriod,
 } from "./_handler";
+import { handleFlowRequest, parseFlowQuery } from "./_flow-handler";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
 import type { Period } from "@/lib/types";
 import type { TimeseriesResponse } from "@/lib/hubble/timeseries-data";
+import type { FlowGraph } from "@/lib/types/flow-graph";
 
 const supportedPeriods: Period[] = ["1d", "7d", "30d", "month"];
 
@@ -61,6 +63,41 @@ describe("parseTimeseriesGranularity", () => {
 
   test("rejects invalid granularity", () => {
     assert.equal(parseTimeseriesGranularity("week").ok, false);
+  });
+});
+
+function mockFlowGraph(period: Period, account?: string): FlowGraph {
+  return {
+    period,
+    account: account ?? null,
+    source: "fixture",
+    sourceTimestamp: "2026-08-03T12:00:00.000Z",
+    isPeriodComplete: false,
+    nodes: [
+      { id: "GAAA", label: "GAAA", kind: "account" },
+      { id: "GBBB", label: "GBBB", kind: "account" },
+    ],
+    edges: [
+      { source: "GAAA", target: "GBBB", value: 42, asset: "XLM" },
+    ],
+    totals: { value: 42, edges: 1 },
+  };
+}
+
+describe("parseFlowQuery", () => {
+  test("defaults to 1d when period absent", () => {
+    assert.deepEqual(parseFlowQuery(new URLSearchParams()), {
+      ok: true,
+      period: "1d",
+      account: undefined,
+    });
+  });
+
+  test("rejects invalid period", () => {
+    assert.equal(
+      parseFlowQuery(new URLSearchParams("period=1y")).ok,
+      false,
+    );
   });
 });
 

@@ -232,7 +232,7 @@ export async function handleActivityRequest(
       return NextResponse.json(
         {
           code: "LIMIT_EXCEEDED",
-          message: error.message,
+          message: "Query scan budget exceeded. Please narrow the time range or filters to reduce data usage.",
         } satisfies ApiErrorResponse,
         { status: 400, headers: NO_STORE_HEADERS },
       );
@@ -309,7 +309,7 @@ export async function handleRawActivityRequest(
       return NextResponse.json(
         {
           code: "LIMIT_EXCEEDED",
-          message: error.message,
+          message: "Query scan budget exceeded. Please narrow the time range or filters to reduce data usage.",
         } satisfies ApiErrorResponse,
         { status: 400, headers: NO_STORE_HEADERS },
       );
