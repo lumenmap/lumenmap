@@ -91,7 +91,7 @@ export function DetailPanel() {
     <Card className="xl:h-full">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-2">
-          <CardTitle className="text-base text-white">
+          <CardTitle data-testid="detail-title" className="text-base text-white">
             {selectedNode.name}
           </CardTitle>
           {selectedNode.meta?.category ? (
@@ -125,7 +125,10 @@ export function DetailPanel() {
                         ? `${selectedNode.meta.assetCode} volume`
                         : "Activity count"}
             </p>
-            <p className="text-lg font-semibold text-white">
+            <p
+              data-testid="detail-operations"
+              className="text-lg font-semibold text-white"
+            >
               {metric === "protocol_tvl"
                 ? `$${formatNumber(selectedNode.meta?.tvlUsd ?? selectedNode.value)}`
                 : (selectedNode.meta?.assetAmount ??
@@ -134,7 +137,10 @@ export function DetailPanel() {
           </div>
           <div className="rounded-lg border border-white/10 bg-black/20 p-3">
             <p className="text-xs text-zinc-500">Share (current level)</p>
-            <p className="text-lg font-semibold text-white">
+            <p
+              data-testid="detail-share"
+              className="text-lg font-semibold text-white"
+            >
               {formatPercent(selectedNode.share)}
             </p>
           </div>
@@ -157,7 +163,7 @@ export function DetailPanel() {
         {selectedNode.meta?.protocol ? (
           <div>
             <p className="mb-1 text-xs text-zinc-500">Protocol</p>
-            <p className="text-sm text-zinc-200">
+            <p data-testid="detail-protocol" className="text-sm text-zinc-200">
               {selectedNode.meta.protocol}
             </p>
           </div>
@@ -208,7 +214,10 @@ export function DetailPanel() {
                 ? "Contract function"
                 : "Operation type"}
             </p>
-            <p className="font-mono text-xs text-zinc-300">
+            <p
+              data-testid="detail-event-type"
+              className="font-mono text-xs text-zinc-300"
+            >
               {selectedNode.meta.eventType}
             </p>
           </div>
