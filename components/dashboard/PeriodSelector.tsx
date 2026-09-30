@@ -56,7 +56,7 @@ export function PeriodSelector() {
           </Button>
         ))}
       </div>
-      <label className="flex items-center justify-end gap-2 text-xs text-zinc-400">
+      <label className="flex items-center justify-end gap-2 text-xs text-text-secondary">
         Compare with
         <select
           value={comparePeriod ?? ""}
@@ -65,7 +65,7 @@ export function PeriodSelector() {
               event.target.value ? (event.target.value as typeof period) : null,
             )
           }
-          className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <option value="">Off</option>
           {PERIOD_OPTIONS.map((option) => (

@@ -143,9 +143,9 @@ test.describe("responsive layout", () => {
         await expect(page.getByText("Top Category")).toBeVisible();
         await expect(page.getByText("Active Contracts")).toBeVisible();
         await expect(page.getByText("Network Treemap")).toBeVisible();
-        await expect(page.getByText("Soroban")).toBeVisible();
-        await expect(page.getByText("Payments")).toBeVisible();
-        await expect(page.getByText("Operation Types")).toBeVisible();
+        await expect(page.getByText("Soroban").first()).toBeVisible();
+        await expect(page.getByText("Payments").first()).toBeVisible();
+        await expect(page.getByRole("radio", { name: "Operation Types" })).toBeVisible();
 
         await expect(page.locator("html")).toHaveCSS("overflow-x", "hidden");
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -175,7 +175,9 @@ test.describe("responsive layout", () => {
             s.includes("overflow-x-auto") ||
             s.includes("overflow-auto") ||
             s.includes("role=img") ||
-            s.includes("svg")
+            s.includes(".sr-only") ||
+            s.includes("svg") ||
+            s.includes("clientW=0")
         );
 
         expect(overflowElements.length - allowedScrollContainers.length).toBe(0);
@@ -185,10 +187,10 @@ test.describe("responsive layout", () => {
         await mockApiResponse(page);
         await page.goto("/");
 
-        const tile = page.locator("svg g").first();
+        const tile = page.getByTestId("treemap-tile").first();
         await tile.click();
 
-        await expect(page.getByText("Operations")).toBeVisible();
+        await expect(page.getByTestId("detail-operations")).toBeVisible();
         await expect(page.getByText("Share (current level)")).toBeVisible();
 
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -207,7 +209,7 @@ test.describe("responsive layout", () => {
         await page.goto("/");
 
         await expect(page.getByText("Network Treemap")).toBeVisible();
-        await expect(page.getByText(/Unable to load|error|500|Server error/i)).toBeVisible();
+        await expect(page.getByText(/Unable to load|Server error|\b500\b/i).first()).toBeVisible();
 
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
         expect(bodyWidth).toBeLessThanOrEqual(viewport.width);

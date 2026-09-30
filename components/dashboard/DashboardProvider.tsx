@@ -27,6 +27,8 @@ import type {
 } from "@/lib/types";
 
 interface DashboardContextValue {
+  visualization: "treemap" | "flow";
+  setVisualization: (view: "treemap" | "flow") => void;
   period: Period;
   setPeriod: (period: Period) => void;
   comparePeriod: Period | null;
@@ -141,6 +143,7 @@ function activeTreemapRoot(
 }
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
+  const [visualization, setVisualization] = useState<"treemap" | "flow">("treemap");
   const [period, setPeriodState] = useState<Period>("1d");
   const [comparePeriod, setComparePeriod] = useState<Period | null>(null);
   const [treemapView, setTreemapViewState] = useState<TreemapViewId>("events");
@@ -163,6 +166,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
     // Defer state updates so hydration does not cascade synchronously in the effect body.
     queueMicrotask(() => {
+      if (new URLSearchParams(window.location.search).get("view") === "flow") {
+        setVisualization("flow");
+      }
       if (parsed.period) setPeriodState(parsed.period);
       if (parsed.comparePeriod) setComparePeriod(parsed.comparePeriod);
       if (parsed.metric) setMetricState(parsed.metric);
@@ -183,6 +189,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleSetTreemapView = useCallback((newView: TreemapViewId) => {
+    setVisualization("treemap");
     setSelectedNode(null);
     setActiveLevelPath([]);
     setFocusRequest(null);
@@ -234,7 +241,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!urlReady || typeof window === "undefined") return;
-    const next = writeDashboardUrlSearch({
+    let next = writeDashboardUrlSearch({
       period,
       metric,
       view: treemapView,
@@ -245,6 +252,11 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       flowMode,
       egoAddress,
     });
+    if (visualization === "flow") {
+      const params = new URLSearchParams(next);
+      params.set("view", "flow");
+      next = `?${params.toString()}`;
+    }
     if (next !== window.location.search) {
       window.history.replaceState(
         window.history.state,
@@ -265,6 +277,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({
+      visualization,
+      setVisualization,
       period,
       setPeriod: handleSetPeriod,
       comparePeriod,
@@ -297,6 +311,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setEgoAddress,
     }),
     [
+      visualization,
       period,
       comparePeriod,
       comparisonQuery.data,
