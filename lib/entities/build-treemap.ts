@@ -33,6 +33,7 @@ import {
 } from "@/lib/types";
 import { buildProtocolTvlTreemap } from "@/lib/tvl/build-protocol-treemap";
 import { PROTOCOL_TVL_FIXTURE_RESULTS } from "@/lib/tvl/protocol-registry";
+import type { TvlAdapterResult } from "@/lib/tvl/adapter";
 
 type BuildMetricId = "ops" | "xlm_volume";
 
@@ -726,11 +727,22 @@ export function buildTransactionTreemap(input: BuildTreemapInput): TreemapNode {
   };
 }
 
-export function buildAllTreemaps(input: BuildTreemapInput): ActivityTreemaps {
+export function buildAllTreemaps(
+  input: BuildTreemapInput,
+  protocolTvlResults: TvlAdapterResult[] = PROTOCOL_TVL_FIXTURE_RESULTS,
+): ActivityTreemaps {
   const eventOperations = buildEventTypeTreemap(input, "ops");
   const actorOperations = buildActorTreemap(input, "ops");
   const eventTransaction = buildTransactionTreemap(input);
-  const actorTransaction = buildTransactionTreemap(input);
+  const actorTransaction: TreemapNode = {
+    name: "Network Activity",
+    value: 0,
+    meta: {
+      type: "root",
+      txnCount: 0,
+    },
+    children: [],
+  };
   const eventXlmVolume = serializeAssetValues(
     buildEventTypeTreemap(input, "xlm_volume"),
   );
@@ -781,7 +793,7 @@ export function buildAllTreemaps(input: BuildTreemapInput): ActivityTreemaps {
       metric: "asset_volume",
       unit: USDC_ASSET_UNIT,
     },
-    protocol_tvl: buildProtocolTvlTreemap(PROTOCOL_TVL_FIXTURE_RESULTS),
+    protocol_tvl: buildProtocolTvlTreemap(protocolTvlResults),
   };
 }
 
