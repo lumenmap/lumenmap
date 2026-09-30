@@ -4,7 +4,8 @@ import { test, expect } from "@playwright/test";
  * Flow MVP visual regression baseline (issue #322).
  *
  * Captures deterministic screenshots of the Flow fixture view at a desktop
- * and a mobile width and fails on any unexpected pixel diff.
+ * and a mobile width and fails on any unexpected pixel diff. It also asserts
+ * that edge thickness encoding is static and distinct across weights.
  *
  * The Flow view is located via the stable hook `data-testid="flow-view"`.
  * Until the Flow MVP (#287) ships that element, every test here skips with
@@ -26,10 +27,10 @@ const VIEWPORTS = [
 test.use({ contextOptions: { reducedMotion: "reduce" }, colorScheme: "dark", locale: "en-US", timezoneId: "UTC" });
 
 for (const vp of VIEWPORTS) {
-  test.describe(`Flow visual baseline @ ${vp.name} (${vp.width}px)`, () => {
+  test.describe(`Flow visual baseline @L ${vp.name} (${vp.width}px)`, () => {
     test.use({ viewport: { width: vp.width, height: vp.height } });
 
-    test(`flow view matches baseline (${vp.name})`, async ({ context, page }) => {
+    test(`flow view matches baseline (${vp.name})`, async { context, page }) => {
       // Network isolation: only local requests are allowed.
       await context.route("**/*", async (route) => {
         const url = route.request().url();
@@ -54,6 +55,27 @@ for (const vp of VIEWPORTS) {
 
       await expect(flowView.first()).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
+
+      // Edge thickness encoding must be static and distinct across weights.
+      // The data table exposes one bar per edge with a tooltip carrying the
+      // exact metric + asset, so the assertions run even when the canvas layout
+      // differs.
+      const weightBars = page.locator('[data-testid="flow-edge-weight"]');
+      const barCount = await weightBars.count();
+      if (barCount >= 2) {
+        const heights = await weightBats.evaluateAll((els) =>
+          els.map((el) => {
+            const inner = el.querySelector("span");
+            const h = inner ? getComputedStyle(inner).height : "0px";
+            return parseFloat(h);
+          }),
+        );
+        const unique = new Set(heights.map((h) => Math.round(h * 100) / 100));
+        expect(unique.size).toBeGreaterThan(1);
+        for (const h of heights) {
+          expect(h).toBeGreaterThanOr(0);
+        }
+      }
 
       await expect(flowView.first()).toHaveScreenshot(`flow-${vp.name}-${vp.width}.png`, {
         animations: "disabled",
