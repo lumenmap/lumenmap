@@ -18,6 +18,12 @@
   --surface-accent: #7b61ff;
   --surface-accent-hover: #927cff;
   --surface-accent-muted: rgba(123, 97, 255, 0.14);
+  /* Filled control surfaces carrying text: the brand accent (#7b61ff) only
+     reaches 3.82:1 against --foreground, below the WCAG AA 4.5:1 threshold for
+     control labels. These deeper variants are the accessible pair for filled
+     buttons and selected toggles, and keep the same hue. */
+  --surface-accent-strong: #5f4ae0;
+  --surface-accent-strong-hover: #6a52e6;
   --border: rgba(255, 255, 255, 0.1);
   --border-muted: rgba(255, 255, 255, 0.06);
 
@@ -74,6 +80,8 @@
   --color-surface-accent: var(--surface-accent);
   --color-surface-accent-hover: var(--surface-accent-hover);
   --color-surface-accent-muted: var(--surface-accent-muted);
+  --color-surface-accent-strong: var(--surface-accent-strong);
+  --color-surface-accent-strong-hover: var(--surface-accent-strong-hover);
   --color-border: var(--border);
   --color-border-muted: var(--border-muted);
   --color-foreground: var(--foreground);

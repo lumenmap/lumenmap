@@ -57,6 +57,7 @@ export {
   activeSourceAccountsQuery,
   categoryQuery,
   contractQuery,
+  flowEdgeQuery,
   heatmapQuery,
   latestDataTimestampQuery,
   nativePaymentVolumeQuery,
@@ -406,4 +407,28 @@ export function mapActiveDestinationCountRow(
     active_destination_count:
       rows.length > 0 ? Number(rows[0].active_destination_count) : 0,
   };
+}
+
+export interface FlowEdgeRow {
+  source_account: string;
+  destination_account: string;
+  asset_key: string;
+  asset_code: string;
+  asset_issuer: string | null;
+  amount: string;
+  operation_count: number;
+}
+
+export function mapFlowEdgeRows(
+  rows: Record<string, unknown>[],
+): FlowEdgeRow[] {
+  return rows.map((row) => ({
+    source_account: typeof row.source_account === "string" ? row.source_account : "",
+    destination_account: typeof row.destination_account === "string" ? row.destination_account : "",
+    asset_key: typeof row.asset_key === "string" ? row.asset_key : "",
+    asset_code: typeof row.asset_code === "string" ? row.asset_code : "",
+    asset_issuer: typeof row.asset_issuer === "string" ? row.asset_issuer : null,
+    amount: typeof row.amount === "string" ? row.amount : "0",
+    operation_count: Number(row.operation_count ?? 0),
+  }));
 }

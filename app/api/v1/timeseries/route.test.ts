@@ -6,9 +6,11 @@ import {
   parseTimeseriesGranularity,
   parseTimeseriesPeriod,
 } from "./_handler";
+import { handleFlowRequest, parseFlowQuery } from "./_flow-handler";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
 import type { Period } from "@/lib/types";
 import type { TimeseriesResponse } from "@/lib/hubble/timeseries-data";
+import type { FlowGraph } from "@/lib/types/flow-graph";
 
 const supportedPeriods: Period[] = ["1d", "7d", "30d", "month"];
 
@@ -64,6 +66,41 @@ describe("parseTimeseriesGranularity", () => {
   });
 });
 
+function mockFlowGraph(period: Period, account?: string): FlowGraph {
+  return {
+    period,
+    account: account ?? null,
+    source: "fixture",
+    sourceTimestamp: "2026-08-03T12:00:00.000Z",
+    isPeriodComplete: false,
+    nodes: [
+      { id: "GAAA", label: "GAAA", kind: "account" },
+      { id: "GBBB", label: "GBBB", kind: "account" },
+    ],
+    edges: [
+      { source: "GAAA", target: "GBBB", value: 42, asset: "XLM" },
+    ],
+    totals: { value: 42, edges: 1 },
+  };
+}
+
+describe("parseFlowQuery", () => {
+  test("defaults to 1d when period absent", () => {
+    assert.deepEqual(parseFlowQuery(new URLSearchParams()), {
+      ok: true,
+      period: "1d",
+      account: undefined,
+    });
+  });
+
+  test("rejects invalid period", () => {
+    assert.equal(
+      parseFlowQuery(new URLSearchParams("period=1y")).ok,
+      false,
+    );
+  });
+});
+
 describe("GET /api/v1/timeseries", () => {
   test("returns 200 for supported periods", async () => {
     for (const period of supportedPeriods) {
@@ -106,6 +143,67 @@ describe("GET /api/v1/timeseries", () => {
   test("returns safe provider error response", async () => {
     const response = await handleTimeseriesRequest(
       new Request("http://localhost/api/v1/timeseries?period=30d"),
+      async () => {
+        throw new Error("BigQuery query failed with backend detail");
+      },
+    );
+
+    assert.equal(response.status, 500);
+    assert.deepEqual(await response.json(), {
+      code: "INTERNAL_ERROR",
+      message: "An unexpected error occurred. Please try again later.",
+    });
+  });
+});
+
+describe("GET /api/v1/flow", () => {
+  test("returns 200 for supported periods in fixture mode", async () => {
+    for (const period of supportedPeriods) {
+      const response = await handleFlowRequest(
+        new Request(`http://localhost/api/v1/flow?period=${period}`),
+        async (requestedPeriod, account) =>
+          mockFlowGraph(requestedPeriod, account),
+      );
+
+      assert.equal(response.status, 200);
+      const body = (await response.json()) as FlowGraph;
+      assert.equal(body.period, period);
+      assert.equal(body.source, "fixture");
+      assert.ok(Array.isArray(body.nodes));
+      assert.ok(Array.isArray(body.edges));
+      assert.ok(body.sourceTimestamp);
+    }
+  });
+
+  test("returns 400 for invalid period without invoking provider", async () => {
+    let calls = 0;
+    const response = await handleFlowRequest(
+      new Request("http://localhost/api/v1/flow?period=1y"),
+      async () => {
+        calls += 1;
+        return mockFlowGraph("1d");
+      },
+    );
+
+    assert.equal(response.status, 400);
+    assert.equal(calls, 0);
+  });
+
+  test("supports ego mode with account param", async () => {
+    const response = await handleFlowRequest(
+      new Request("http://localhost/api/v1/flow?period=7d&account=GAAA"),
+      async (period, account) => mockFlowGraph(period, account),
+    );
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as FlowGraph;
+    assert.equal(body.period, "7d");
+    assert.equal(body.account, "GAAA");
+  });
+
+  test("returns safe provider error response", async () => {
+    const response = await handleFlowRequest(
+      new Request("http://localhost/api/v1/flow?period=30d"),
       async () => {
         throw new Error("BigQuery query failed with backend detail");
       },

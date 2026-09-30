@@ -52,14 +52,25 @@ async function checkHealth(baseUrl) {
 }
 
 async function checkActivity(baseUrl) {
-  const url = `${baseUrl.replace(/\/$/, '')}/api/activity?period=1d`;
+  // Updated to use the versioned endpoint per requirements
+  const url = `${baseUrl.replace(/\/$/, '')}/api/v1/activity?period=1d`;
   const res = await fetchWithTimeout(url, { method: 'GET' });
   if (!res.ok) {
     throw new Error(`Activity: HTTP ${res.status}`);
   }
   const json = await res.json();
-  if (!json.period || !json.kpis || typeof json.kpis.totalOps !== 'number') {
-    throw new Error('Activity: Invalid schema');
+  
+  // Validate schema including minimal treemap payload structure (treemaps.events.children)
+  if (
+    !json.period ||
+    json.period !== '1d' ||
+    !json.kpis ||
+    typeof json.kpis.totalOps !== 'number' ||
+    !json.treemaps ||
+    !json.treemaps.events ||
+    !Array.isArray(json.treemaps.events.children)
+  ) {
+    throw new Error('Activity: Invalid schema or missing treemap children payload');
   }
   return 'Activity OK';
 }
@@ -72,36 +83,61 @@ async function runSmoke(deploymentUrl) {
 
   console.log(`Running smoke check on: ${deploymentUrl}`);
 
-  const checks = [
-    { name: 'homepage', fn: () => checkHomepage(deploymentUrl) },
-    { name: 'health', fn: () => checkHealth(deploymentUrl) },
-    { name: 'activity', fn: () => checkActivity(deploymentUrl) },
-  ];
+  let isHealthGreen = false;
+  let healthError = null;
+  let activityOk = false;
+  let activityError = null;
 
-  let passed = 0;
   const failures = [];
 
-  for (const check of checks) {
-    try {
-      const result = await check.fn();
-      console.log(`✓ ${result}`);
-      passed++;
-    } catch (err) {
-      const msg = `${check.name}: ${err.message}`;
-      console.error(`✗ ${msg}`);
-      failures.push(msg);
-    }
+  // 1. Check Homepage
+  try {
+    const res = await checkHomepage(deploymentUrl);
+    console.log(`✓ ${res}`);
+  } catch (err) {
+    const msg = `homepage: ${err.message}`;
+    console.error(`✗ ${msg}`);
+    failures.push(msg);
   }
 
-  console.log(`\nSmoke check complete: ${passed}/${checks.length} passed`);
+  // 2. Check Health
+  try {
+    const res = await checkHealth(deploymentUrl);
+    console.log(`✓ ${res}`);
+    isHealthGreen = true;
+  } catch (err) {
+    healthError = err.message;
+    const msg = `health: ${healthError}`;
+    console.error(`✗ ${msg}`);
+    failures.push(msg);
+  }
+
+  // 3. Check Activity
+  try {
+    const res = await checkActivity(deploymentUrl);
+    console.log(`✓ ${res}`);
+    activityOk = true;
+  } catch (err) {
+    activityError = err.message;
+    const msg = `activity: ${activityError}`;
+    console.error(`✗ ${msg}`);
+    failures.push(msg);
+  }
+
+  // Split-brain check: Health is green (200) while activity failed
+  if (isHealthGreen && !activityOk) {
+    const splitBrainMsg = `Split-brain state detected: /api/health is green, but activity check failed (${activityError})`;
+    console.error(`\n🚨 ${splitBrainMsg}`);
+    failures.push(splitBrainMsg);
+  }
 
   if (failures.length > 0) {
-    console.error('\nFailures:');
+    console.error('\nSmoke check failed with errors:');
     failures.forEach(f => console.error(`  - ${f}`));
     process.exit(1);
   }
 
-  console.log('All checks passed.');
+  console.log('\nAll checks passed successfully.');
   process.exit(0);
 }
 
