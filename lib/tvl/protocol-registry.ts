@@ -1,5 +1,7 @@
 import type { ProtocolTvlAdapter, TvlAdapterResult } from "@/lib/tvl/adapter";
 import { ExampleTvlAdapter } from "@/lib/tvl/adapter";
+import { DefiLlamaTvlAdapter } from "@/lib/tvl/live-adapters/defillama-tvl-adapter";
+import { getEnabledLiveAdapterIds } from "@/lib/tvl/config";
 
 function hoursAgo(hours: number): string {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
@@ -88,6 +90,88 @@ export const PROTOCOL_TVL_ADAPTERS: ProtocolTvlAdapter[] =
     (result) => new ExampleTvlAdapter(result),
   );
 
-export async function fetchProtocolTvlResults(): Promise<TvlAdapterResult[]> {
-  return Promise.all(PROTOCOL_TVL_ADAPTERS.map((adapter) => adapter.getTvl()));
+/**
+ * Registry of protocol id -> factory for a real, non-fixture adapter.
+ *
+ * To register a new live adapter:
+ *   1. Add a class implementing `ProtocolTvlAdapter` under
+ *      `lib/tvl/live-adapters/` (see `defillama-tvl-adapter.ts` for an
+ *      example).
+ *   2. Add an entry below, keyed by lowercase protocol id.
+ *   3. Enable it via the `LUMENMAP_TVL_LIVE_ADAPTERS` environment variable
+ *      (see `lib/tvl/config.ts`). Nothing else changes: the treemap
+ *      builder, the `ProtocolTvlAdapter` contract, and every other
+ *      protocol's fixture are unaffected.
+ *
+ * See CONTRIBUTING.md "Protocol TVL adapter registry" for the full guide.
+ */
+const LIVE_ADAPTER_FACTORIES: Record<string, () => ProtocolTvlAdapter> = {
+  soroswap: () => new DefiLlamaTvlAdapter("Soroswap", "soroswap"),
+};
+
+interface RegistryEntry {
+  id: string;
+  fixture: TvlAdapterResult;
+}
+
+const REGISTRY_ENTRIES: RegistryEntry[] = PROTOCOL_TVL_FIXTURE_RESULTS.map(
+  (fixture) => ({ id: fixture.protocol.toLowerCase(), fixture }),
+);
+
+/**
+ * Builds the list of adapters to query: a live adapter for any protocol id
+ * enabled via config (and with a registered factory), the fixture adapter
+ * for everything else. With no configuration set, this returns exactly the
+ * same fixture adapters as before — existing behaviour is unchanged.
+ *
+ * `liveFactories` and `enabledIds` are overridable for tests; production
+ * code should call this with no arguments.
+ */
+export function getConfiguredProtocolTvlAdapters(
+  liveFactories: Record<string, () => ProtocolTvlAdapter> = LIVE_ADAPTER_FACTORIES,
+  enabledIds: Set<string> = getEnabledLiveAdapterIds(),
+): { id: string; protocol: string; adapter: ProtocolTvlAdapter }[] {
+  return REGISTRY_ENTRIES.map(({ id, fixture }) => {
+    const useLive = enabledIds.has(id) && id in liveFactories;
+    return {
+      id,
+      protocol: fixture.protocol,
+      adapter: useLive ? liveFactories[id]() : new ExampleTvlAdapter(fixture),
+    };
+  });
+}
+
+/**
+ * Fetches TVL results for every configured adapter. Each adapter is
+ * isolated: if one throws (rather than resolving to a `failed` status, as
+ * `DefiLlamaTvlAdapter` and the fixture adapter always do), it is converted
+ * to a `failed` result here rather than rejecting the whole call — a broken
+ * adapter must never take down the page.
+ */
+export async function fetchProtocolTvlResults(
+  adapters: {
+    id: string;
+    protocol: string;
+    adapter: ProtocolTvlAdapter;
+  }[] = getConfiguredProtocolTvlAdapters(),
+): Promise<TvlAdapterResult[]> {
+  const settled = await Promise.allSettled(
+    adapters.map(({ adapter }) => adapter.getTvl()),
+  );
+
+  return settled.map((outcome, index) => {
+    if (outcome.status === "fulfilled") return outcome.value;
+
+    const { protocol } = adapters[index];
+    const reason = outcome.reason;
+    const error = reason instanceof Error ? reason.message : String(reason);
+
+    return {
+      protocol,
+      network: "stellar",
+      status: "failed",
+      snapshotTime: new Date().toISOString(),
+      error,
+    };
+  });
 }
