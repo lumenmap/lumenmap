@@ -2,6 +2,7 @@
 
 import {
   queryRegistry,
+  assetPaymentVolumeQuery,
   categoryQuery,
   transactionCategoryQuery,
   contractQuery,
@@ -23,6 +24,7 @@ import {
 } from "../lib/hubble/shared-queries.mjs";
 
 const queryMap = {
+  assetPaymentVolumeQuery,
   categoryQuery,
   transactionCategoryQuery,
   contractQuery,

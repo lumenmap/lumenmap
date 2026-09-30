@@ -1,4 +1,4 @@
-import { GET } from "../../activity/_handler";
+import { GET } from "../../flow/_handler";
 
 export const dynamic = "force-dynamic";
 
