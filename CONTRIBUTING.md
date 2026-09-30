@@ -227,6 +227,33 @@ Valid categories: `defi`, `exchange`, `wallet`, `anchor`, `issuer`, `other`.
 
 ---
 
+## Protocol TVL adapter registry
+
+The Protocol TVL treemap (`metric: "tvl"`) is built from `lib/tvl/protocol-registry.ts`. By default every protocol uses a fixture adapter (`lib/tvl/adapter.ts`'s `ExampleTvlAdapter`) so the treemap works with no external credentials. A protocol can instead use a real, live adapter.
+
+### Adding a live adapter
+
+1. Add a class implementing the `ProtocolTvlAdapter` contract (`lib/tvl/adapter.ts`) under `lib/tvl/live-adapters/`. It must resolve to a `TvlAdapterResult` — including a `"failed"` result on any error — and must not throw. See `lib/tvl/live-adapters/defillama-tvl-adapter.ts` for a working example backed by DefiLlama's free public API.
+2. Register it in `LIVE_ADAPTER_FACTORIES` in `lib/tvl/protocol-registry.ts`, keyed by the protocol's lowercase id (its fixture's `protocol` name, lowercased).
+3. Enable it locally by setting `LUMENMAP_TVL_LIVE_ADAPTERS` in `.env.local` to a comma-separated list of ids, e.g. `LUMENMAP_TVL_LIVE_ADAPTERS=soroswap`.
+4. Run the tests:
+
+   ```bash
+   npm test
+   ```
+
+An id with no registered factory, or with the environment variable unset, is a no-op — that protocol keeps using its fixture. No other file needs to change: `buildAllTreemaps`, `buildProtocolTvlTreemap`, and the `ProtocolTvlAdapter` contract are unaffected by adding or removing a live adapter.
+
+### Error isolation
+
+`fetchProtocolTvlResults` isolates every adapter individually (`Promise.allSettled`): if one adapter throws, it is converted to a `"failed"` result rather than rejecting the whole call. `buildProtocolTvlTreemap` renders every result as a tile, including `"failed"` and `"unsupported"` ones, at zero value — so a broken live adapter shows up as a visibly failed tile, and never removes other protocols' tiles or crashes the page.
+
+### Note on TVL methodology
+
+A live adapter that only reports a number from an external aggregator (like the DefiLlama example) does not follow the Hubble-native snapshot, pricing, and double-counting rules in [`docs/tvl-methodology.md`](docs/tvl-methodology.md) — that document describes a Stellar-ledger-derived adapter, which is tracked separately. Say so in the adapter's own doc comment if it doesn't.
+
+---
+
 ## Branch and PR workflow
 
 1. **Check or open an issue** before starting non-trivial work. Comment on the issue to signal you are working on it.

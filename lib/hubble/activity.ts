@@ -68,6 +68,11 @@ import {
 import { resolvePeriod } from "@/lib/periods";
 import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
+import {
+  fetchProtocolTvlResults,
+  PROTOCOL_TVL_FIXTURE_RESULTS,
+} from "@/lib/tvl/protocol-registry";
+import type { TvlAdapterResult } from "@/lib/tvl/adapter";
 import type {
   ActiveContractCountRow,
   ActivityDataset,
@@ -619,8 +624,33 @@ export async function getActivityData(
       durationMs: endTimer(labelTimer),
     });
 
+    const tvlTimer = startTimer();
+    let protocolTvlResults: TvlAdapterResult[];
+    try {
+      protocolTvlResults = await fetchProtocolTvlResults();
+    } catch (error) {
+      // fetchProtocolTvlResults already isolates individual adapter
+      // failures into "failed" results; this catch is defense-in-depth
+      // against something unexpected in the registry itself, so a broken
+      // adapter registry can never take down the whole activity dataset.
+      logError({
+        event: "activity.tvl.registry_error",
+        correlationId,
+        period,
+        durationMs: endTimer(tvlTimer),
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+      protocolTvlResults = PROTOCOL_TVL_FIXTURE_RESULTS;
+    }
+    logInfo({
+      event: "activity.tvl.fetch",
+      correlationId,
+      period,
+      durationMs: endTimer(tvlTimer),
+    });
+
     const treemapTimer = startTimer();
-    const treemaps = buildAllTreemaps({ ...raw, labels });
+    const treemaps = buildAllTreemaps({ ...raw, labels }, protocolTvlResults);
     const protocols = buildProtocolSummary(raw.accounts, raw.contracts, labels);
     const timeseries = buildTimeseries(
       period,
