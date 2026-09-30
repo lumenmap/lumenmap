@@ -27,6 +27,8 @@ import type {
 } from "@/lib/types";
 
 interface DashboardContextValue {
+  visualization: "treemap" | "flow";
+  setVisualization: (view: "treemap" | "flow") => void;
   period: Period;
   setPeriod: (period: Period) => void;
   comparePeriod: Period | null;
@@ -170,6 +172,9 @@ export function DashboardProvider({
     }
     // Defer state updates so hydration does not cascade synchronously in the effect body.
     queueMicrotask(() => {
+      if (new URLSearchParams(window.location.search).get("view") === "flow") {
+        setVisualization("flow");
+      }
       if (parsed.period) setPeriodState(parsed.period);
       if (parsed.comparePeriod) setComparePeriod(parsed.comparePeriod);
       if (parsed.metric) setMetricState(parsed.metric);
@@ -191,6 +196,7 @@ export function DashboardProvider({
   }, []);
 
   const handleSetTreemapView = useCallback((newView: TreemapViewId) => {
+    setVisualization("treemap");
     setSelectedNode(null);
     setActiveLevelPath([]);
     setFocusRequest(null);
@@ -252,7 +258,7 @@ export function DashboardProvider({
 
   useEffect(() => {
     if (!urlReady || typeof window === "undefined") return;
-    const next = writeDashboardUrlSearch({
+    let next = writeDashboardUrlSearch({
       period,
       metric,
       view: treemapView,
@@ -262,6 +268,11 @@ export function DashboardProvider({
       comparePeriod,
       network,
     });
+    if (visualization === "flow") {
+      const params = new URLSearchParams(next);
+      params.set("view", "flow");
+      next = `?${params.toString()}`;
+    }
     if (next !== window.location.search) {
       window.history.replaceState(
         window.history.state,
@@ -293,6 +304,8 @@ export function DashboardProvider({
 
   const value = useMemo(
     () => ({
+      visualization,
+      setVisualization,
       period,
       setPeriod: handleSetPeriod,
       comparePeriod,
@@ -324,6 +337,7 @@ export function DashboardProvider({
       selectSearchResult,
     }),
     [
+      visualization,
       period,
       comparePeriod,
       comparisonQuery.data,
