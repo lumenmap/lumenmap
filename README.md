@@ -478,6 +478,16 @@ identical.
 `/api/activity` will be removed in a future release. New consumers should use
 `/api/v1/activity`.
 
+### `GET /api/activity/health`
+
+Checks the activity SQL queries with BigQuery dry runs. The response contains
+`status` (`healthy` or `unavailable`), `source` (`live` or `fixture`), and a
+`queries` array. Each live query has a stable `name`, `status` (`ok` or
+`error`), `latencyMs`, and an `errorCode` on failure. A failed query returns
+HTTP 503. Provider messages and SQL are never included in the response.
+Fixture mode returns `source: "fixture"` and an empty `queries` array because
+no upstream queries are probed.
+
 ### `GET /api/category-share`
 
 | Param | Values | Default |
