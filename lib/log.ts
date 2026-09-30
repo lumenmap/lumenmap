@@ -1,5 +1,10 @@
 export type LogLevel = "info" | "warn" | "error";
-export type ErrorClass = "timeout" | "cost_limit" | "provider" | "validation";
+export type ErrorClass =
+  | "timeout"
+  | "cost_limit"
+  | "provider"
+  | "validation"
+  | "schema";
 
 export interface LogEntry {
   timestamp: string;
@@ -14,6 +19,11 @@ export interface LogEntry {
   cacheHit?: boolean;
   errorClass?: ErrorClass;
   errorMessage?: string;
+  start?: string;
+  end?: string;
+  assetMode?: string;
+  network?: string;
+  edgeCount?: number;
 }
 
 export function createCorrelationId(): string {
@@ -72,6 +82,19 @@ export function classifyError(error: unknown): ErrorClass {
     lower.includes("deadline_exceeded")
   ) {
     return "timeout";
+  }
+
+  if (
+    lower.includes("unrecognized name") ||
+    lower.includes("unrecognized field") ||
+    lower.includes("unrecognized column") ||
+    lower.includes("no matching signature") ||
+    lower.includes("invalid field") ||
+    lower.includes("not found: table") ||
+    lower.includes("does not exist") ||
+    lower.includes("schema")
+  ) {
+    return "schema";
   }
 
   if (
