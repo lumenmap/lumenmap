@@ -1,9 +1,9 @@
 /**
- * Canonical metric methodology (v0.1).
+ * Canonical metric methodology (v2.0.0).
  * Inline UI definitions link to these section ids via /methodology#<id>.
  */
 
-export const METHODOLOGY_VERSION = "0.1";
+export const METHODOLOGY_VERSION = "2.0.0";
 
 export type MethodologySectionId =
   | "operations"
@@ -146,7 +146,7 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
       "COUNT(DISTINCT destination_account) across payment-style operation types.",
     timeBasis: "Same selected period bounds as operations.",
     source:
-      "`enriched_history_operations` destination fields (`details.to`, `details.new_account`, `details.into`) for selected types.",
+      "`enriched_history_operations` destination fields (`to`, `account`, `into`) for selected types.",
     inclusions: [
       "G... accounts receiving payment, path payment, create_account, or account_merge",
     ],
