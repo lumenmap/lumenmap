@@ -18,6 +18,7 @@ import type {
   Period,
 } from "@/lib/types";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
+import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
 
 const supportedPeriods: Period[] = ["1d", "7d", "30d", "month"];
 
@@ -331,6 +332,25 @@ describe("GET /api/activity and /api/v1/activity", () => {
     } finally {
       console.error = originalConsoleError;
     }
+  });
+
+  test("does not expose a provider message in a limit error", async () => {
+    const response = await handleActivityRequest(
+      new Request("http://localhost/api/v1/activity"),
+      async () => {
+        throw new BigQueryLimitExceededError(
+          "Unrecognized name: details at [12:5]",
+          100,
+          "SELECT private_sql",
+          {},
+        );
+      },
+    );
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      code: "LIMIT_EXCEEDED",
+      message: "Query scan budget exceeded. Please narrow the time range or filters to reduce data usage.",
+    });
   });
 
   test("returns a safe schema validation error response", async () => {
