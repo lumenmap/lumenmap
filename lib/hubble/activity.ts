@@ -10,6 +10,7 @@ import {
   isBytesBilledLimitExceededError,
 } from "@/lib/hubble/errors";
 import { coalesceInflight } from "@/lib/hubble/inflight";
+import { runOptionalQuery } from "@/lib/hubble/soft-fail";
 import {
   accountQuery,
   assetPaymentVolumeQuery,
@@ -68,6 +69,11 @@ import {
 import { resolvePeriod } from "@/lib/periods";
 import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
+import {
+  fetchProtocolTvlResults,
+  PROTOCOL_TVL_FIXTURE_RESULTS,
+} from "@/lib/tvl/protocol-registry";
+import type { TvlAdapterResult } from "@/lib/tvl/adapter";
 import type {
   ActiveContractCountRow,
   ActivityDataset,
@@ -225,12 +231,18 @@ async function fetchFromHubble(
       params,
       correlationId,
     ),
-    runQuery<Record<string, unknown>>(
+    runOptionalQuery(
       "transactionCategory",
-      transactionCategoryQuery,
-      params,
+      () =>
+        runQuery<Record<string, unknown>>(
+          "transactionCategory",
+          transactionCategoryQuery,
+          params,
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
       correlationId,
-    ).catch(() => [] as Record<string, unknown>[]),
+    ),
     runQuery<Record<string, unknown>>(
       "contract",
       contractQuery,
@@ -282,24 +294,36 @@ async function fetchFromHubble(
       },
       correlationId,
     ),
-    runQuery<Record<string, unknown>>(
+    runOptionalQuery(
       "usdcCategory",
-      usdcCategoryQuery,
-      {
-        ...params,
-        assets: getUsdcPaymentVolumeParams(),
-      },
+      () =>
+        runQuery<Record<string, unknown>>(
+          "usdcCategory",
+          usdcCategoryQuery,
+          {
+            ...params,
+            assets: getUsdcPaymentVolumeParams(),
+          },
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
       correlationId,
-    ).catch(() => [] as Record<string, unknown>[]),
-    runQuery<Record<string, unknown>>(
+    ),
+    runOptionalQuery(
       "usdcAccount",
-      usdcAccountQuery,
-      {
-        ...params,
-        assets: getUsdcPaymentVolumeParams(),
-      },
+      () =>
+        runQuery<Record<string, unknown>>(
+          "usdcAccount",
+          usdcAccountQuery,
+          {
+            ...params,
+            assets: getUsdcPaymentVolumeParams(),
+          },
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
       correlationId,
-    ).catch(() => [] as Record<string, unknown>[]),
+    ),
     runQuery<Record<string, unknown>>(
       "timeseries",
       timeseriesQuery,
@@ -341,10 +365,16 @@ async function fetchHomeDomains(ids: string[], correlationId: string) {
     return {};
   }
 
-  const rows = await runQuery<Record<string, unknown>>(
+  const rows = await runOptionalQuery(
     "accountMetadata",
-    accountMetadataQuery,
-    { ids },
+    () =>
+      runQuery<Record<string, unknown>>(
+        "accountMetadata",
+        accountMetadataQuery,
+        { ids },
+        correlationId,
+      ),
+    () => [] as Record<string, unknown>[],
     correlationId,
   );
 
@@ -619,8 +649,33 @@ export async function getActivityData(
       durationMs: endTimer(labelTimer),
     });
 
+    const tvlTimer = startTimer();
+    let protocolTvlResults: TvlAdapterResult[];
+    try {
+      protocolTvlResults = await fetchProtocolTvlResults();
+    } catch (error) {
+      // fetchProtocolTvlResults already isolates individual adapter
+      // failures into "failed" results; this catch is defense-in-depth
+      // against something unexpected in the registry itself, so a broken
+      // adapter registry can never take down the whole activity dataset.
+      logError({
+        event: "activity.tvl.registry_error",
+        correlationId,
+        period,
+        durationMs: endTimer(tvlTimer),
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+      protocolTvlResults = PROTOCOL_TVL_FIXTURE_RESULTS;
+    }
+    logInfo({
+      event: "activity.tvl.fetch",
+      correlationId,
+      period,
+      durationMs: endTimer(tvlTimer),
+    });
+
     const treemapTimer = startTimer();
-    const treemaps = buildAllTreemaps({ ...raw, labels });
+    const treemaps = buildAllTreemaps({ ...raw, labels }, protocolTvlResults);
     const protocols = buildProtocolSummary(raw.accounts, raw.contracts, labels);
     const timeseries = buildTimeseries(
       period,

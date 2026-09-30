@@ -34,8 +34,10 @@ export function SavedViewsControls() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setViews(readSavedViewsFromStorage());
-    setReady(true);
+    queueMicrotask(() => {
+      setViews(readSavedViewsFromStorage());
+      setReady(true);
+    });
   }, []);
 
   useEffect(() => {
