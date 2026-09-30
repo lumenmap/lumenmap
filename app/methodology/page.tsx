@@ -172,28 +172,52 @@ export default function MethodologyPage() {
 
           <div id={FLOW_METHODOLOGY_ANCHORS.edges} className="scroll-mt-24 space-y-2">
             <h3 className="text-base font-semibold text-white">Edges</h3>
+            <p className="text-sm text-zinc-300">
+              One successful row in{" "}
+              <code className="font-mono text-xs">enriched_history_operations</code>{" "}
+              yields one directed transfer from{" "}
+              <code className="font-mono text-xs">op_source_account</code> to
+              the destination below. Use the flattened columns, filter{" "}
+              <code className="font-mono text-xs">successful = TRUE</code>, and
+              apply the selected <code className="font-mono text-xs">closed_at</code>{" "}
+              bounds.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[32rem] text-left text-xs text-zinc-300">
+                <thead>
+                  <tr className="border-b border-white/10 text-zinc-500">
+                    <th className="py-2 pr-3">Operation type</th>
+                    <th className="py-2 pr-3">Destination</th>
+                    <th className="py-2 pr-3">Amount</th>
+                    <th className="py-2">Asset</th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono">
+                  <tr><td className="py-2 pr-3">payment</td><td className="pr-3">to</td><td className="pr-3">amount</td><td>asset_type/code/issuer</td></tr>
+                  <tr><td className="py-2 pr-3">path_payment_strict_receive</td><td className="pr-3">to</td><td className="pr-3">amount received</td><td>asset_type/code/issuer</td></tr>
+                  <tr><td className="py-2 pr-3">path_payment_strict_send</td><td className="pr-3">to</td><td className="pr-3">amount received</td><td>asset_type/code/issuer</td></tr>
+                  <tr><td className="py-2 pr-3">create_account</td><td className="pr-3">account</td><td className="pr-3">starting_balance</td><td>native XLM</td></tr>
+                  <tr><td className="py-2 pr-3">account_merge</td><td className="pr-3">into</td><td className="pr-3">excluded</td><td>no amount field</td></tr>
+                </tbody>
+              </table>
+            </div>
             <ul className="list-disc space-y-1 pl-4 text-sm text-zinc-300">
               <li>
-                An edge points from the source account to the destination
-                account of a successful operation of type{" "}
-                <code className="font-mono text-xs">payment</code>,{" "}
-                <code className="font-mono text-xs">path_payment_strict_send</code>,{" "}
-                <code className="font-mono text-xs">path_payment_strict_receive</code>,{" "}
-                <code className="font-mono text-xs">create_account</code>{" "}
-                (funding edge), or{" "}
-                <code className="font-mono text-xs">account_merge</code>{" "}
-                (drain edge).
+                Path payments use the received asset and amount. The source
+                amount and asset describe the exchange input; path hops never
+                become separate edges. Account creation is a native XLM funding
+                edge. Account merge has no transferred amount in this table,
+                so it is excluded from the amount-bearing graph.
               </li>
               <li>
                 Operations between the same source and destination in the same
-                asset are collapsed into one edge whose amount and operation
-                count are the sums of those operations. The same account pair
-                can therefore have one edge per asset.
+                asset are collapsed into one edge. Sum their amounts and count
+                their operations; keep different assets separate.
               </li>
               <li>
-                Failed operations, self-payments, rows without a source or
-                destination, and all other operation types (DEX offers,
-                liquidity-pool flows, fees, …) are not edges.
+                Failed transactions, self-payments, missing account IDs,
+                missing or non-positive amounts, and all other operation types
+                (DEX offers, liquidity-pool flows, fees, …) are not edges.
               </li>
               <li>
                 Edge amounts are not the Payment volume metric: that metric
@@ -210,16 +234,17 @@ export default function MethodologyPage() {
             </h3>
             <ul className="list-disc space-y-1 pl-4 text-sm text-zinc-300">
               <li>
-                The graph renders the top-N edges of the period, ranked by
-                operation count and then by amount within the same asset.
-                Edges below the cut are omitted, along with nodes that only
-                they touched.
+                Aggregate all qualifying rows before the top-N cap. Sort by
+                operation count descending, normalized asset identity
+                ascending, then amount descending and source/destination IDs
+                ascending. Amount only breaks ties within one asset. Edges
+                below the cut and nodes only they touched are omitted.
               </li>
               <li>
-                The coverage badge reports returned versus total edges and
-                returned versus total operations, and marks the graph as
-                sampled when edges were dropped. Read absences as “not in the
-                sample”, not “no activity”.
+                Coverage reports the period, asset filter, cap N, returned
+                versus total edges and qualifying operations, and a sampled
+                flag. Totals use the same filters before the cap. Read absences
+                as “not in the sample”, not “no activity”.
               </li>
               <li>
                 Hubble freshness applies: recent ledgers can be missing, and a
@@ -232,10 +257,9 @@ export default function MethodologyPage() {
             <h3 className="text-base font-semibold text-white">Asset modes</h3>
             <ul className="list-disc space-y-1 pl-4 text-sm text-zinc-300">
               <li>
-                Every edge is denominated in exactly one asset, identified by
-                asset code and issuer; native XLM is its own explicit bucket.
-                Asset modes (for example XLM or USDC) filter the graph to edges
-                of that asset.
+                Every edge has one asset identity. Native XLM is one explicit
+                bucket; issued assets use asset type, code, and issuer together.
+                Asset modes filter to one exact identity before sampling.
               </li>
               <li>
                 Amounts in different assets are never summed. Edge thickness
