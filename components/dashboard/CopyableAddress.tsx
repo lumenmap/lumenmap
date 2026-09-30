@@ -34,7 +34,11 @@ export function CopyableAddress({
 
   if (!eligible) {
     return (
-      <p className={cn("break-all font-mono text-xs text-zinc-300", className)}>
+      <p
+        data-testid="detail-address"
+        data-canonical-address={address}
+        className={cn("break-all font-mono text-xs text-zinc-300", className)}
+      >
         {address}
       </p>
     );
@@ -64,6 +68,7 @@ export function CopyableAddress({
     <div className={cn("space-y-1.5", className)}>
       <div className="flex items-start gap-2">
         <p
+          data-testid="detail-address"
           className={cn(
             "min-w-0 flex-1 select-text break-all font-mono text-xs text-zinc-300",
           )}

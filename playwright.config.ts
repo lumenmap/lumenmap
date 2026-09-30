@@ -44,6 +44,7 @@ export default defineConfig({
     env: {
       // Deterministic fixture data; GCP credentials intentionally blank so
       // the suite can never depend on them.
+      PLAYWRIGHT_TEST: "true",
       LUMENMAP_DATA_SOURCE: "fixture",
       GOOGLE_APPLICATION_CREDENTIALS: "",
       GCP_SERVICE_ACCOUNT_KEY: "",
