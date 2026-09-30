@@ -18,7 +18,11 @@ describe("Button", () => {
 
       expect(button.className).toContain("bg-surface-accent");
       expect(button.className).toContain("text-foreground");
-      expect(button.className).toContain("hover:bg-surface-accent-hover");
+      expect(button.className).toContain("hover:bg-surface-accent-strong-hover");
+      // The focus ring needs an offset so it stays visible against the
+      // filled accent surface, not just against the page.
+      expect(button.className).toContain("focus-visible:ring-focus");
+      expect(button.className).toContain("focus-visible:ring-offset-2");
     } finally {
       root.unmount();
       document.body.removeChild(container);
