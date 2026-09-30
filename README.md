@@ -436,6 +436,16 @@ identical.
 `/api/activity` will be removed in a future release. New consumers should use
 `/api/v1/activity`.
 
+### `GET /api/activity/health`
+
+Checks the activity SQL queries with BigQuery dry runs. The response contains
+`status` (`healthy` or `unavailable`), `source` (`live` or `fixture`), and a
+`queries` array. Each live query has a stable `name`, `status` (`ok` or
+`error`), `latencyMs`, and an `errorCode` on failure. A failed query returns
+HTTP 503. Provider messages and SQL are never included in the response.
+Fixture mode returns `source: "fixture"` and an empty `queries` array because
+no upstream queries are probed.
+
 ### `GET /api/category-share`
 
 | Param | Values | Default |
@@ -615,6 +625,14 @@ npm run test:e2e                 # builds and serves the app in fixture mode
 without a BigQuery service account and produces the same results on every
 run, locally and in CI (see `.github/workflows/e2e.yml`).
 
+### Experimental Flow view
+
+Flow is off by default in production. Maintainers can enable it by setting
+`LUMENMAP_ENABLE_FLOW_VIEW=true`. In development or fixture mode, use
+`?view=flow&flow=1` to preview it. When the view is disabled, a direct
+`?view=flow` URL redirects to the dashboard. The query opt-in is ignored in
+production, so public access requires the environment flag.
+
 ---
 
 ## Data notes
@@ -675,3 +693,10 @@ To add wallet or dApp labels, edit [`data/entities.json`](data/entities.json) or
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, fixture mode, and PR expectations.
+
+### Running Smoke Checks
+
+Maintainers can trigger the smoke check manually via GitHub Actions (`workflow_dispatch`) by providing the target deployment URL, or run it locally:
+
+```bash
+node scripts/smoke-check.mjs [https://your-deployment-url.vercel.app](https://your-deployment-url.vercel.app)

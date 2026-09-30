@@ -44,7 +44,9 @@ describe("health bytes-billed readiness", () => {
       new Request("http://localhost/api/health?type=readiness"),
     );
     const body = (await response.json()) as {
+      status: string;
       checks: {
+        bigquery: { status: string; latencyMs: number };
         bytesBilled: {
           rollingBytesBilled: number;
           status: string;
@@ -53,6 +55,8 @@ describe("health bytes-billed readiness", () => {
     };
     assert.equal(body.checks.bytesBilled.rollingBytesBilled, 0);
     assert.equal(body.checks.bytesBilled.status, "ok");
+    assert.ok(["healthy", "degraded", "unavailable"].includes(body.status));
+    assert.ok(Number.isInteger(body.checks.bigquery.latencyMs));
   });
 
   it("marks readiness degraded when rolling bytes exceed the threshold", async () => {
@@ -67,6 +71,7 @@ describe("health bytes-billed readiness", () => {
     const body = (await response.json()) as {
       status: string;
       checks: {
+        bigquery: { status: string; latencyMs: number };
         bytesBilled: {
           rollingBytesBilled: number;
           status: string;
@@ -79,5 +84,7 @@ describe("health bytes-billed readiness", () => {
       (body.checks.bytesBilled.message ?? "").includes("exceeded"),
     );
     assert.equal(body.status === "degraded" || body.status === "unavailable", true);
+    assert.ok(["ok", "degraded", "unavailable"].includes(body.checks.bigquery.status));
+    assert.ok(Number.isInteger(body.checks.bigquery.latencyMs));
   });
 });

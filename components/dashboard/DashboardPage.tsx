@@ -9,12 +9,15 @@ import { CategoryShareChart } from "@/components/dashboard/CategoryShareChart";
 import { DetailPanel } from "@/components/dashboard/DetailPanel";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
+import { FixtureOnboarding } from "@/components/dashboard/FixtureOnboarding";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { NetworkTreemap } from "@/components/dashboard/NetworkTreemap";
+import { FlowView } from "@/components/dashboard/FlowView";
 import { ProtocolBarChart } from "@/components/dashboard/ProtocolBarChart";
-import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
+
 import { TimeSeriesChart } from "@/components/dashboard/TimeSeriesChart";
-import { HourOfWeekHeatmap } from "@/components/dashboard/HourOfWeekHeatmap";
+
+import { TemporalPatternsDisclosure } from "@/components/dashboard/TemporalPatternsDisclosure";
 import { AssetVolumePanel } from "@/components/dashboard/AssetVolumePanel";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
@@ -29,7 +32,15 @@ import {
 } from "@/lib/network";
 
 function DashboardContent() {
-  const { selectedNode, network, metric, setMetric } = useDashboard();
+  const {
+    selectedNode,
+    network,
+    metric,
+    setMetric,
+    visualization,
+    setVisualization,
+    data,
+  } = useDashboard();
   const metricSupported = isMetricSupportedOnNetwork(metric, network);
 
   return (
@@ -74,6 +85,8 @@ function DashboardContent() {
 
       <FreshnessWarning />
 
+      <FixtureOnboarding />
+
       <SavedViewsControls />
 
       {!metricSupported && (
@@ -102,27 +115,45 @@ function DashboardContent() {
 
       <CategoryShareChart />
 
-      <div
-        className={`grid min-w-0 grid-cols-1 gap-6 transition-all duration-300 ${
-          selectedNode
-            ? "xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]"
-            : "xl:grid-cols-1"
-        }`}
-      >
-        <div className="min-w-0">
-          <NetworkTreemap />
-        </div>
-        {selectedNode && (
-          <div className="min-w-0 scroll-mt-4" id="detail-panel-container">
-            <DetailPanel />
-          </div>
-        )}
+      <div role="group" aria-label="Visualization" className="flex gap-2">
+        {(["treemap", "flow"] as const).map((view) => (
+          <button
+            key={view}
+            type="button"
+            aria-pressed={visualization === view}
+            onClick={() => setVisualization(view)}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-stellar-light ${visualization === view ? "border-stellar bg-stellar/20 text-white" : "border-white/10 text-zinc-300 hover:text-white"}`}
+          >
+            {view === "flow" ? "Flow" : "Treemap"}
+          </button>
+        ))}
       </div>
 
+      {visualization === "flow" ? (
+        <FlowView fixture={data?.source === "fixture"} />
+      ) : (
+        <div
+          className={`grid min-w-0 grid-cols-1 gap-6 transition-all duration-300 ${
+            selectedNode
+              ? "xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]"
+              : "xl:grid-cols-1"
+          }`}
+        >
+          <div className="min-w-0">
+            <NetworkTreemap />
+          </div>
+          {selectedNode && (
+            <div className="min-w-0 scroll-mt-4" id="detail-panel-container">
+              <DetailPanel />
+            </div>
+          )}
+        </div>
+      )}
+
       <ProtocolBarChart />
-      <ActivityHeatmap />
+      <TemporalPatternsDisclosure />
       <TimeSeriesChart />
-      <HourOfWeekHeatmap />
+      
     </div>
   );
 }
