@@ -41,24 +41,26 @@ function statusLabel(status: string): string {
 
 /**
  * Build a Protocol TVL treemap from adapter results.
- * Unsupported/failed adapters are omitted from tile sizing but kept out of
- * the value sum so partial coverage stays visible via status metadata.
+ *
+ * Every result becomes a tile, including `failed` and `unsupported` ones —
+ * a failed adapter call must be visible to the user (as a zero-value tile
+ * with the "Failed" status and its documented gray color), not silently
+ * dropped from the map. Only `complete`/`partial`/`stale` results
+ * contribute USD value to tile sizing and the total, so a failed or
+ * unsupported protocol never inflates or distorts the treemap's sizing.
  */
 export function buildProtocolTvlTreemap(
   results: TvlAdapterResult[],
 ): TreemapPayload<"tvl"> {
-  const usable = results.filter(
-    (result) =>
-      result.status === "complete" ||
-      result.status === "partial" ||
-      result.status === "stale",
-  );
+  const sized = new Set(["complete", "partial", "stale"]);
 
-  const total = usable.reduce((sum, result) => sum + sumUsd(result), 0);
+  const total = results
+    .filter((result) => sized.has(result.status))
+    .reduce((sum, result) => sum + sumUsd(result), 0);
 
-  const children: TreemapNode<string>[] = usable
+  const children: TreemapNode<string>[] = results
     .map((result) => {
-      const tvlUsd = sumUsd(result);
+      const tvlUsd = sized.has(result.status) ? sumUsd(result) : 0;
       const share = total > 0 ? (tvlUsd / total) * 100 : 0;
       return {
         id: result.protocol.toLowerCase(),

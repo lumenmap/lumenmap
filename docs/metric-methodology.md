@@ -1,8 +1,8 @@
 # LumenMap metric methodology
 
-**Methodology version:** 1.0.0  
+**Methodology version:** 2.0.0\
 **Status:** Canonical for the current mainnet dashboard and its planned metrics  
-**Last updated:** 2026-07-28
+**Last updated:** 2026-09-29
 
 This document is the authoritative definition of LumenMap metrics. A label in the
 application, API, README, or a future chart must use the definition here. A metric
@@ -118,6 +118,20 @@ particular, summing operation-type counts must never be labelled “transactions
 | **Excludes** | Destination-only accounts, passive accounts referenced in operation payloads, null/empty source IDs, and identities inferred from labels. |
 | **Limitations** | **Not currently returned by the dashboard or API.** The existing “Top accounts” treemap query is not active-account count: it is restricted to `ACCOUNT_QUERY_TYPES`, ranks the top 70 accounts per type, and is suitable only for a ranked display. Hubble freshness and partial-period limits apply. |
 
+### Active destination accounts
+
+**Methodology ID:** `active-destination-accounts` · **Version:** `1.0.0`
+
+| Property | Canonical definition |
+| --- | --- |
+| **Unit** | One unique Stellar destination account ID. |
+| **Aggregation** | `COUNT(DISTINCT destination_account)` across payment-style operation types. |
+| **Time basis** | `closed_at BETWEEN @start AND @end`. |
+| **Source** | `crypto-stellar.crypto_stellar_dbt.enriched_history_operations`; destination fields (`to`, `account`, `into`) for selected types (`payment`, `path_payment_strict_receive`, `path_payment_strict_send`, `create_account`, `account_merge`). |
+| **Includes** | Classic `G...` accounts receiving qualifying operations in the period. |
+| **Excludes** | Source-only accounts, contract IDs, empty identifiers, and muxed (`M...`) accounts. |
+| **Limitations** | Destination semantics differ from source active wallets; do not sum the two KPIs as a deduplicated user count. Only the documented operation types contribute to the destination count. |
+
 ### Active contracts
 
 | Property | Canonical definition |
@@ -159,8 +173,16 @@ follows the common conventions above.
   `sampled` when more edges exist. An absent edge can therefore be outside the
   sample rather than absent from the network.
 - **Asset modes.** Each edge has exactly one asset identity (code + issuer;
-  native XLM is explicit). Asset modes such as XLM or USDC filter to one asset.
-  Amounts across assets are never summed and no price conversion is applied.
+  native XLM is explicit). For `asset_type = 'native'`, use one XLM identity
+  regardless of null code/issuer; for issued assets, require a non-empty code
+  and issuer and keep `(asset_type, asset_code, asset_issuer)` together. An
+  asset mode such as XLM or USDC filters to one exact identity before ranking
+  and coverage calculation. Amounts across assets must not be summed or used
+  as a cross-asset ranking key; no price conversion is applied.
+
+The [Flow ADR](adr/payment-flow.md) links to these rules. The
+[Hubble enriched operations schema](https://developers.stellar.org/docs/data/analytics/hubble/data-catalog/data-dictionary/silver/enriched-history-operations)
+documents the flattened columns and transaction success flag.
 
 ## Current dashboard field map
 
@@ -171,6 +193,7 @@ follows the common conventions above.
 | `accounts[].op_count` / account treemap values | Operations attributed to `op_source_account` | Top-70-per-type, selected operation types only; not active accounts and not monetary volume. |
 | `contracts[].op_count` / contract treemap values | `SUM(txn_count)` per contract | Legacy field name only; this is transaction activity, not operation count. |
 | `kpis.activeContracts` / “Active Contracts” | Active contracts | Top-200 observed contracts as defined above. |
+| `kpis.activeDestinationAccounts` / “Active Destinations” | Active destination accounts | Distinct classic accounts receiving payment-style operations (`to`, `account`, `into`). |
 | `kpis.sorobanShare` | Share of operations | Soroban-group operation count divided by Total Operations. |
 
 ## Change policy
