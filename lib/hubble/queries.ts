@@ -12,6 +12,7 @@ import {
   heatmapQuery,
   latestDataTimestampQuery,
   nativePaymentVolumeQuery,
+  paymentFlowEdgesQuery,
   queryRegistry,
   sorobanFunctionContractQuery,
   sorobanFunctionQuery,
@@ -32,6 +33,7 @@ import type {
   SorobanFunctionContractRow,
   SorobanFunctionRow,
   NativePaymentVolume,
+  PaymentFlowEdgeRow,
   TransactionCategoryRow,
   UsdcAccountRow,
   UsdcCategoryRow,
@@ -62,10 +64,12 @@ export {
   usdcPaymentVolumeQuery,
   usdcCategoryQuery,
   usdcAccountQuery,
+  paymentFlowEdgesQuery,
   TOP_ACCOUNTS_PER_TYPE,
   TOP_CONTRACT_LIMIT,
   TOP_CONTRACTS_PER_FUNCTION,
   TOP_SOROBAN_FUNCTIONS,
+  TOP_PAYMENT_FLOW_EDGES,
 } from "./shared-queries.mjs";
 
 export interface QueryParams {
@@ -327,4 +331,80 @@ export function mapActiveDestinationCountRow(
     active_destination_count:
       rows.length > 0 ? Number(rows[0].active_destination_count) : 0,
   };
+}
+
+// Maps aggregated payment-flow edge rows. Each row is validated
+// independently: malformed rows (bad addresses, self-edges, non-finite or
+// negative amounts, issued assets missing issuer, invalid op counts) are
+// skipped without throwing, so one bad row never fails the whole batch.
+export function mapPaymentFlowEdgesRows(
+  rows: Record<string, unknown>[],
+): PaymentFlowEdgeRow[] {
+  const edges: PaymentFlowEdgeRow[] = [];
+
+  for (const row of rows) {
+    try {
+      const fromRaw = row.from_account ?? row.from;
+      const toRaw = row.to_account ?? row.to;
+      if (typeof fromRaw !== "string" || typeof toRaw !== "string") {
+        continue;
+      }
+      if (
+        fromRaw === "" ||
+        toRaw === "" ||
+        !fromRaw.startsWith("G") ||
+        !toRaw.startsWith("G")
+      ) {
+        continue;
+      }
+      if (fromRaw === toRaw) {
+        continue;
+      }
+
+      const assetTypeRaw = row.asset_type;
+      const codeRaw = row.asset_code;
+      const issuerRaw = row.asset_issuer;
+      let asset: PaymentFlowEdgeRow["asset"] | null = null;
+      if (String(assetTypeRaw) === "native") {
+        asset = { type: "native", code: "XLM" };
+      } else {
+        if (typeof codeRaw !== "string" || codeRaw === "") {
+          continue;
+        }
+        if (
+          typeof issuerRaw !== "string" ||
+          issuerRaw === "" ||
+          !issuerRaw.startsWith("G")
+        ) {
+          continue;
+        }
+        asset = { type: "issued", code: codeRaw, issuer: issuerRaw };
+      }
+
+      const amountRaw = row.amount;
+      const amountNum =
+        typeof amountRaw === "number" ? amountRaw : Number(amountRaw);
+      if (!Number.isFinite(amountNum) || amountNum < 0) {
+        continue;
+      }
+
+      const opRaw = row.op_count ?? row.opCount;
+      const opNum = typeof opRaw === "number" ? opRaw : Number(opRaw);
+      if (!Number.isFinite(opNum) || opNum < 1) {
+        continue;
+      }
+
+      edges.push({
+        from: fromRaw,
+        to: toRaw,
+        asset,
+        amount: String(amountRaw ?? "0"),
+        opCount: Math.trunc(opNum),
+      });
+    } catch {
+      continue;
+    }
+  }
+
+  return edges;
 }

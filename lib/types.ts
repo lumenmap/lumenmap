@@ -244,6 +244,14 @@ export interface AssetPaymentVolumeRow {
   opCount: number;
 }
 
+export interface PaymentFlowEdgeRow {
+  from: string;
+  to: string;
+  asset: AssetIdentity;
+  amount: string;
+  opCount: number;
+}
+
 export interface ActiveSourceAccountsRow {
   active_accounts: number;
 }
