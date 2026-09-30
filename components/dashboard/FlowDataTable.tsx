@@ -3,6 +3,11 @@
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { cn, formatExactNumber, truncateAddress } from "@/lib/utils";
+import {
+  encodeFlowEdges,
+  type FlowEdgeEncoding,
+  type FlowEdgeWeightMetric,
+} from "@/lib/metrics/flow-edge-encoding";
 
 /**
  * Minimal structural shapes of the Flow graph model. They are intentionally a
@@ -143,6 +148,8 @@ export interface FlowDataTableProps {
   selectedId?: string | null;
   onSelect?: (id: string) => void;
   caption?: string;
+  /** Weight metric used for edge thickness (operations or asset amount). */
+  weightMetric?: FlowEdgeWeightMetric;
 }
 
 const HEADER_CELL =
@@ -307,6 +314,7 @@ export function FlowDataTable({
   selectedId = null,
   onSelect,
   caption = "Flow graph edges",
+  weightMetric = "operations",
 }: FlowDataTableProps) {
   const edgeSort = useSort<EdgeSortKey>("amount");
   const nodeSort = useSort<NodeSortKey>("outflow");
@@ -319,6 +327,11 @@ export function FlowDataTable({
 
   const resolveLabel = (id: string) => labelById.get(id) ?? truncateAddress(id);
 
+  const edgeEncodings = useMemo(
+    () => encodeFlowEdges(edges, weightMetric),
+    [edges, weightMetric],
+  );
+
   const edgeRows = useMemo(() => {
     const rows = edges.map((edge) => ({
       edge,
@@ -327,6 +340,7 @@ export function FlowDataTable({
         labelById.get(edge.destination) ?? truncateAddress(edge.destination),
       asset: assetLabel(edge),
       amount: amountToUnits(edge.amount),
+      encoding: edgeEncodings.get(edge.id),
     }));
     const { sortKey, direction } = edgeSort;
     return rows.sort((a, b) => {
@@ -340,7 +354,7 @@ export function FlowDataTable({
       if (cmp === 0) cmp = a.edge.id.localeCompare(b.edge.id);
       return direction === "asc" ? cmp : -cmp;
     });
-  }, [edges, labelById, edgeSort]);
+  }, [edges, labelById, edgeSort, edgeEncodings]);
 
   const nodeRows = useMemo(() => {
     const totals = new Map<string, { inflow: number; outflow: number }>();
@@ -394,7 +408,7 @@ export function FlowDataTable({
       {/* Desktop: sortable table. */}
       <div className="hidden overflow-x-auto rounded-xl border border-white/5 bg-black/20 sm:block">
         <table className="w-full min-w-[36rem] border-collapse text-sm">
-          <caption className="px-3 py-2 text-left text-xs text-zinc-500">
+          <caption className="px-3 py-2 text-left texe-xs text-zinc-500">
             {caption} ({formatExactNumber(edges.length)} edges)
           </caption>
           <thead>
@@ -407,7 +421,7 @@ export function FlowDataTable({
             </tr>
           </thead>
           <tbody>
-            {edgeRows.map(({ edge, sourceLabel, destinationLabel, asset, amount }) => (
+            {edgeRows.map(({ edge, sourceLabel, destinationLabel, asset, amount, encoding }) => (
               <SelectableRow
                 key={edge.id}
                 id={edge.id}
@@ -419,8 +433,11 @@ export function FlowDataTable({
                 <td className="px-3 py-2 text-zinc-400">{asset}</td>
                 <td className="px-3 py-2 font-mono text-zinc-200">{formatExactNumber(amount)}</td>
                 <td className="px-3 py-2 font-mono text-zinc-300">{formatExactNumber(edge.operationCount)}</td>
+                <td className="px-3 py-2">
+                  <EdgeWeightBar encoding={encoding} />
+                </td>
               </SelectableRow>
-            ))}
+            ))
           </tbody>
         </table>
       </div>
@@ -477,7 +494,35 @@ export function FlowDataTable({
   );
 }
 
+/**
+ * Static weight bar shown in the edge table. Thickness and opacity
+ * are driven by the shared encoding function, so the table and the canvas
+ * agree on relative weight. No animation is used, so reduced-motion users
+ * still see the encoding.
+ */
+function EdgeWeightBar({ encoding }: { encoding?: FlowEdgeEncoding }) {
+  if (!encoding) {
+    return <span className="text-xs text-zinc-600">—</span>;
+  }
+  const { strokeWidth, opacity, tooltip } = encoding;
+  return (
+    <span
+      className="inline-flex h-4 w-24 items-center"
+      title={tooltip}
+      aria-label={tooltip}
+      data-testid="flow-edge-weight"
+    >
+      <span
+        className="w-full rounded-full bg-stellar-light"
+        style={{ height: `${strokeWidth}px`, opacity }}
+      />
+    </span>
+  );
+}
+
 export type FlowView = "graph" | "table";
+
+export type FlowAssetMode = "xlm" | "usdc" | "op_count";
 
 /** "Graph / Table" toggle meant to sit beside the Flow canvas. */
 export function FlowViewToggle({
