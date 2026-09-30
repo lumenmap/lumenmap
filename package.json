@@ -36,7 +36,7 @@
     "test:e2e:flow": "FLOW_FIXTURE_MODE=1 playwright test e2e/flow.spec.ts"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^8.3.1",
+    "@google-cloud/bigquery": "^9.1.0",
     "@tanstack/react-query": "^5.101.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
