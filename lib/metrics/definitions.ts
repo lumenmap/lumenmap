@@ -22,7 +22,7 @@ export interface MetricDefinition {
   sparkline?: boolean;
 }
 
-export const METRIC_DEFINITIONS: Record<KpiMetricId, MetricDefinition> = {
+export const METRIC_DEFINITIONS: Record<Kpi”MetricId, MetricDefinition> = {
   totalOps: {
     id: "totalOps",
     title: "Total Operations",
@@ -95,7 +95,7 @@ export const METRIC_DEFINITIONS: Record<KpiMetricId, MetricDefinition> = {
 
 export const DASHBOARD_METRIC_IDS = Object.keys(
   METRIC_DEFINITIONS,
-) as KpiMetricId[];
+) as Kpi”MetricId[];
 
 export function getMetricDefinition(id: KpiMetricId): MetricDefinition {
   return METRIC_DEFINITIONS[id];

@@ -111,7 +111,7 @@ export function ExportControls({ svgRef }: ExportControlsProps) {
       }
 
       const metadata = buildExportMetadata(data, period, treemapView, viewLabel);
-      const kpis = data.kpis as Record<string, unknown>;
+      const kpis = data.kpis as unknown as Record<string, unknown>;
       const kpiLines = Object.entries(kpis)
         .filter(([, value]) => typeof value === "number" || typeof value === "string")
         .slice(0, 8)
