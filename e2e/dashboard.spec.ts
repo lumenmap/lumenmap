@@ -328,7 +328,14 @@ test.describe("LumenMap dashboard user journey", () => {
     // Select Payments category tile
     await tile(page, GROUP_LABELS.payments).click();
     
-    // Check that detail panel says \"Transactions\" instead of \"Operations\"
+    // Check that detail panel says "Transactions" instead of "Operations"
     await expect(page.getByText("Transactions", { exact: true }).first()).toBeVisible();
+
+    // Switch to Accounts & Contracts view to test disabled state
+    await page.getByRole("radio", { name: "Accounts & Contracts" }).click();
+    
+    // Verify it is disabled
+    await expect(txnBtn).toBeDisabled();
+    await expect(txnBtn).toHaveAttribute("title", "No transaction data available for this period");
   });
 });
