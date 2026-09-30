@@ -650,3 +650,10 @@ To add wallet or dApp labels, edit [`data/entities.json`](data/entities.json) or
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, fixture mode, and PR expectations.
+
+### Running Smoke Checks
+
+Maintainers can trigger the smoke check manually via GitHub Actions (`workflow_dispatch`) by providing the target deployment URL, or run it locally:
+
+```bash
+node scripts/smoke-check.mjs [https://your-deployment-url.vercel.app](https://your-deployment-url.vercel.app)
