@@ -145,7 +145,7 @@ test.describe("responsive layout", () => {
         await expect(page.getByText("Network Treemap")).toBeVisible();
         await expect(page.getByText("Soroban").first()).toBeVisible();
         await expect(page.getByText("Payments").first()).toBeVisible();
-        await expect(page.getByText("Operation Types")).toBeVisible();
+        await expect(page.getByRole("radio", { name: "Operation Types" })).toBeVisible();
 
         await expect(page.locator("html")).toHaveCSS("overflow-x", "hidden");
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -190,7 +190,7 @@ test.describe("responsive layout", () => {
         const tile = page.getByTestId("treemap-tile").first();
         await tile.click();
 
-        await expect(page.getByText("Operations")).toBeVisible();
+        await expect(page.getByTestId("detail-operations")).toBeVisible();
         await expect(page.getByText("Share (current level)")).toBeVisible();
 
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
