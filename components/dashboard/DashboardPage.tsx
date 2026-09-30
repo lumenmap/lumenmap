@@ -12,9 +12,10 @@ import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { NetworkTreemap } from "@/components/dashboard/NetworkTreemap";
 import { ProtocolBarChart } from "@/components/dashboard/ProtocolBarChart";
-import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
+
 import { TimeSeriesChart } from "@/components/dashboard/TimeSeriesChart";
-import { HourOfWeekHeatmap } from "@/components/dashboard/HourOfWeekHeatmap";
+
+import { TemporalPatternsDisclosure } from "@/components/dashboard/TemporalPatternsDisclosure";
 import { AssetVolumePanel } from "@/components/dashboard/AssetVolumePanel";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
@@ -118,9 +119,9 @@ function DashboardContent() {
       </div>
 
       <ProtocolBarChart />
-      <ActivityHeatmap />
+      <TemporalPatternsDisclosure />
       <TimeSeriesChart />
-      <HourOfWeekHeatmap />
+      
     </div>
   );
 }
