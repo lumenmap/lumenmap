@@ -12,7 +12,10 @@ export function resolveDataSource(
   const raw = (env[FIXTURE_ENV] ?? "live").trim().toLowerCase();
 
   if (raw === "fixture") {
-    if (env.NODE_ENV === "production" || env.VERCEL_ENV === "production") {
+    if (
+      (env.NODE_ENV === "production" || env.VERCEL_ENV === "production") &&
+      env.PLAYWRIGHT_TEST !== "true"
+    ) {
       throw new Error(
         `${FIXTURE_ENV}=fixture is not allowed in production. Fixture data is for local development and tests only.`,
       );

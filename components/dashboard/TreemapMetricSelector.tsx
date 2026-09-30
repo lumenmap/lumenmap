@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 
 export function TreemapMetricSelector() {
-  const { metric, setMetric, data } = useDashboard();
+  const { metric, setMetric, data, treemapView } = useDashboard();
 
-  const transactionsAvailable =
-    !!data &&
-    !!data.treemaps.txn_events &&
-    (data.treemaps.txn_events.children?.length ?? 0) > 0;
+  const activeTxnTreemap = treemapView === "events" ? data?.treemaps.txn_events : data?.treemaps.txn_actors;
+  const transactionsAvailable = !!data && (activeTxnTreemap?.children?.length ?? 0) > 0;
 
   const description =
     metric === "ops"

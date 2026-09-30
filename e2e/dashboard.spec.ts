@@ -66,7 +66,7 @@ async function selectPeriod(page: Page, label: string, period: Period) {
       response.url().includes(`/api/v1/activity?period=${period}`) &&
       response.status() === 200,
   );
-  await page.getByRole("button", { name: label }).click();
+  await page.getByRole("radio", { name: label }).click();
   const response = await responsePromise;
   // URL state: the period is carried by the API request URL.
   const url = new URL(response.request().url());
@@ -142,7 +142,7 @@ test.describe("LumenMap dashboard user journey", () => {
 
     // Hierarchy starts at the root breadcrumb with an empty details panel.
     await expect(breadcrumbs(page)).toHaveText(["Network Activity"]);
-    await expect(page.getByTestId("detail-empty")).toBeVisible();
+    await expect(page.locator("#detail-panel-container")).toBeHidden();
   });
 
   test("switching metrics (periods) refetches and updates visible data", async ({
@@ -175,7 +175,7 @@ test.describe("LumenMap dashboard user journey", () => {
     await expect(page.getByTestId("kpi-value-totalOps")).toHaveText(
       formatNumber(totalOps("30d")),
     );
-    await expect(page.getByTestId("detail-empty")).toBeVisible();
+    await expect(page.locator("#detail-panel-container")).toBeHidden();
     await expect(breadcrumbs(page)).toHaveText(["Network Activity"]);
 
     // The dashboard currently keeps journey state in components, not in the
@@ -199,11 +199,11 @@ test.describe("LumenMap dashboard user journey", () => {
 
     // Accounts & Contracts view: category -> contracts/accounts instead.
     await page
-      .getByRole("button", { name: "Accounts & Contracts" })
+      .getByRole("radio", { name: "Accounts & Contracts" })
       .click();
     await expect(page.getByText(/Drill into top wallets/)).toBeVisible();
     // Changing views clears the previous selection.
-    await expect(page.getByTestId("detail-empty")).toBeVisible();
+    await expect(page.locator("#detail-panel-container")).toBeHidden();
 
     await tile(page, GROUP_LABELS.soroban).click();
     await expect(tile(page, "Soroswap")).toBeVisible();
@@ -213,7 +213,8 @@ test.describe("LumenMap dashboard user journey", () => {
     await tile(page, "Soroswap").click();
     await expect(page.getByTestId("detail-title")).toHaveText("Soroswap");
     await expect(page.getByTestId("detail-protocol")).toHaveText("Soroswap");
-    await expect(page.getByTestId("detail-address")).toHaveText(
+    await expect(page.getByTestId("detail-address")).toHaveAttribute(
+      "data-canonical-address",
       FIXTURE_CONTRACTS.soroswap,
     );
     await expect(page.getByTestId("detail-operations")).toHaveText(
@@ -221,7 +222,7 @@ test.describe("LumenMap dashboard user journey", () => {
     );
 
     // Switching back restores the operation-type hierarchy.
-    await page.getByRole("button", { name: "Operation Types" }).click();
+    await page.getByRole("radio", { name: "Operation Types" }).click();
     await expect(
       page.getByText(/operation type or Soroban function/),
     ).toBeVisible();
@@ -250,7 +251,7 @@ test.describe("LumenMap dashboard user journey", () => {
 
     // Close the panel, then select a leaf tile two levels down.
     await page.getByRole("button", { name: "Close details" }).click();
-    await expect(page.getByTestId("detail-empty")).toBeVisible();
+    await expect(page.locator("#detail-panel-container")).toBeHidden();
 
     await tile(page, "payment").click();
     await expect(page.getByTestId("detail-event-type")).toHaveText("payment");
@@ -263,7 +264,8 @@ test.describe("LumenMap dashboard user journey", () => {
     await expect(page.getByTestId("detail-share")).toHaveText(
       shareOf(90_000, 170_000),
     );
-    await expect(page.getByTestId("detail-address")).toHaveText(
+    await expect(page.getByTestId("detail-address")).toHaveAttribute(
+      "data-canonical-address",
       FIXTURE_ACCOUNTS.kraken,
     );
     await expect(page.getByTestId("detail-protocol")).toHaveText("Kraken");
@@ -307,5 +309,26 @@ test.describe("LumenMap dashboard user journey", () => {
     await expect(breadcrumbs(page)).toHaveText(["Network Activity"]);
     await expect(page.getByTestId("treemap-tile")).toHaveCount(6);
     await expect(tile(page, GROUP_LABELS.payments)).toBeVisible();
+  });
+
+  test("switching metric to transactions updates the treemap and details panel", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("kpi-value-totalOps")).toBeVisible();
+
+    // Select the Transaction Count metric
+    const txnBtn = page.getByRole("button", { name: "Transaction Count" });
+    await expect(txnBtn).not.toBeDisabled();
+    await txnBtn.click();
+
+    // Verify description updates
+    await expect(page.getByText("Tile size is proportional to the number of transactions.")).toBeVisible();
+
+    // Select Payments category tile
+    await tile(page, GROUP_LABELS.payments).click();
+    
+    // Check that detail panel says \"Transactions\" instead of \"Operations\"
+    await expect(page.getByText("Transactions", { exact: true }).first()).toBeVisible();
   });
 });
