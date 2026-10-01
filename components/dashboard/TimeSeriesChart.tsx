@@ -18,8 +18,8 @@ export function TimeSeriesChart() {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const errorCode = (error as any)?.code as string | undefined;
-  const errorCopy = errorCode ? getErrorCopy(errorCode as any) : null;
+  const errorCode = (error as Error & { code?: string })?.code;
+  const errorCopy = errorCode ? getErrorCopy(errorCode as Parameters<typeof getErrorCopy>[0]) : null;
   const retryPending = isRetrying || isFetching;
 
   const handleRetry = async () => {

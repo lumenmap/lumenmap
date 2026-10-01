@@ -28,7 +28,7 @@ export function resolveDataSource(
   }
 
   throw new Error(
-    `Unknown ${FIXTRE_ENV}="${env[FIXTURE_ENV]}". Use "live" (default) or "fixture".`,
+    `Unknown ${FIXTURE_ENV}="${env[FIXTURE_ENV]}". Use "live" (default) or "fixture".`,
   );
 }
 
@@ -40,7 +40,7 @@ export function isFixtureMode(
 
 /**
  * True when the current runtime is a local/dev context where fixture mode
- * instructions are appropriate."always false in production deployments.
+ * instructions are appropriate." always false in production deployments.
  */
 export function isLocalDevContext(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,

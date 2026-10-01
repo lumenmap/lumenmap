@@ -599,7 +599,7 @@ export function FlowDataTable({
                   <EdgeWeightBar encoding={encoding} />
                 </td>
               </SelectableRow>
-            ))
+            ))}
           </tbody>
         </table>
       </div>

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useDashboard } from '@/components/dashboard/DashboardProvider';
 import { NetworkTreemap } from '@/components/dashboard/NetworkTreemap';
@@ -23,7 +23,7 @@ export function TreemapSection() {
           <button type='button' className='mt-2 text-sm font-medium text-amber-50 underline' onClick={() => setMetric('ops')}>Switch to operations</button>
         </div>
       )}
-      <div className={grid min-w-0 grid-cols-1 gap-6 transition-all duration-300 }>
+      <div className="grid min-w-0 grid-cols-1 gap-6 transition-all duration-300">
         <div className='min-w-0'>
           <NetworkTreemap />
         </div>

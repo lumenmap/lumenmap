@@ -79,10 +79,19 @@ export function FlowCanvas({ nodes, edges, selectedId, onSelect }: FlowCanvasPro
 
   // Prepare nodes with activity and radius
   const flowNodes: FlowNode[] = useMemo(() => {
+    const getPseudoRandom = (seed: string) => {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        hash = (Math.imul(31, hash) + seed.charCodeAt(i)) | 0;
+      }
+      const x = Math.sin(hash) * 10000;
+      return x - Math.floor(x);
+    };
+
     return nodes.map((node) => ({
       ...node,
-      x: Math.random() * size.width,
-      y: Math.random() * size.height,
+      x: getPseudoRandom(node.id + "x") * size.width,
+      y: getPseudoRandom(node.id + "y") * size.height,
       activity: nodeActivity.get(node.id) ?? 0,
       radius: mapActivityToRadius(nodeActivity.get(node.id) ?? 0, minActivity, maxActivity),
     }));

@@ -33,7 +33,7 @@ async function fetchCategoryShare(
     const body = (await response.json()) as { code?: string; error?: string };
     const error = new Error(body.error ?? "Failed to load category share chart");
     if (body.code) {
-      (error as any).code = body.code;
+      Object.assign(error, { code: body.code });
     }
     throw error;
   }
@@ -132,8 +132,8 @@ export function CategoryShareChart() {
     staleTime: 60_000,
   });
 
-  const errorCode = (query.error as any)?.code as string | undefined;
-  const errorCopy = errorCode ? getErrorCopy(errorCode as any) : null;
+  const errorCode = (query.error as Error & { code?: string })?.code;
+  const errorCopy = errorCode ? getErrorCopy(errorCode as Parameters<typeof getErrorCopy>[0]) : null;
 
   const legendById = useMemo(() => {
     const map = new Map<CategoryId, { label: string; color: string }>();

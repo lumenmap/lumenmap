@@ -7,6 +7,7 @@ import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
 import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { isMetricSupportedOnNetwork, unsupportedMetricMessage } from "@/lib/network";
+import type { FlowNode, FlowEdge } from "@/lib/types";
 
 export function FlowSection() {
   const { metric, network, setMetric, data } = useDashboard();
@@ -14,8 +15,8 @@ export function FlowSection() {
 
   // The dashboard API includes flow data within the generic `data` object when the metric is relevant.
   // For simplicity, we fallback to empty arrays if not present.
-  const nodes = (data?.flow?.nodes as readonly any[]) ?? [];
-  const edges = (data?.flow?.edges as readonly any[]) ?? [];
+  const nodes = (data?.flow?.nodes as readonly FlowNode[]) ?? [];
+  const edges = (data?.flow?.edges as readonly FlowEdge[]) ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-3 py-6 sm:px-6 lg:px-8">

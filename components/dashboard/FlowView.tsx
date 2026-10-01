@@ -5,6 +5,7 @@ import { FlowCanvas } from "./FlowCanvas";
 import { FlowDataTable, FlowViewToggle } from "./FlowDataTable";
 import { useDashboard } from "./DashboardProvider";
 import type { FlowTableNode, FlowTableEdge } from "./FlowDataTable";
+import type { TreemapNode } from "@/lib/types";
 
 export function FlowView() {
   const { data, flowView, setFlowView, selectedNode, setSelectedNode } = useDashboard();
@@ -18,7 +19,7 @@ export function FlowView() {
     const nodeSet = new Set<string>();
 
     // Extract nodes from treemap data
-    const extractNodes = (treemapNode: any, category?: string) => {
+    const extractNodes = (treemapNode: TreemapNode, category?: string) => {
       if (treemapNode.meta?.id && !nodeSet.has(treemapNode.meta.id)) {
         nodeSet.add(treemapNode.meta.id);
         flowNodes.push({

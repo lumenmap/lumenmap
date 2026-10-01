@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
-import { useDashboard } from "@/components/dashboard/DashboardProvider";
+import { useDashboard, DashboardProvider } from "@/components/dashboard/DashboardProvider";
 import { CategoryShareChart } from "@/components/dashboard/CategoryShareChart";
 import { DetailPanel } from "@/components/dashboard/DetailPanel";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
@@ -15,6 +14,8 @@ import { FlowView } from "@/components/dashboard/FlowView";
 import { ProtocolBarChart } from "@/components/dashboard/ProtocolBarChart";
 
 import { TimeSeriesChart } from "@/components/dashboard/TimeSeriesChart";
+import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
+import { HourOfWeekHeatmap } from "@/components/dashboard/HourOfWeekHeatmap";
 
 import { TemporalPatternsDisclosure } from "@/components/dashboard/TemporalPatternsDisclosure";
 import { AssetVolumePanel } from "@/components/dashboard/AssetVolumePanel";
@@ -32,8 +33,6 @@ import {
 
 function DashboardContent() {
   const { selectedNode, network, metric, setMetric, period } = useDashboard();
-  const [showFlow, setShowFlow] = useState(false);
-  const [flowAccount, setFlowAccount] = useState<string | null>(null);
   const metricSupported = isMetricSupportedOnNetwork(metric, network);
 
   return (
