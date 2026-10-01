@@ -25,7 +25,7 @@ test.describe('Flow view (fixture mode)', () => {
   test('updates detail panel on node click', async ({ page }) => {
     const detailPanel = page.locator(DETAIL_PANEL_SELECTOR);
     await expect(detailPanel).toBeVisible();
-    await expect(detailPanel).getByTestId('flow-detail-empty')).toBeVisible();
+    await expect(detailPanel.getByTestId('flow-detail-empty')).toBeVisible();
 
     const node = page.locator(NODE_SELECTOR).first();
     const nodeLabel = await node.getAttribute('data-node-label');

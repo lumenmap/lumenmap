@@ -63,7 +63,7 @@ for (const vp of VIEWPORTS) {
       const weightBars = page.locator('[data-testid="flow-edge-weight"]');
       const barCount = await weightBars.count();
       if (barCount >= 2) {
-        const heights = await weightBats.evaluateAll((els) =>
+        const heights = await weightBars.evaluateAll((els) =>
           els.map((el) => {
             const inner = el.querySelector("span");
             const h = inner ? getComputedStyle(inner).height : "0px";

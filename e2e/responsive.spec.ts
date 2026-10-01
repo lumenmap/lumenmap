@@ -245,7 +245,7 @@ test.describe("responsive layout", () => {
           }
         }
 
-        expect(tooSmall, lazy() => `too small: ${tooSmall.join(", ")}`).toHaveLength(0);
+        expect(tooSmall, `too small: ${tooSmall.join(", ")}`).toHaveLength(0);
       });
     });
   }

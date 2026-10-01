@@ -609,7 +609,7 @@ export function FlowDataTable({
           <div className="overflow-hidden rounded-xl border border-white/5 bg-black/20 sm:hidden">
             <p className="px-3 py-2 text-left text-xs text-zinc-500">
               Flow graph nodes ({formatExactNumber(nodes.length)} accounts)
-            </caption>
+            </p>
             <thead>
               <tr className="border-b border-white/10">
                 <SortableHeader label="Account" state={nodeSort.ariaSort("label")} onSort={() => nodeSort.onSort("label")} />

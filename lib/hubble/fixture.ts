@@ -457,7 +457,7 @@ export function buildFlowGraph(
   options: {
     labels?: ReadonlyMap<string, string> | { get(key: string): string | undefined };
   } = {},
-}: FlowGraphResponse {
+): FlowGraphResponse {
   const nodes = new Map<string, FlowNode>();
   const edges = new Map<string, FlowEdge>();
 
