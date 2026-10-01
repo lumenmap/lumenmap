@@ -203,6 +203,27 @@ async function fetchFromHubble(
   const timeseriesQuery =
     period === "1d" ? hourlyTimeseriesQuery : dailyTimeseriesQuery;
 
+  /**
+   * Query classification for soft failure handling.
+   *
+   * **Required queries:** Failure causes HTTP 500. The treemap cannot render
+   * without these foundational metrics.
+   * - assetPaymentVolume, category, contract, account, sorobanFunction,
+   *   sorobanFunctionContract, activeSourceAccounts, timeseries, heatmap
+   *
+   * **Optional queries:** Failure returns null/empty with structured logs.
+   * Treemap renders with degraded KPIs and metric breakdowns.
+   * - transactionCategory: If fails, treemap loses txn_events/txn_actors views
+   * - usdcCategory, usdcAccount: If fails, USDC treemaps show empty
+   * - activeDestinationCount: If fails, active destination KPI card shows 0
+   * - activeContractCount: If fails, active contract KPI card shows 0
+   * - accountMetadata: If fails, home_domain labels are unavailable
+   *
+   * Optional queries use runOptionalQuery, which logs query failures as
+   * activity.query.soft_fail and records telemetry without throwing.
+   * See lib/hubble/soft-fail.ts for details.
+   */
+
   const [
     assetVolumeRows,
     categoryRows,
@@ -286,13 +307,19 @@ async function fetchFromHubble(
       params,
       correlationId,
     ),
-    runQuery<Record<string, unknown>>(
+    runOptionalQuery(
       "activeDestinationCount",
-      activeDestinationCountQuery,
-      {
-        ...params,
-        types: getDestinationQueryTypes(),
-      },
+      () =>
+        runQuery<Record<string, unknown>>(
+          "activeDestinationCount",
+          activeDestinationCountQuery,
+          {
+            ...params,
+            types: getDestinationQueryTypes(),
+          },
+          correlationId,
+        ),
+      () => [{ active_destination_count: 0 }] as Record<string, unknown>[],
       correlationId,
     ),
     runQuery<Record<string, unknown>>(
@@ -400,13 +427,19 @@ export async function getActiveContractCount(
   end: string,
   correlationId: string = createCorrelationId(),
 ): Promise<ActiveContractCountRow> {
-  const rows = await runQuery<Record<string, unknown>>(
+  const rows = await runOptionalQuery(
     "activeContractCount",
-    activeContractCountQuery,
-    {
-      start,
-      end,
-    },
+    () =>
+      runQuery<Record<string, unknown>>(
+        "activeContractCount",
+        activeContractCountQuery,
+        {
+          start,
+          end,
+        },
+        correlationId,
+      ),
+    () => [{ active_contract_count: 0 }] as Record<string, unknown>[],
     correlationId,
   );
 

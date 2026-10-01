@@ -229,3 +229,46 @@ methodology version bump. Breaking definition changes require a new major versio
 additive clarification uses a minor version; editorial corrections use a patch
 version. Historical values calculated under another version must be labelled with
 that version rather than silently compared with this one.
+
+
+## KPI query degradation strategy
+
+When an optional KPI query fails (timeout, schema drift, BigQuery quota exceeded, etc.), LumenMap does not fail the entire `/api/v1/activity` response. Instead, the optional query soft-fails: it returns a fallback value, logs the error with correlation ID and query name, and increments a telemetry counter.
+
+### Query classification
+
+**Required queries** — failure causes HTTP 500:
+- `assetPaymentVolume`, `category`, `contract`, `account`, `sorobanFunction`, `sorobanFunctionContract`, `activeSourceAccounts`
+- `timeseries`, `heatmap`
+
+These queries power the core treemap and are necessary for a valid activity response. If any required query fails, the caller receives a safe HTTP 500 error (no SQL or parameter details are leaked).
+
+**Optional queries** — failure returns fallback, HTTP 200:
+- `transactionCategory`: Treemap loses `txn_events` and `txn_actors` views; operation/transaction counts still available
+- `usdcCategory`, `usdcAccount`: USDC-specific treemaps show empty; the core operation-count treemaps remain
+- `activeDestinationCount`: Active destination KPI card shows 0; other KPIs remain
+- `activeContractCount`: Active contract KPI card shows 0; other KPIs remain
+- `accountMetadata` (home_domain labels): Labels are unavailable; addresses still display
+
+### Implementation
+
+Optional queries use `runOptionalQuery` (in `lib/hubble/soft-fail.ts`), which:
+1. Attempts to run the query
+2. On failure, logs a structured `activity.query.soft_fail` event including `correlationId`, `queryName`, `errorClass`, and `errorMessage`
+3. Records a counter keyed by `(queryName, errorClass)` for monitoring
+4. Returns a typed fallback value (usually `[]` or a zero-valued object)
+5. Allows the activity dataset to build successfully with degraded KPIs
+
+Consumers see no difference in the HTTP response contract; optional KPI fields simply carry zero or empty values when the upstream query fails.
+
+### Monitoring soft failures
+
+Every soft failure is:
+- Logged with `event: "activity.query.soft_fail"` and a `correlationId` for tracing
+- Counted in telemetry under `{ endpoint: "activity", query_outcome: "soft_fail", query_name: "<name>", error_class: "<class>" }`
+
+Operators can alert on soft-failure rates per query name. A query with rising soft-failure rates signals a need for troubleshooting (e.g., BigQuery quota, schema change, or Hubble data lag).
+
+### Version history
+
+- **2.0.0 (current):** Optional query soft-failure for activeDestinationCount, activeContractCount, and transactionCategory queries.

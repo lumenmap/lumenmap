@@ -512,3 +512,61 @@ describe("activity cache headers", () => {
   });
 });
 
+describe("optional query degradation", () => {
+  test("returns HTTP 200 with treemap data even when optional KPI queries fail", async () => {
+    const response = await handleActivityRequest(
+      new Request("http://localhost/api/v1/activity?period=1d"),
+      async () => {
+        // Simulate a dataset where optional queries (activeDestinationCount,
+        // activeContractCount) would fail by returning mock data with 0 values.
+        // In real failure scenarios, runOptionalQuery catches the error and
+        // returns the fallback (0).
+        const dataset = mockActivityDataset("1d");
+        return {
+          ...dataset,
+          // Optional KPI queries have soft-failed; treemap still renders.
+          kpis: {
+            ...dataset.kpis,
+            activeDestinationAccounts: { kind: "entity_count", unit: "count", value: 0 },
+            activeContracts: { kind: "entity_count", unit: "count", value: 0 },
+          },
+        };
+      },
+    );
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as ActivityVisualizationResponse;
+    assert.equal(body.period, "1d");
+    assert.ok("kpis" in body);
+    assert.ok("treemaps" in body);
+    // Even with soft-failed optional KPIs, the response is valid and cacheable.
+    assert.equal(
+      response.headers.get("cache-control"),
+      "public, max-age=60, s-maxage=60",
+    );
+  });
+
+  test("required query failures still return HTTP 500", async () => {
+    const originalConsoleError = console.error;
+    console.error = () => {};
+
+    try {
+      const response = await handleActivityRequest(
+        new Request("http://localhost/api/v1/activity?period=1d"),
+        async () => {
+          // Simulate a required query failure (e.g., category query).
+          throw new Error("BigQuery: SELECT * required queries failed");
+        },
+      );
+
+      assert.equal(response.status, 500);
+      assert.deepEqual(await response.json(), {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred. Please try again later.",
+      });
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
+});
+
