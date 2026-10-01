@@ -31,7 +31,7 @@ test.describe('Flow view (fixture mode)', () => {
     const nodeLabel = await node.getAttribute('data-node-label');
     await node.click();
 
-    await expect(detailPanel).getByTestId('flow-detail-empty')).toBeHidden();
+    await expect(detailPanel.getByTestId('flow-detail-empty')).toBeHidden();
     await expect(detailPanel.getByTestId('flow-detail-name')).toHaveText(nodeLabel ?? /./);
   });
 });

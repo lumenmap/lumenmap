@@ -610,33 +610,35 @@ export function FlowDataTable({
             <p className="px-3 py-2 text-left text-xs text-zinc-500">
               Flow graph nodes ({formatExactNumber(nodes.length)} accounts)
             </p>
-            <thead>
-              <tr className="border-b border-white/10">
-                <SortableHeader label="Account" state={nodeSort.ariaSort("label")} onSort={() => nodeSort.onSort("label")} />
-                <SortableHeader label="Category" state={nodeSort.ariaSort("category")} onSort={() => nodeSort.onSort("category")} />
-                <SortableHeader label="Incoming ops" state={nodeSort.ariaSort("inflow")} onSort={() => nodeSort.onSort("inflow")} />
-                <SortableHeader label="Outgoing ops" state={nodeSort.ariaSort("outflow")} onSort={() => nodeSort.onSort("outflow")} />
-                <th scope="col" className={HEADER_CELL}>Account id</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nodeRows.map(({ node, category, inflow, outflow }) => (
-                <SelectableRow
-                  key={node.id}
-                  id={node.id}
-                  selected={effectiveSelectedId === node.id}
-                  onSelect={effectiveOnSelect}
-                >
-                  <td className="px-3 py-2 text-zinc-200">{resolveLabel(node.id)}</td>
-                  <td className="px-3 py-2 text-zinc-400">{category || "—"}</td>
-                  <td className="px-3 py-2 font-mono text-zinc-300">{formatExactNumber(inflow)}</td>
-                  <td className="px-3 py-2 font-mono text-zinc-300">{formatExactNumber(outflow)}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-zinc-500">{truncateAddress(node.id)}</td>
-                </SelectableRow>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <SortableHeader label="Account" state={nodeSort.ariaSort("label")} onSort={() => nodeSort.onSort("label")} />
+                  <SortableHeader label="Category" state={nodeSort.ariaSort("category")} onSort={() => nodeSort.onSort("category")} />
+                  <SortableHeader label="Incoming ops" state={nodeSort.ariaSort("inflow")} onSort={() => nodeSort.onSort("inflow")} />
+                  <SortableHeader label="Outgoing ops" state={nodeSort.ariaSort("outflow")} onSort={() => nodeSort.onSort("outflow")} />
+                  <th scope="col" className={HEADER_CELL}>Account id</th>
+                </tr>
+              </thead>
+              <tbody>
+                {nodeRows.map(({ node, category, inflow, outflow }) => (
+                  <SelectableRow
+                    key={node.id}
+                    id={node.id}
+                    selected={effectiveSelectedId === node.id}
+                    onSelect={effectiveOnSelect}
+                  >
+                    <td className="px-3 py-2 text-zinc-200">{resolveLabel(node.id)}</td>
+                    <td className="px-3 py-2 text-zinc-400">{category || "—"}</td>
+                    <td className="px-3 py-2 font-mono text-zinc-300">{formatExactNumber(inflow)}</td>
+                    <td className="px-3 py-2 font-mono text-zinc-300">{formatExactNumber(outflow)}</td>
+                    <td className="px-3 py-2 font-mono text-xs text-zinc-500">{truncateAddress(node.id)}</td>
+                  </SelectableRow>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       {showNodes && nodes.length === 0 && (
         <div

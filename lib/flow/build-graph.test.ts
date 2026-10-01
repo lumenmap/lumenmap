@@ -1,1 +1,86 @@
-aW1wb3J0IHsgZGVzY3JpYmUsIGV4cGVjdCwgaXQgfSBmcm9tICJ2aXRlc3QiOwoKaW1wb3J0IHsgYnVpbGRGbG93R3JhcGggfSBmcm9tICJAL2xpYi9mbG93L2J1aWxkLWdyYXBoIjsKaW1wb3J0IHR5cGUgeyBGbG93RWRnZVJvdyB9IGZyb20gIkAvbGliL2Zsb3cvdHlwZXMiOwppbXBvcnQgewogIEZJWFJVUkVfRkxPV19FREdFX1JPV1MsCiAgYnVpbGRGaXh0dXJlRmxvd0dyYXBoLAp9IGZyb20gIkAvbGliL2ZpeHR1cmVzL2Zsb3ctZ3JhcGgiOwoKY29uc3QgQUNDT1VOVF9BID0gIkdBNVpTRUpZQjM3SlJDNUFWQ0lBNU1PUDRSR0hUTTMzNVhLS1gzSUhPSkFQUDVSRTM0SzRLWlZOIjsKY29uc3QgQUNDT1VOVF9CID0gIkdBQVpJNFRDUjNUWTVPSkhDVEpDMkE0UVNZNkNKV0pINUlBSlRHS0lOMkVSN0xCTktOTFhMVENWIjsKY29uc3QgQ09OVFJBQ1RfQSA9ICJDQTRIRVFUTDJXUEVVWUtZS0NET0hDRE5JVjRRSE5KN0VMNEo0TlE2VkFEUDdTWUhWUllaN0FXMiI7CmNvbnN0IENPTlRSQUNUX0IgPSAiQ0EyVFpJQjU2S1lLRDQ2RjdJRkJGNlhQTzVURE5LNk4yVTZCUlRHWjVBRjRXVVNCTjZCS1pNR0YiOwoKZGVzY3JpYmUoImJ1aWxkRmxvd0dyYXBoIiwgKCkgPT4gewogIGl0KCJkZWR1cGVzIG5vZGVzIGJ5IGlkIGFjcm9zcyByb3dzIiwgKCkgPT4gewogICAgY29uc3Qgcm93czogRmxvd0VkZ2VSb3dbXSA9IFsKICAgICAgeyBzb3VyY2VfaWQ6IEFDQ09VTlRfQSwgdGFyZ2V0X2lkOiBDT05UUkFDVF9BLCBvcF9jb3VudDogMTAgfSwKICAgICAgeyBzb3VyY2VfaWQ6IEFDQ09VTlRfQSwgdGFyZ2V0X2lkOiBDT05UUkFDVF9CLCБvcF9jb3VudDogNSB9LAogICAgXTsKICAgIGNvbnN0IGdyYXBoID0gYnVpbGRGbG93R3JhcGgocm93cyk7CiAgICBjb25zdCBpZHMgPSBncmFwaC5ub2Rlcy5tYXAoKG4pID0+IG4uaWQpLnNvcnQoKTsKICAgIGV4cGVjdChpZHMpLnRvRXF1YWwoW0FDQ09VTlRfQSwgQ09OVFJBQ1RfQSwgQ09OVFJBQ1RfQl0uc29ydCgpKTsKICAgIGV4cGVjdChncmFwaC5ub2Rlcy5sZW5ndGgpLnRvQmVHcmVhdGVyT3JFcXVhbCgzKTsKICB9KTsKCiAgaXQoImFnZ3JlZ2F0ZXMgcGFyYWxsZWwgZWRnZXMgYnkgaWQgd2l0aCBzdW1tZWQgbWV0cmljcyIsICgpID0+IHsKICAgIGNvbnN0IHJvd3M6IEZsb3dFZGdlUm93W10gPSBbCiAgICAgIHsKICAgICAgICBzb3VyY2VfaWQ6IEFDQ09VTlRfQSwKICAgICAgICB0YXJnZXRfaWQ6IENPTlRSQUNUX0EsCiAgICAgICAgb3BfY291bnQ6IDEwLAogICAgICAgIHR4bl9jb3VudDogNCwKICAgICAgICB4bG1fdm9sdW1lOiAxMDAwLAogICAgICAgIGFzc2V0X2tleXM6IFsieGxtOm5hdGl2ZSJdLAogICAgICB9LAogICAgICB7CiAgICAgICAgc291cmNlX2lkOiBBQ0NPVU5UX0EsCiAgICAgICAgdGFyZ2V0X2lkOiBDT05UUkFDVF9BLAogICAgICAgIG9wX2NvdW50OiA1LAogICAgICAgIHR4bl9jb3VudDogMiwKICAgICAgICB4bG1fdm9sdW1lOiA1MDAsCiAgICAgICAgYXNzZXRfa2V5czogWyJ1c2RjOmlzc3VlciJdLAogICAgICB9LAogICAgXTsKICAgIGNvbnN0IGdyYXBoID0gYnVpbGRGbG93R3JhcGgocm93cyk7CiAgICBleHBlY3QoZ3JhcGguZWRnZXMpLnRvSGF2ZUxlbmd0aCgxKTsKICAgIGNvbnN0IGVkZ2UgPSBncmFwaC5lZGdlc1swXTsKICAgIGV4cGVjdChlZGdlLnNvdXJjZSkudG9CZShBQ0NPVU5UX0EpOwogICAgZXhwZWN0KGVkZ2UudGFyZ2V0KS50b0JlKENPTlRSQUNUX0EpOwogICAgZXhwZWN0KGVkZ2UubWV0cmljcy5vcENvdW50KS50b0JlKDE1KTsKICAgIGV4cGVjdChlZGdlLm1ldHJpY3MudHhuQ291bnQpLnRvQmUoNik7CiAgICBleHBlY3QoZWRnZS5tZXRyaWNzLnhsbVZvbHVtZSkudG9CZSgxNTAwKTsKICAgIGV4cGVjdChlZGdlLmFzc2V0S2V5cykudG9FcXVhbChbInVzZGM6aXNzdWVyIiwgInhsbTpuYXRpdmUiXSk7CiAgfSk7CgogIGl0KCJhZ2dyZWdhdGVzIG5vZGUgbWV0cmljcyBmcm9tIGluYm91bmQgYW5kIG91dGJvdW5kIGVkZ2VzIiwgKCkgPT4gewogICAgY29uc3Qgcm93czogRmxvd0VkZ2VSb3dbXSA9IFsKICAgICAgeyBzb3VyY2VfaWQ6IEFDQ09VTlRfQSwgdGFyZ2V0X2lkOiBDT05UUkFDVF9BLCBvcF9jb3VudDogMTAgfSwKICAgICAgeyBzb3VyY2VfaWQ6IENPTlRSQUNUX0EsIHRhcmdldF9pZDogQUNDT1VOVF9CLCБvcF9jb3VudDogNyB9LAogICAgXTsKICAgIGNvbnN0IGdyYXBoID0gYnVpbGRGbG93R3JhcGgocm93cyk7CiAgICBjb25zdCBjb250cmFjdCA9IGdyYXBoLm5vZGVzLmZpbmQoKG4pID0+IG4uaWQgPT09IENPTlRSQUNUX0EpOwogICAgZXhwZWN0KGNvbnRyYWN0Py5tZXRyaWNzLm9wQ291bnQpLnRvQmUoMTcpOwogICAgZXhwZWN0KGNvbnRyYWN0Py5raW5kKS50b0JlKCJjb250cmFjdCIpOwogIH0pOwoKICBpdCgicmVzcGVjdHMgbGFiZWwgYW5kIGtpbmQgb3ZlcnJpZGVzIiwgKCkgPT4gewogICAgY29uc3Qgcm93czogRmxvd0VkZ2VSb3dbXSA9IFsKICAgICAgeyBzb3VyY2VfaWQ6IEFDQ09VTlRfQSwgdGFyZ2V0X2lkOiBDT05UUkFDVF9BLCBvcF9jb3VudDogMSB9LAogICAgXTsKICAgIGNvbnN0IGdyYXBoID0gYnVpbGRGbG93R3JhcGgocm93cywgewogICAgICBsYWJlbHM6IHsgW0FDQ09VTlRfQV06ICJBY2NvdW50IEEiIH0sCiAgICAgIGtpbmRzOiB7IFtBQ0NPVU5UX0FdOiAicHJvdG9jb2wiIH0sCiAgICB9KTsKICAgIGNvbnN0IG5vZGUgPSBncmFwaC5ub2Rlcy5maW5kKChuKSA9PiBuLmlkID09PSBBQ0NPVU5UX0EpOwogICAgZXhwZWN0KG5vZGUpLnRvTWF0Y2hPYmplY3QoeyBsYWJlbDogIkFjY291bnQgQSIsIGtpbmQ6ICJwcm90b2NvbCIgfSk7CiAgfSk7CgogIGl0KCJsb2FkcyB0aGUgZml4dHVyZSBkYXRhc2V0IHdpdGhvdXQgY3JlZGVudGlhbHMiLCAoKSA9PiB7CiAgICBjb25zdCBncmFwaCA9IGJ1aWxkRml4dHVyZUZsb3dHcmFwaCgpOwogICAgZXhwZWN0KGdyYXBoLm5vZGVzLmxlbmd0aCkudG9CZUdyZWF0ZXJUaGFuKDApOwogICAgZXhwZWN0KGdyYXBoLmVkZ2VzLmxlbmd0aCkudG9CZUdyZWF0ZXJUaGFuKDApOwogICAgZXhwZWN0KGdyYXBoLmVkZ2VzLmxlbmd0aCkudG9CZUxlc3NUaGFuT3JFcXVhbChGSVhUVVJFX0ZMT1dfRURHRV9ST1dTLmxlbmd0aCk7CiAgfSk7Cn0pOwo=
+import { describe, expect, it } from "vitest";
+
+import { buildFlowGraph } from "@/lib/flow/build-graph";
+import type { FlowEdgeRow } from "@/lib/flow/types";
+import {
+  FIXTURE_FLOW_EDGE_ROWS,
+  buildFixtureFlowGraph,
+} from "@/lib/fixtures/flow-graph";
+
+const ACCOUNT_A = "GA5ZSEJYB37JRC5AVCIA5MOP4RGHTM335XKKX3IHOJAPP5RE34K4KZVN";
+const ACCOUNT_B = "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNKNLXLTCV";
+const CONTRACT_A = "CA4HEQTL2WPEUYKYKCDOHCDNIV4QHNJ7EL4J4NQ6VADP7SYHVRYZ7AW2";
+const CONTRACT_B = "CA2TZIB56KYKD46F7IFBF6XPO5TDNK6N2U6BRTGZ5AF4WUSBN6BKZMGF";
+
+describe("buildFlowGraph", () => {
+  it("dedupes nodes by id across rows", () => {
+    const rows: FlowEdgeRow[] = [
+      { source_id: ACCOUNT_A, target_id: CONTRACT_A, op_count: 10 },
+      { source_id: ACCOUNT_A, target_id: CONTRACT_B, op_count: 5 },
+    ];
+    const graph = buildFlowGraph(rows);
+    const ids = graph.nodes.map((n) => n.id).sort();
+    expect(ids).toEqual([ACCOUNT_A, CONTRACT_A, CONTRACT_B].sort());
+    expect(graph.nodes.length).toBeGreaterOrEqual(3);
+  });
+
+  it("aggregates parallel edges by id with summed metrics", () => {
+    const rows: FlowEdgeRow[] = [
+      {
+        source_id: ACCOUNT_A,
+        target_id: CONTRACT_A,
+        op_count: 10,
+        txn_count: 4,
+        xlm_volume: 1000,
+        asset_keys: ["xlm:native"],
+      },
+      {
+        source_id: ACCOUNT_A,
+        target_id: CONTRACT_A,
+        op_count: 5,
+        txn_count: 2,
+        xlm_volume: 500,
+        asset_keys: ["usdc:issuer"],
+      },
+    ];
+    const graph = buildFlowGraph(rows);
+    expect(graph.edges).toHaveLength(1);
+    const edge = graph.edges[0];
+    expect(edge.source).toBe(ACCOUNT_A);
+    expect(edge.target).toBe(CONTRACT_A);
+    expect(edge.metrics.opCount).toBe(15);
+    expect(edge.metrics.txnCount).toBe(6);
+    expect(edge.metrics.xlmVolume).toBe(1500);
+    expect(edge.assetKeys).toEqual(["usdc:issuer", "xlm:native"]);
+  });
+
+  it("aggregates node metrics from inbound and outbound edges", () => {
+    const rows: FlowEdgeRow[] = [
+      { source_id: ACCOUNT_A, target_id: CONTRACT_A, op_count: 10 },
+      { source_id: CONTRACT_A, target_id: ACCOUNT_B, op_count: 7 },
+    ];
+    const graph = buildFlowGraph(rows);
+    const contract = graph.nodes.find((n) => n.id === CONTRACT_A);
+    expect(contract?.metrics.opCount).toBe(17);
+    expect(contract?.kind).toBe("contract");
+  });
+
+  it("respects label and kind overrides", () => {
+    const rows: FlowEdgeRow[] = [
+      { source_id: ACCOUNT_A, target_id: CONTRACT_A, op_count: 1 },
+    ];
+    const graph = buildFlowGraph(rows, {
+      labels: { [ACCOUNT_A]: "Account A" },
+      kinds: { [ACCOUNT_A]: "protocol" },
+    });
+    const node = graph.nodes.find((n) => n.id === ACCOUNT_A);
+    expect(node).toMatchObject({ label: "Account A", kind: "protocol" });
+  });
+
+  it("loads the fixture dataset without credentials", () => {
+    const graph = buildFixtureFlowGraph();
+    expect(graph.nodes.length).toBeGreaterThan(0);
+    expect(graph.edges.length).toBeGreaterThan(0);
+    expect(graph.edges.length).toBeLessThanOrEqual(FIXTURE_FLOW_EDGE_ROWS.length);
+  });
+});

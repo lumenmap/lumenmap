@@ -30,7 +30,7 @@ for (const vp of VIEWPORTS) {
   test.describe(`Flow visual baseline @L ${vp.name} (${vp.width}px)`, () => {
     test.use({ viewport: { width: vp.width, height: vp.height } });
 
-    test(`flow view matches baseline (${vp.name})`, async { context, page }) => {
+    test(`flow view matches baseline (${vp.name})`, async ({ context, page }) => {
       // Network isolation: only local requests are allowed.
       await context.route("**/*", async (route) => {
         const url = route.request().url();
