@@ -42,6 +42,7 @@ interface BuildTreemapInput {
   transactionCategories?: TransactionCategoryRow[];
   contracts: ContractRow[];
   accounts: AccountRow[];
+  destinationAccounts?: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
   sorobanFunctionContracts: SorobanFunctionContractRow[];
   usdcCategories?: UsdcCategoryRow[];
@@ -733,6 +734,9 @@ export function buildAllTreemaps(
 ): ActivityTreemaps {
   const eventOperations = buildEventTypeTreemap(input, "ops");
   const actorOperations = buildActorTreemap(input, "ops");
+  const actorDestOperations = input.destinationAccounts
+    ? buildActorTreemap({ ...input, accounts: input.destinationAccounts }, "ops")
+    : { name: "Network Activity", value: 0, meta: { type: "root", opCount: 0 }, children: [] };
   const eventTransaction = buildTransactionTreemap(input);
   const actorTransaction: TreemapNode = {
     name: "Network Activity",
@@ -749,8 +753,12 @@ export function buildAllTreemaps(
   const actorXlmVolume = serializeAssetValues(
     buildActorTreemap(input, "xlm_volume"),
   );
+  const actorDestXlmVolume = input.destinationAccounts
+    ? serializeAssetValues(buildActorTreemap({ ...input, accounts: input.destinationAccounts }, "xlm_volume"))
+    : serializeAssetValues({ name: "Network Activity", value: 0, meta: { type: "root", xlmVolume: 0 }, children: [] });
   const eventUsdcVolume = serializeAssetValues(buildUsdcEventTypeTreemap(input));
   const actorUsdcVolume = serializeAssetValues(buildUsdcActorTreemap(input));
+  const actorDestUsdcVolume = serializeAssetValues({ name: "Network USDC Activity", value: 0, meta: { type: "root", usdcVolume: 0 }, children: [] });
 
   return {
     events: {
@@ -763,12 +771,22 @@ export function buildAllTreemaps(
       metric: "operation_count",
       unit: OPERATION_COUNT_UNIT,
     },
+    actors_dest: {
+      ...actorDestOperations,
+      metric: "operation_count",
+      unit: OPERATION_COUNT_UNIT,
+    },
     txn_events: {
       ...eventTransaction,
       metric: "transaction_count",
       unit: TRANSACTION_COUNT_UNIT,
     },
     txn_actors: {
+      ...actorTransaction,
+      metric: "transaction_count",
+      unit: TRANSACTION_COUNT_UNIT,
+    },
+    txn_actors_dest: {
       ...actorTransaction,
       metric: "transaction_count",
       unit: TRANSACTION_COUNT_UNIT,
@@ -783,6 +801,11 @@ export function buildAllTreemaps(
       metric: "asset_volume",
       unit: XLM_ASSET_UNIT,
     },
+    xlm_actors_dest: {
+      ...actorDestXlmVolume,
+      metric: "asset_volume",
+      unit: XLM_ASSET_UNIT,
+    },
     usdc_events: {
       ...eventUsdcVolume,
       metric: "asset_volume",
@@ -790,6 +813,11 @@ export function buildAllTreemaps(
     },
     usdc_actors: {
       ...actorUsdcVolume,
+      metric: "asset_volume",
+      unit: USDC_ASSET_UNIT,
+    },
+    usdc_actors_dest: {
+      ...actorDestUsdcVolume,
       metric: "asset_volume",
       unit: USDC_ASSET_UNIT,
     },

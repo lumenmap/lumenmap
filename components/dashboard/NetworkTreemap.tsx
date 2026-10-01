@@ -129,7 +129,7 @@ export function NetworkTreemap() {
         ? data.treemaps[`usdc_${treemapView}` as keyof typeof data.treemaps]
         : metric === "transactions"
           ? data.treemaps[`txn_${treemapView}` as keyof typeof data.treemaps]
-          : (treemapView === "flow" ? undefined : data.treemaps[treemapView as "events" | "actors"])
+          : (treemapView === "flow" ? undefined : data.treemaps[treemapView as "events" | "actors" | "actors_dest"])
     : null;
   const activeTreemap = activePayload ? toChartNode(activePayload) : null;
   const isEmpty =

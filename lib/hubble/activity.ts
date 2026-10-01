@@ -209,6 +209,7 @@ async function fetchFromHubble(
     transactionCategoryRows,
     contractRows,
     accountRows,
+    destinationAccountRows,
     sorobanFunctionRows,
     sorobanFunctionContractRows,
     activeSourceAccountRows,
@@ -255,6 +256,15 @@ async function fetchFromHubble(
       {
         ...params,
         types: getAccountQueryTypes(),
+      },
+      correlationId,
+    ),
+    runQuery<Record<string, unknown>>(
+      "destinationAccount",
+      destinationAccountQuery,
+      {
+        ...params,
+        types: getDestinationQueryTypes(),
       },
       correlationId,
     ),
@@ -344,6 +354,7 @@ async function fetchFromHubble(
     transactionCategories: mapTransactionCategoryRows(transactionCategoryRows),
     contracts: mapContractRows(contractRows),
     accounts: mapAccountRows(accountRows),
+    destinationAccounts: mapAccountRows(destinationAccountRows),
     sorobanFunctions: mapSorobanFunctionRows(sorobanFunctionRows),
     sorobanFunctionContracts: mapSorobanFunctionContractRows(
       sorobanFunctionContractRows,
@@ -722,6 +733,7 @@ export async function getActivityData(
       transactionCategories: raw.transactionCategories,
       contracts: raw.contracts,
       accounts: raw.accounts,
+      destinationAccounts: raw.destinationAccounts,
       sorobanFunctions: raw.sorobanFunctions,
       sorobanFunctionContracts: raw.sorobanFunctionContracts,
       usdcPaymentVolume: raw.usdcPaymentVolume,

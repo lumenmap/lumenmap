@@ -207,7 +207,8 @@ documents the flattened columns and transaction success flag.
 | --- | --- | --- |
 | `kpis.totalOps` / “Total Operations” | Operations | All Hubble operation rows in range. |
 | `categories[].op_count` and operation-type treemap values | Operations | Counted by `type_string`. |
-| `accounts[].op_count` / account treemap values | Operations attributed to `op_source_account` | Top-70-per-type, selected operation types only; not active accounts and not monetary volume. |
+| `accounts[].op_count` / source treemap values | Operations attributed to `op_source_account` | Top-70-per-type, selected operation types only; not active accounts and not monetary volume. |
+| `destinationAccounts[].op_count` / receiver treemap values | Operations attributed to destination fields | Top-70-per-type, payment-style types only; extracts `to`, `account`, or `into` fields based on operation type. |
 | `contracts[].op_count` / contract treemap values | `SUM(txn_count)` per contract | Legacy field name only; this is transaction activity, not operation count. |
 | `txn_events` / `txn_actors` treemaps and the Transaction Count metric | Transactions | `COUNT(DISTINCT transaction_hash)` per type; never labelled operations. |
 | Time-series chart and `GET /api/v1/timeseries` buckets | Operations and Transactions | UTC buckets (`hour` for `1d`, otherwise `day`) with partial-bucket flags and series totals. |

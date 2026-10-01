@@ -421,12 +421,16 @@ export interface TimeseriesRawRow {
 export interface ActivityTreemaps {
   events: TreemapPayload<"operation_count">;
   actors: TreemapPayload<"operation_count">;
+  actors_dest: TreemapPayload<"operation_count">;
   txn_events: TreemapPayload<"transaction_count">;
   txn_actors: TreemapPayload<"transaction_count">;
+  txn_actors_dest: TreemapPayload<"transaction_count">;
   xlm_events: TreemapPayload<"asset_volume">;
   xlm_actors: TreemapPayload<"asset_volume">;
+  xlm_actors_dest: TreemapPayload<"asset_volume">;
   usdc_events: TreemapPayload<"asset_volume">;
   usdc_actors: TreemapPayload<"asset_volume">;
+  usdc_actors_dest: TreemapPayload<"asset_volume">;
   protocol_tvl: TreemapPayload<"tvl">;
 }
 
@@ -444,6 +448,7 @@ export interface RawResearchRows {
   transactionCategories: TransactionCategoryRow[];
   contracts: ContractRow[];
   accounts: AccountRow[];
+  destinationAccounts: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
   sorobanFunctionContracts: SorobanFunctionContractRow[];
   usdcPaymentVolume: UsdcPaymentVolume;

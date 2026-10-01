@@ -6,7 +6,9 @@ import { useDashboard } from "@/components/dashboard/DashboardProvider";
 export function TreemapMetricSelector() {
   const { metric, setMetric, data, treemapView } = useDashboard();
 
-  const activeTxnTreemap = treemapView === "events" ? data?.treemaps.txn_events : data?.treemaps.txn_actors;
+  const activeTxnTreemap = treemapView === "events" 
+    ? data?.treemaps.txn_events 
+    : data?.treemaps[`txn_${treemapView}` as keyof typeof data.treemaps];
   const transactionsAvailable = !!data && (activeTxnTreemap?.children?.length ?? 0) > 0;
 
   const description =

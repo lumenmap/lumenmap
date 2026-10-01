@@ -2,6 +2,7 @@ import {
   accountCounterpartyQuery,
   accountMetadataQuery,
   accountQuery,
+  destinationAccountQuery,
   activeContractCountQuery,
   activeDestinationCountQuery,
   activeSourceAccountsQuery,
@@ -54,6 +55,7 @@ export {
   accountCounterpartyQuery,
   accountMetadataQuery,
   accountQuery,
+  destinationAccountQuery,
   activeContractCountQuery,
   activeDestinationCountQuery,
   activeSourceAccountsQuery,
@@ -160,6 +162,7 @@ export type RawQueryResults = {
   transactionCategories: TransactionCategoryRow[];
   contracts: ContractRow[];
   accounts: AccountRow[];
+  destinationAccounts: AccountRow[];
   sorobanFunctions: SorobanFunctionRow[];
   sorobanFunctionContracts: SorobanFunctionContractRow[];
   activeSourceAccounts: ActiveSourceAccountsRow[];

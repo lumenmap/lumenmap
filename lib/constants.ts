@@ -79,8 +79,13 @@ export const TREEMAP_VIEWS = [
   },
   {
     id: "actors",
-    label: "Accounts & Contracts",
-    description: "Drill into top wallets, anchors, and Soroban contracts.",
+    label: "Top Senders",
+    description: "Drill into top wallets, anchors, and Soroban contracts by source account.",
+  },
+  {
+    id: "actors_dest",
+    label: "Top Receivers",
+    description: "Drill into top receiving accounts for payment and funding operations.",
   },
   {
     id: "flow",
