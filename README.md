@@ -756,3 +756,5 @@ Maintainers can trigger the smoke check manually via GitHub Actions (`workflow_d
 
 ```bash
 node scripts/smoke-check.mjs [https://your-deployment-url.vercel.app](https://your-deployment-url.vercel.app)
+
+<!-- Updated documentation references -->
