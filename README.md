@@ -704,6 +704,32 @@ production, so public access requires the environment flag.
 
 ---
 
+## Embeddable widgets
+
+Read-only KPI and treemap widgets can be framed from an allowlisted parent.
+Set `EMBED_FRAME_ANCESTORS` to a comma-separated origin list. When the variable
+is unset, local harnesses are allowed. A configured list blocks unknown parents.
+
+```html
+<iframe
+  title="LumenMap KPI"
+  src="https://lumenmap.example/embed/kpi?period=7d&metric=ops"
+  width="640"
+  height="180"
+  style="border:0"
+></iframe>
+<iframe
+  title="LumenMap treemap"
+  src="https://lumenmap.example/embed/treemap?period=30d&metric=xlm_volume"
+  width="640"
+  height="280"
+  style="border:0"
+></iframe>
+```
+
+Local fixture harness: `/embed-harness.html`. Widgets follow `prefers-color-scheme`
+and do not include watchlists, exports, or the Flow canvas.
+
 ## Data notes
 
 Metric definitions, current-period coverage, Hubble freshness limits, source fields, and top-N qualifications are documented in the [versioned metric methodology](docs/metric-methodology.md). In particular, Hubble refreshes in intraday batches, current periods are provisional, and API responses are cached at the edge: 60s for periods that are still accumulating and 900s for closed periods (errors are never cached).

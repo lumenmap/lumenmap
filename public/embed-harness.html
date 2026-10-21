@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LumenMap embed harness</title>
+    <style>
+      body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 24px; }
+      iframe { width: 100%; border: 1px solid #ddd; border-radius: 8px; }
+      .kpi { height: 180px; }
+      .treemap { height: 280px; }
+    </style>
+  </head>
+  <body>
+    <h1>Embed harness</h1>
+    <p>Fixture mode. No watchlist, export, or wallet controls.</p>
+    <iframe class="kpi" title="KPI strip" src="/embed/kpi?period=7d&metric=ops"></iframe>
+    <iframe class="treemap" title="Treemap" src="/embed/treemap?period=7d&metric=ops"></iframe>
+  </body>
+</html>
