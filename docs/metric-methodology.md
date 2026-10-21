@@ -161,6 +161,22 @@ particular, summing operation-type counts must never be labelled “transactions
 | **Excludes** | Null/empty IDs and contracts absent from this aggregate. Treemap contract children also exclude any qualifying ID outside the query's top 200 groups because `contractQuery` applies `LIMIT 200`. |
 | **Limitations** | Treemap contract children are a **top-200 observed** view, not the network-wide universe, and cannot be compared directly with operation counts; `txn_count` must not be labelled operation count. The live KPI is the uncapped distinct count and may therefore exceed the contracts visible in the treemap. Values may differ from contracts visible in operation-level Soroban data because sources and time grains differ. Hubble freshness, partial periods, cache, and inclusive boundaries apply. |
 
+### Soroban fees and resources
+
+**Methodology ID:** `soroban-fees` · **Version:** `1.0.0`
+
+| Property | Canonical definition |
+| --- | --- |
+| **Unit** | Stroops. One XLM is 10,000,000 stroops. The average is stroops of non-refundable resource fee per invoke. |
+| **Aggregation** | Total fees are `SUM(total_fee_charged)`. Average resources per invoke are `SUM(total_non_refundable_resource_fee) / SUM(txn_count)`, and the average is null when the invoke sum is zero. Top contracts are `GROUP BY contract_id` ordered by charged fee, limited to 8. |
+| **Time basis** | Half-open predicate `@start <= hour_agg AND hour_agg < @end` on the hourly aggregate. Period bounds match the dashboard period control. |
+| **Source** | `crypto-stellar.crypto_stellar_dbt.hourly_soroban_fee_agg_contract`. Columns: `hour_agg`, `contract_id`, `txn_count`, `total_fee_charged`, `total_non_refundable_resource_fee`. SQL: `sorobanFeeSummaryQuery` and `sorobanFeeContractQuery` in `lib/hubble/shared-queries.mjs`. The public gold dictionary documents the same column names on the hourly Soroban fee aggregate. |
+| **Includes** | Hourly contract rows inside the period. Fees actually charged. The non-refundable resource fee, which covers CPU instructions, read bytes, write bytes, and bandwidth and is charged on success and failure. |
+| **Excludes** | Raw CPU instruction counts, read-byte counts, and write-byte counts (not present on this aggregate). Refund (`total_resource_fee_refund`) and rent (`total_rent_fee`) detail. Inclusion-fee bids, fee efficiency, and per-ledger fee-market simulation. Classic fees. Leaderboard rows with a null or empty `contract_id`. |
+| **Known gaps** | LumenMap cannot treat the gold dictionary as proof that `crypto_stellar_dbt` has already published every optional fee column. When a referenced column is missing, `GET /api/soroban-fees` returns HTTP 200 with `status: "unavailable"` and `reason: "schema_drift"` instead of HTTP 500, and the activity dashboard keeps loading. `txn_count` counts transactions attributed to the contract, not host-function operations. The pre-execution `total_resource_fee` budget is not the numerator; unused budget that is later refunded is intentionally omitted. Network-wide Soroban fees are larger than this panel because rows without a resolvable contract are excluded upstream. |
+| **Fixture sample** | With `LUMENMAP_DATA_SOURCE=fixture`, the panel always renders 1,250,000,000 stroops of fees, 50,000 invokes, and 18,000 stroops of non-refundable resource fee per invoke. The sample contracts are 640,000,000 / 22,000 / 396,000,000, 410,000,000 / 18,000 / 324,000,000, and 200,000,000 / 10,000 / 180,000,000 (fee stroops / invokes / resource stroops). Those numbers are defined in `lib/soroban-fees/fixture.ts` and are not live rankings. |
+| **Limitations** | Subject to Hubble freshness and partial periods. Null numeric cells map to zero. A live query failure of any other kind returns `reason: "query_failed"` with the same non-500 contract. |
+
 ## Payment-flow graph
 
 **Anchors:** `/methodology#flow`, `#flow-nodes`, `#flow-edges`, `#flow-sampling`,

@@ -57,9 +57,11 @@ queries registered in `queryRegistry` are listed below.
 
 | Column | Type used as | Read by | Notes |
 | --- | --- | --- | --- |
-| `hour_agg` | TIMESTAMP | `contractQuery`, `activeContractCountQuery` | ⚠️ Time column is `hour_agg`, not `closed_at`. |
-| `contract_id` | STRING | `contractQuery`, `activeContractCountQuery` | Null/empty filtered identically in both, so the leaderboard and the uncapped count stay consistent. |
-| `txn_count` | INTEGER | `contractQuery` | Summed into `op_count`. Pre-aggregated, so it is an operation count per hour-bucket. |
+| `hour_agg` | TIMESTAMP | `contractQuery`, `activeContractCountQuery`, `sorobanFeeSummaryQuery`, `sorobanFeeContractQuery` | ⚠️ Time column is `hour_agg`, not `closed_at`. Fee queries use the same half-open predicate. |
+| `contract_id` | STRING | `contractQuery`, `activeContractCountQuery`, `sorobanFeeContractQuery` | Null/empty filtered so the leaderboard, the uncapped count, and the fee ranking stay consistent. |
+| `txn_count` | INTEGER | `contractQuery`, `sorobanFeeSummaryQuery`, `sorobanFeeContractQuery` | Summed into `op_count` by the leaderboard. The fee panel uses the same sum as an invoke count. Pre-aggregated per hour-bucket. The gold dictionary describes it as a transaction count, not an operation count. |
+| `total_fee_charged` | INTEGER | `sorobanFeeSummaryQuery`, `sorobanFeeContractQuery` | Optional. Sum of `fee_charged` in stroops. If the column is absent the fee panel soft-fails; `contractQuery` does not read it. |
+| `total_non_refundable_resource_fee` | INTEGER | `sorobanFeeSummaryQuery`, `sorobanFeeContractQuery` | Optional. Stroop charge covering CPU, read bytes, write bytes, and bandwidth. Used as the resource numerator. Absence soft-fails the fee panel only. |
 
 ## `accounts_current`
 
@@ -93,6 +95,8 @@ Every entry of `queryRegistry` with the columns it would fail on if removed.
 | `usdcCategoryQuery` | `enriched_history_operations` | `type_string`, `asset_code`, `asset_issuer`, `amount`, `dest_*` (3), `source_*` (3), `closed_at` | `start`, `end`, `assets` |
 | `usdcAccountQuery` | `enriched_history_operations` | `op_source_account`, `type_string`, `asset_*`, `amount`, `dest_*` (3), `source_*` (3), `closed_at` | `start`, `end`, `assets` |
 | `heatmapQuery` | `enriched_history_operations` | `closed_at`, `transaction_id` | `start`, `end` |
+| `sorobanFeeSummaryQuery` | `hourly_soroban_fee_agg_contract` | `hour_agg`, `txn_count`, `total_fee_charged`, `total_non_refundable_resource_fee` | `start`, `end` |
+| `sorobanFeeContractQuery` | `hourly_soroban_fee_agg_contract` | `hour_agg`, `contract_id`, `txn_count`, `total_fee_charged`, `total_non_refundable_resource_fee` | `start`, `end` |
 
 `queryRegistry` is asserted to stay in sync with the exported constants by
 `npm run test:hubble:registry`, so a newly added query that is not registered
@@ -123,6 +127,12 @@ These have bitten (or are one rename away from biting) the project:
 5. **Numeric casts** — XLM volume reads `amount` as `FLOAT64`, USDC reads it as
    `NUMERIC`, and the asset rollup emits `amount` as `STRING`. Changing a cast
    changes reported totals without any error.
+6. **Optional Soroban fee columns** — `total_fee_charged` and
+   `total_non_refundable_resource_fee` are documented on the public gold
+   hourly Soroban fee aggregate, but they are not required by `contractQuery`.
+   `sorobanFeeSummaryQuery` and `sorobanFeeContractQuery` are the only readers.
+   A missing name must soft-fail `GET /api/soroban-fees` (`status: unavailable`,
+   `reason: schema_drift`) and must not 500 the activity response.
 
 ---
 

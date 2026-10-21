@@ -14,6 +14,7 @@ The interactive copy lives at [`/methodology`](/methodology). Section anchors:
 | Active destination accounts | `#active-destination-accounts` |
 | Active contracts | `#active-contracts` |
 | Soroban share | `#soroban-share` |
+| Soroban fees and resources | `#soroban-fees` |
 | Top category | `#top-category` |
 | Time basis | `#time-basis` |
 | Hubble freshness | `#hubble-freshness` |

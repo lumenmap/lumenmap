@@ -14,6 +14,7 @@ export type MethodologySectionId =
   | "active-destination-accounts"
   | "active-contracts"
   | "soroban-share"
+  | "soroban-fees"
   | "top-category"
   | "time-basis"
   | "hubble-freshness";
@@ -193,6 +194,40 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     limitations: [
       "Category mapping is product-defined; raw Hubble types remain available in treemap drill-down.",
       "Undefined when total operations are zero.",
+    ],
+  },
+  {
+    id: "soroban-fees",
+    title: "Soroban fees and resources",
+    summary:
+      "Period totals of Soroban fees charged, average non-refundable resource fee per invoke, and the contracts with the highest charged fees. Fixture mode shows a fixed sample of 1,250,000,000 stroops across 50,000 invokes (18,000 stroops per invoke).",
+    unit: "stroops (integer fee units); average is stroops per invoke",
+    aggregation:
+      "SUM(total_fee_charged) for total fees. Average resources = SUM(total_non_refundable_resource_fee) / SUM(txn_count). Top contracts are the highest SUM(total_fee_charged) groups, capped at 8.",
+    timeBasis:
+      "Half-open hourly window on hour_agg: start <= hour_agg < end, using the same selected period bounds as the dashboard.",
+    source:
+      "`crypto-stellar.crypto_stellar_dbt.hourly_soroban_fee_agg_contract` columns `hour_agg`, `contract_id`, `txn_count`, `total_fee_charged`, and `total_non_refundable_resource_fee`. Implemented by `sorobanFeeSummaryQuery` and `sorobanFeeContractQuery`.",
+    inclusions: [
+      "Hourly rows whose hour_agg falls in the selected period",
+      "Charged fees (total_fee_charged) in stroops",
+      "Non-refundable resource fee as the resource numerator",
+      "Contract ids that are non-null and non-empty on the leaderboard",
+    ],
+    exclusions: [
+      "Raw CPU instruction, read-byte, and write-byte counters (not columns of this aggregate)",
+      "Refund and rent breakdowns",
+      "Per-ledger fee-market simulation",
+      "Classic (non-Soroban) fees",
+      "Rows with a null or empty contract id on the leaderboard",
+    ],
+    limitations: [
+      "The public gold dictionary documents these fee columns, but the dbt dataset used by LumenMap may lag that dictionary. A missing column returns status unavailable with reason schema_drift and does not fail the activity API.",
+      "txn_count is a transaction count on the hourly aggregate, not an operation count. The panel labels it as invokes.",
+      "Average resources are stroops of non-refundable resource fee per transaction. That charge covers CPU, reads, writes, and bandwidth, but it is not an instruction or byte count.",
+      "Contract totals are not network-wide: operations with no resolvable contract id are absent from this table, and the leaderboard is top 8 by fee.",
+      "Fixture mode ignores the selected period for the numbers and always renders the documented sample: 1,250,000,000 fee stroops, 50,000 invokes, 18,000 stroops of resource fee per invoke.",
+      "Hubble lag and partial periods apply. Null aggregate cells are treated as zero; an invoke count of zero leaves the average null.",
     ],
   },
   {

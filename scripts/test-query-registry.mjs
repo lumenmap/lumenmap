@@ -6,6 +6,8 @@ import {
   categoryQuery,
   transactionCategoryQuery,
   contractQuery,
+  destinationAccountQuery,
+  accountCounterpartyQuery,
   activeContractCountQuery,
   accountQuery,
   sorobanFunctionQuery,
@@ -21,6 +23,8 @@ import {
   paymentFlowEdgesQuery,
   flowEdgeQuery,
   heatmapQuery,
+  sorobanFeeSummaryQuery,
+  sorobanFeeContractQuery,
 } from "../lib/hubble/shared-queries.mjs";
 
 const queryMap = {
@@ -28,6 +32,8 @@ const queryMap = {
   categoryQuery,
   transactionCategoryQuery,
   contractQuery,
+  destinationAccountQuery,
+  accountCounterpartyQuery,
   activeContractCountQuery,
   accountQuery,
   sorobanFunctionQuery,
@@ -43,6 +49,8 @@ const queryMap = {
   paymentFlowEdgesQuery,
   flowEdgeQuery,
   heatmapQuery,
+  sorobanFeeSummaryQuery,
+  sorobanFeeContractQuery,
 };
 
 const registeredNames = new Set(queryRegistry.map((e) => e.name));

@@ -19,6 +19,7 @@ import { HourOfWeekHeatmap } from "@/components/dashboard/HourOfWeekHeatmap";
 
 import { TemporalPatternsDisclosure } from "@/components/dashboard/TemporalPatternsDisclosure";
 import { AssetVolumePanel } from "@/components/dashboard/AssetVolumePanel";
+import { SorobanFeePanel } from "@/components/dashboard/SorobanFeePanel";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { ComparisonPanel } from "@/components/dashboard/ComparisonPanel";
@@ -142,6 +143,11 @@ function DashboardContent() {
             id: "comparisons",
             label: "Comparisons",
             content: <ComparisonPanel />,
+          },
+          {
+            id: "soroban-fees",
+            label: "Soroban fees",
+            content: <SorobanFeePanel />,
           },
         ] as const}
         defaultTab="volume"
