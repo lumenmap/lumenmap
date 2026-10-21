@@ -285,6 +285,18 @@ Every soft failure is:
 
 Operators can alert on soft-failure rates per query name. A query with rising soft-failure rates signals a need for troubleshooting (e.g., BigQuery quota, schema change, or Hubble data lag).
 
+## KPI anomaly banners
+
+The dashboard compares the current period with the previous equal-length baseline for operations, active wallets, and Soroban share. A banner appears when either the absolute change or the percent change crosses the threshold in `lib/anomalies.ts`:
+
+| KPI | Absolute | Percent |
+| --- | --- | --- |
+| Operations | 10,000 | 25% |
+| Active wallets | 200 | 20% |
+| Soroban share | 8 points | 15% |
+
+Incomplete periods and a missing baseline produce no banner. `?anomaly=spike` and `?anomaly=quiet` force fixture states for tests.
+
 ### Version history
 
 - **2.0.0 (current):** Optional query soft-failure for activeDestinationCount, activeContractCount, and transactionCategory queries.
