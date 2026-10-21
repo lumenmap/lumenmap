@@ -24,6 +24,7 @@ import { SorobanFeePanel } from "@/components/dashboard/SorobanFeePanel";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { ComparisonPanel } from "@/components/dashboard/ComparisonPanel";
+import { RetentionCohortChart } from "@/components/dashboard/RetentionCohortChart";
 import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { SnapshotBanner } from "@/components/dashboard/SnapshotBanner";
 import { SnapshotShareControls } from "@/components/dashboard/SnapshotShareControls";
@@ -156,6 +157,11 @@ function DashboardContent() {
                 <HourOfWeekHeatmap />
               </div>
             ),
+          },
+          {
+            id: "retention",
+            label: "Retention",
+            content: <RetentionCohortChart />,
           },
           {
             id: "comparisons",

@@ -288,3 +288,17 @@ Operators can alert on soft-failure rates per query name. A query with rising so
 ### Version history
 
 - **2.0.0 (current):** Optional query soft-failure for activeDestinationCount, activeContractCount, and transactionCategory queries.
+
+## Returning-wallet cohorts
+
+Weekly cohorts answer whether wallets active in week W0 return in later weeks.
+Monthly cohorts are out of scope.
+
+Cost controls:
+
+- Window is capped at 8 weeks.
+- Each cohort keeps at most 5,000 distinct wallet ids (`COHORT_SAMPLE_CAP`).
+- A sampled cohort is labelled in the chart. Rates are computed on the sample, not the full population.
+- Fixture mode (`lib/fixtures/retention-cohorts.ts`) renders the chart without BigQuery.
+
+This is not an identity graph and does not attempt Sybil resistance.
