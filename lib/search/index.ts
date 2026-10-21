@@ -10,13 +10,3 @@ export {
   type SearchResult,
   type SearchResultType,
 } from "@/lib/search/types";
-export {
-  buildFlowGraph,
-  dedupeFlowNodes,
-  aggregateParallelEdges,
-  type FlowNode,
-  type FlowEdge,
-  type FlowGraphResponse,
-  type FlowEdgeRow,
-} from "@/lib/search/flow-graph";
-export { flowGraphFixture } from "@/lib/search/flow-fixture";

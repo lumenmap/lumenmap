@@ -8,26 +8,30 @@ import { buildEgoGraph } from "@/lib/flow-ego";
 /**
  * Flow ego section (issue #311).
  *
- * Renders only when `?view=flow` is active. The ego account comes from the
- * current search selection (`selectedNode`): selecting a fixture account
- * with Flow enabled opens its ego graph automatically — via mouse or
- * keyboard, since both flow through the same selection. With no account
- * selected, a prompt replaces the graph; treemap mode is never affected.
+ * Renders when the Flow feature flag is on and the chart view is Flow.
+ * The ego account comes from the watchlist (`egoAddress`) or the current
+ * selection. With no account selected, a prompt replaces the graph.
  *
  * Edge data has no live source yet (Flow MVP #287), so counterparties come
  * from an empty set until the activity API exposes per-account payments —
  * the populated path is covered by unit tests against fixture edges.
  */
 export function FlowEgoSection() {
-  const { flowView, selectedNode } = useDashboard();
+  const { chartView, flowViewEnabled, selectedNode, egoAddress } = useDashboard();
+  const flowActive = flowViewEnabled && chartView === "flow";
 
   const account = useMemo(() => {
-    if (!flowView) return null;
+    if (!flowActive) return null;
+    if (egoAddress) {
+      const label =
+        selectedNode?.meta?.id === egoAddress ? selectedNode.name : egoAddress;
+      return { id: egoAddress, label };
+    }
     if (!selectedNode?.meta?.id) return null;
     return { id: selectedNode.meta.id, label: selectedNode.name };
-  }, [flowView, selectedNode]);
+  }, [flowActive, egoAddress, selectedNode]);
 
-  if (!flowView) return null;
+  if (!flowActive) return null;
 
   if (!account) {
     return (

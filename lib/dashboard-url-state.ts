@@ -88,6 +88,7 @@ export type DashboardUrlState = {
    */
   chartView?: ChartViewId;
   pathSegments: string[];
+  searchQuery?: string;
   comparePeriod?: Period;
   network?: "mainnet" | "testnet";
   flowMode?: "graph" | "table";
@@ -149,6 +150,8 @@ export function writeDashboardUrlSearch(input: {
   network?: "mainnet" | "testnet";
   flowMode?: "graph" | "table" | null;
   egoAddress?: string | null;
+  chartView?: ChartViewId;
+  searchQuery?: string;
 }): string {
   const params = new URLSearchParams(
     (input.currentSearch ?? "").replace(/^\?/, ""),

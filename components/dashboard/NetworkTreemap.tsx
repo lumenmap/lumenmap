@@ -108,6 +108,8 @@ export function NetworkTreemap() {
   const [excludedCategories, setExcludedCategories] = useState<Set<string>>(
     new Set(),
   );
+  const isFlowView = flowViewEnabled && chartView === "flow";
+  const chartPanelId = "network-chart-panel";
 
   const toggleCategory = (key: string) => {
     setExcludedCategories((prev) => {

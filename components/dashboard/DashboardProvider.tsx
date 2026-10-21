@@ -55,6 +55,8 @@ interface DashboardContextValue {
   refetch: () => Promise<unknown>;
   selectedNode: SelectedNode | null;
   setSelectedNode: (node: SelectedNode | null) => void;
+  /** Open DetailPanel for a watched entity, and Flow ego when Flow is enabled. */
+  focusWatchedEntity: (node: SelectedNode) => void;
   activeLevelPath: TreemapNode[];
   setActiveLevelPath: (path: TreemapNode[]) => void;
   /** Active search focus used to open treemap context. */
@@ -165,6 +167,8 @@ export function DashboardProvider({
   const [comparePeriod, setComparePeriod] = useState<Period | null>(null);
   const [treemapView, setTreemapViewState] = useState<TreemapViewId>("events");
   const [chartView, setChartViewState] = useState<ChartViewId>("treemap");
+  const [visualization, setVisualization] = useState<"treemap" | "flow">("treemap");
+  const [searchQuery, setSearchQuery] = useState("");
   const [metric, setMetricState] = useState<DashboardMetricId>("ops");
   const [network, setNetworkState] =
     useState<import("@/lib/network").DashboardNetworkId>("mainnet");
@@ -311,6 +315,19 @@ export function DashboardProvider({
     [query.data],
   );
 
+  const focusWatchedEntity = useCallback(
+    (node: SelectedNode) => {
+      const address = node.meta?.id ?? null;
+      setSelectedNode(node);
+      if (flowViewEnabled && address) {
+        setChartViewState("flow");
+        setVisualization("flow");
+        setEgoAddress(address);
+      }
+    },
+    [flowViewEnabled],
+  );
+
   const value = useMemo(
     () => ({
       visualization,
@@ -340,6 +357,7 @@ export function DashboardProvider({
       refetch: query.refetch,
       selectedNode,
       setSelectedNode,
+      focusWatchedEntity,
       activeLevelPath,
       setActiveLevelPath,
       focusRequest,
@@ -376,6 +394,7 @@ export function DashboardProvider({
       query.error,
       query.refetch,
       selectedNode,
+      focusWatchedEntity,
       activeLevelPath,
       focusRequest,
       searchQuery,
