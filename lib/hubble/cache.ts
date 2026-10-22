@@ -1,5 +1,6 @@
 import { metrics } from "@/lib/telemetry/metrics";
 import { getCacheDriver } from "@/lib/cache";
+import { freshnessBroadcaster } from "@/lib/hubble/freshness";
 
 export const DEFAULT_CACHE_TTL_SECONDS = 900;
 export const MIN_CACHE_TTL_SECONDS = 1;
@@ -38,6 +39,7 @@ export function setClock(clock: Clock): void {
 
 export function clearCache(): void {
   getCacheDriver().clear();
+  freshnessBroadcaster.notifyCacheRotation(undefined, "cache_clear");
 }
 
 export function getCached<T>(
@@ -87,6 +89,7 @@ export function setCache(
     validTtl,
   );
   pruneCache();
+  freshnessBroadcaster.notifyCacheRotation([key], "cache_set");
 }
 
 /**
