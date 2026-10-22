@@ -25,7 +25,6 @@ import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { AddressComparisonPanel } from "@/components/dashboard/AddressComparisonPanel";
 import { ComparisonPanel } from "@/components/dashboard/ComparisonPanel";
-import { AddressComparisonPanel } from "@/components/dashboard/AddressComparisonPanel";
 import { IssuerIntelligence } from "@/components/dashboard/IssuerIntelligence";
 import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { WatchlistPanel } from "@/components/dashboard/WatchlistPanel";
