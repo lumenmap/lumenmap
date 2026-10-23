@@ -7,43 +7,49 @@ import {
   type UseFreshnessStreamOptions,
 } from "@/lib/hooks/useFreshnessStream";
 
-// Mock EventSource
+type FreshnessListener = (event: MessageEvent) => void;
+
+// Mock EventSource, installed via vi.stubGlobal("EventSource", MockEventSource)
 class MockEventSource {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 2;
   static instances: MockEventSource[] = [];
   public url: string;
-  public readyState: number = 0; // 0: CONNECTING, 1: OPEN, 2: CLOSED
-  public listeners: Record<string, ((event: any) => void)[]> = {};
+  public readyState: number = MockEventSource.CONNECTING;
+  public listeners: Record<string, FreshnessListener[]> = {};
   public onopen: (() => void) | null = null;
   public onerror: (() => void) | null = null;
 
   constructor(url: string) {
     this.url = url;
-    this.readyState = 1; // open
+    this.readyState = MockEventSource.OPEN;
     MockEventSource.instances.push(this);
   }
 
-  addEventListener(event: string, handler: (event: any) => void) {
+  addEventListener(event: string, handler: FreshnessListener) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
     }
     this.listeners[event].push(handler);
   }
 
-  removeEventListener(event: string, handler: (event: any) => void) {
+  removeEventListener(event: string, handler: FreshnessListener) {
     if (this.listeners[event]) {
       this.listeners[event] = this.listeners[event].filter((h) => h !== handler);
     }
   }
 
-  emit(event: string, data: any) {
+  emit(event: string, data: unknown) {
     const handlers = this.listeners[event] || [];
+    const message = new MessageEvent(event, { data: JSON.stringify(data) });
     for (const h of handlers) {
-      h({ data: JSON.stringify(data) });
+      h(message);
     }
   }
 
   close() {
-    this.readyState = 2; // CLOSED
+    this.readyState = MockEventSource.CLOSED;
   }
 }
 
@@ -56,12 +62,11 @@ describe("useFreshnessStream hook", () => {
   let container: HTMLDivElement;
   let root: Root;
   let queryClient: QueryClient;
-  const originalEventSource = globalThis.EventSource;
 
   beforeEach(() => {
     vi.useFakeTimers();
     MockEventSource.instances = [];
-    (globalThis as any).EventSource = MockEventSource;
+    vi.stubGlobal("EventSource", MockEventSource);
 
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -81,7 +86,7 @@ describe("useFreshnessStream hook", () => {
     container.remove();
     vi.restoreAllMocks();
     vi.useRealTimers();
-    (globalThis as any).EventSource = originalEventSource;
+    vi.unstubAllGlobals();
   });
 
   function renderComponent(props: UseFreshnessStreamOptions) {
@@ -214,7 +219,7 @@ describe("useFreshnessStream hook", () => {
   });
 
   it("falls back to polling when EventSource is unavailable", () => {
-    delete (globalThis as any).EventSource;
+    vi.stubGlobal("EventSource", undefined);
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     renderComponent({
