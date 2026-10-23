@@ -67,12 +67,17 @@ export function useFreshnessStream({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastEpochRef = useRef<number | null>(null);
   const onFreshnessChangeRef = useRef(onFreshnessChange);
-  onFreshnessChangeRef.current = onFreshnessChange;
-
   const currentPeriodRef = useRef(currentPeriod);
-  currentPeriodRef.current = currentPeriod;
   const currentNetworkRef = useRef(currentNetwork);
-  currentNetworkRef.current = currentNetwork;
+
+  // Keep refs in sync with the latest render. Refs are only written inside
+  // effects (never during render), and this effect is declared before the
+  // subscription effect so the refs are fresh before it re-runs.
+  useEffect(() => {
+    onFreshnessChangeRef.current = onFreshnessChange;
+    currentPeriodRef.current = currentPeriod;
+    currentNetworkRef.current = currentNetwork;
+  }, [onFreshnessChange, currentPeriod, currentNetwork]);
 
   useEffect(() => {
     if (!enabled) return;
