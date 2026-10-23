@@ -13,6 +13,7 @@ import { NetworkTreemap } from "@/components/dashboard/NetworkTreemap";
 import { FlowView } from "@/components/dashboard/FlowView";
 import { ProtocolBarChart } from "@/components/dashboard/ProtocolBarChart";
 import { ProtocolHealthScorecards } from "@/components/dashboard/ProtocolHealthScorecards";
+import { ProtocolScatterChart } from "@/components/dashboard/ProtocolScatterChart";
 
 import { TimeSeriesChart } from "@/components/dashboard/TimeSeriesChart";
 import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
@@ -203,6 +204,7 @@ function DashboardContent() {
             label: "Activity Analysis",
             content: (
               <div className="flex flex-col gap-6">
+                <ProtocolScatterChart />
                 <ProtocolBarChart />
                 <ActivityHeatmap />
                 <TimeSeriesChart />
