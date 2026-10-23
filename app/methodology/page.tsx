@@ -63,6 +63,14 @@ export default function MethodologyPage() {
           ))}
           <li>
             <a
+              href="#protocol-scatter"
+              className="text-zinc-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stellar rounded-sm"
+            >
+              Protocol activity scatter plot
+            </a>
+          </li>
+          <li>
+            <a
               href="#protocol-health"
               className="text-zinc-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stellar rounded-sm"
             >
@@ -149,6 +157,33 @@ export default function MethodologyPage() {
             </div>
           </section>
         ))}
+
+        <section
+          id="protocol-scatter"
+          className="scroll-mt-24 space-y-4 rounded-xl border border-white/10 bg-black/20 p-5"
+        >
+          <h2 className="text-xl font-semibold text-white">
+            Protocol activity scatter plot
+          </h2>
+          <p className="text-sm leading-relaxed text-zinc-300">
+            Each point is a protocol in the selected period. The horizontal
+            axis is closed operations attributed to the protocol; the vertical
+            axis is the distinct count of labeled accounts and contracts in
+            that protocol&apos;s activity (the dashboard&apos;s wallet measure).
+            Neither measure is a count of all protocol users or all deployed
+            contracts.
+          </p>
+          <p className="text-sm leading-relaxed text-zinc-300">
+            When measured, bubble area scales with the protocol&apos;s native
+            XLM volume on attributed accounts. Other assets are not converted
+            or combined. If volume is unavailable for any displayed protocol,
+            all bubbles use the same size and the chart states that volume is
+            incomplete. Protocols missing either axis measurement are omitted
+            from the plot rather than shown as zero; the chart reports how many
+            were omitted. Selecting a point opens its existing protocol or
+            entity detail context.
+          </p>
+        </section>
 
         <section
           id="protocol-health"
