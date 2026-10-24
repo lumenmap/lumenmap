@@ -191,4 +191,36 @@ describe("dashboard URL state", () => {
     assert.doesNotMatch(search, /flowMode/);
     assert.doesNotMatch(search, /ego/);
   });
+
+  it("parses the treemap diff flag from the URL", () => {
+    assert.equal(parseDashboardUrlSearch("?diff=1").treemapDiff, true);
+    assert.equal(parseDashboardUrlSearch("?diff=true").treemapDiff, true);
+    assert.equal(parseDashboardUrlSearch("?diff=0").treemapDiff, undefined);
+    assert.equal(parseDashboardUrlSearch("?diff=nope").treemapDiff, undefined);
+    assert.equal(parseDashboardUrlSearch("").treemapDiff, undefined);
+  });
+
+  it("round-trips the treemap diff flag", () => {
+    const search = writeDashboardUrlSearch({
+      period: "7d",
+      metric: "ops",
+      view: "events",
+      path: [],
+      treemapDiff: true,
+    });
+    assert.match(search, /diff=1/);
+    assert.equal(parseDashboardUrlSearch(search).treemapDiff, true);
+  });
+
+  it("clears the treemap diff flag when toggled off", () => {
+    const search = writeDashboardUrlSearch({
+      period: "7d",
+      metric: "ops",
+      view: "events",
+      path: [],
+      currentSearch: "?diff=1",
+      treemapDiff: false,
+    });
+    assert.doesNotMatch(search, /diff=/);
+  });
 });

@@ -7,6 +7,7 @@ import {
   handleActivityRequest,
   handleRawActivityRequest,
   parseActivityPeriod,
+  parseActivityWindow,
   toVisualizationResponse,
 } from "./_handler";
 import { GET as v1GET } from "../v1/activity/route";
@@ -19,6 +20,7 @@ import type {
 } from "@/lib/types";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
 import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
+import { previousPeriodAnchor, resolvePeriod } from "@/lib/periods";
 
 const supportedPeriods: Period[] = ["1d", "7d", "30d", "month"];
 
@@ -189,6 +191,117 @@ describe("parseActivityPeriod", () => {
           supported: supportedPeriods,
         },
       });
+    }
+  });
+});
+
+describe("parseActivityWindow", () => {
+  test("defaults to the current window when the parameter is absent", () => {
+    assert.deepEqual(parseActivityWindow(null), { ok: true, window: "current" });
+  });
+
+  test("accepts explicit current and prev windows", () => {
+    assert.deepEqual(parseActivityWindow("current"), {
+      ok: true,
+      window: "current",
+    });
+    assert.deepEqual(parseActivityWindow("prev"), { ok: true, window: "prev" });
+  });
+
+  test("rejects unsupported windows", () => {
+    for (const window of ["", "previous", "next"]) {
+      assert.deepEqual(parseActivityWindow(window), {
+        ok: false,
+        status: 400,
+        body: {
+          code: "INVALID_WINDOW",
+          message: "Unsupported activity window.",
+          supported: ["current", "prev"],
+        },
+      });
+    }
+  });
+});
+
+describe("window=prev (treemap diff mode, issue #447)", () => {
+  test("passes an anchor that resolves to the previous equal-length window", async () => {
+    const anchors: (Date | undefined)[] = [];
+    const response = await handleActivityRequest(
+      new Request("http://localhost/api/v1/activity?period=7d&window=prev"),
+      async (period, _correlationId, _network, options) => {
+        anchors.push(options?.anchor);
+        return mockActivityDataset(period);
+      },
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(anchors.length, 1);
+    const anchor = anchors[0];
+    assert.ok(anchor instanceof Date);
+
+    const active = resolvePeriod("7d", new Date());
+    const previous = resolvePeriod("7d", anchor);
+    // Adjacent: the previous window ends right where the active one starts.
+    assert.equal(active.start.getTime() - previous.end.getTime(), 1);
+    assert.equal(
+      previous.end.getTime() - previous.start.getTime(),
+      active.end.getTime() - active.start.getTime(),
+    );
+  });
+
+  test("does not pass an anchor for the default window", async () => {
+    let sawAnchor = false;
+    const response = await handleActivityRequest(
+      new Request("http://localhost/api/v1/activity?period=7d"),
+      async (period, _correlationId, _network, options) => {
+        if (options?.anchor) sawAnchor = true;
+        return mockActivityDataset(period);
+      },
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(sawAnchor, false);
+  });
+
+  test("returns 400 for unsupported windows without invoking the provider", async () => {
+    let callCount = 0;
+    const response = await handleActivityRequest(
+      new Request("http://localhost/api/v1/activity?period=1d&window=next"),
+      async (period) => {
+        callCount += 1;
+        return mockActivityDataset(period);
+      },
+    );
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      code: "INVALID_WINDOW",
+      message: "Unsupported activity window.",
+      supported: ["current", "prev"],
+    });
+    assert.equal(callCount, 0);
+  });
+
+  test("fixture mode serves the previous window's range for window=prev", async () => {
+    const previousSource = process.env.LUMENMAP_DATA_SOURCE;
+    process.env.LUMENMAP_DATA_SOURCE = "fixture";
+    try {
+      const response = await handleActivityRequest(
+        new Request("http://localhost/api/v1/activity?period=1d&window=prev"),
+      );
+
+      assert.equal(response.status, 200);
+      const body = (await response.json()) as ActivityVisualizationResponse;
+      const expected = resolvePeriod("1d", previousPeriodAnchor("1d"));
+      assert.equal(body.period, "1d");
+      assert.equal(body.start, expected.start.toISOString());
+      assert.equal(body.end, expected.end.toISOString());
+    } finally {
+      if (previousSource === undefined) {
+        delete process.env.LUMENMAP_DATA_SOURCE;
+      } else {
+        process.env.LUMENMAP_DATA_SOURCE = previousSource;
+      }
     }
   });
 });

@@ -7,6 +7,12 @@ import { ChevronRight } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/constants";
 import { PATTERN_DEFS, PATTERN_OPACITY, getCategoryPatternId } from "@/lib/treemap-patterns";
 import type { SelectedNode, TreemapNode } from "@/lib/types";
+import {
+  diffColor,
+  formatTreemapDeltaText,
+  treemapNodeKey,
+  type TreemapDelta,
+} from "@/lib/treemap-diff";
 import { getMetricUnit } from "@/lib/metrics/units";
 import {
   formatNumber,
@@ -17,11 +23,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 
+/**
+ * Period-over-period diff data for the tiles at the current drill level
+ * (issue #447). `deltas` is the whole-tree diff index; `parentPathKey` is the
+ * path-qualified key of the node whose children are being rendered, so each
+ * tile looks itself up as `${parentPathKey}/${tileKey}`.
+ */
+export interface TreemapTileDiff {
+  deltas: Map<string, TreemapDelta>;
+  parentPathKey: string;
+}
+
 interface D3TreemapProps {
   root: TreemapNode;
   onSelect: (node: SelectedNode) => void;
   path?: TreemapNode[];
   onPathChange?: (path: TreemapNode[]) => void;
+  /** Present when the diff overlay is active; null hides diff encoding. */
+  diff?: TreemapTileDiff | null;
 }
 
 interface LayoutNode extends HierarchyNode<TreemapNode> {
@@ -56,9 +75,16 @@ interface TooltipData {
   value: number;
   share: number;
   unit: string;
+  delta?: TreemapDelta;
 }
 
-export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3TreemapProps) {
+export function D3Treemap({
+  root,
+  onSelect,
+  path: pathProp,
+  onPathChange,
+  diff = null,
+}: D3TreemapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 400, height: 400 });
@@ -261,7 +287,7 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
   const handleMouseMove = useCallback(
     (e: React.MouseEvent, data: Omit<TooltipData, "x" | "y">) => {
       const tooltipWidth = 280;
-      const tooltipHeight = 140;
+      const tooltipHeight = 170;
       const margin = 16;
 
       let x = e.clientX + margin;
@@ -346,7 +372,17 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
           const original = tileLookup.get(data.id ?? data.name) ?? data;
           const value = node.value ?? 0;
           const share = levelTotal > 0 ? (value / levelTotal) * 100 : 0;
-          const color = resolveColor(data);
+          const tileKey = treemapNodeKey(original);
+          const delta = diff
+            ? diff.deltas.get(
+                diff.parentPathKey
+                  ? `${diff.parentPathKey}/${tileKey}`
+                  : tileKey,
+              )
+            : undefined;
+          // Diverging scale replaces the category fill in diff mode; the
+          // category pattern overlay stays as the secondary encoding.
+          const color = delta ? diffColor(delta) : resolveColor(data);
           const nodeId = `${data.id ?? data.name}-${node.x0}-${node.y0}`;
           const isHovered = hoveredId === nodeId;
           const isFocused = focusedId === nodeId;
@@ -362,9 +398,10 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
           // on touch screens. They still have a <title> for pointer tooltip.
           // We also add role, tabIndex, and aria-label so keyboard and assistive
           // technology users can reach and activate them regardless of size.
+          const deltaText = delta ? formatTreemapDeltaText(delta) : null;
           const ariaLabel = identity
-            ? `${data.name}, ${identity}, ${formatNumber(value)} ${metricUnit}, ${formatPercent(share)}`
-            : `${data.name}, ${formatNumber(value)} ${metricUnit}, ${formatPercent(share)}`;
+            ? `${data.name}, ${identity}, ${formatNumber(value)} ${metricUnit}, ${formatPercent(share)}${deltaText ? `, ${deltaText}` : ""}`
+            : `${data.name}, ${formatNumber(value)} ${metricUnit}, ${formatPercent(share)}${deltaText ? `, ${deltaText}` : ""}`;
 
           return (
             <g
@@ -372,6 +409,15 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
               id={`node-${data.id ?? data.name}`}
               data-testid="treemap-tile"
               data-node-name={data.name}
+              {...(delta
+                ? {
+                    "data-diff-kind": delta.kind,
+                    "data-diff-percent":
+                      delta.percent === null
+                        ? "new"
+                        : delta.percent.toFixed(1),
+                  }
+                : {})}
               transform={`translate(${node.x0},${node.y0})`}
               tabIndex={0}
               role="button"
@@ -384,6 +430,7 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
                   value,
                   share,
                   unit: metricUnit,
+                  delta,
                 });
               }}
               onMouseLeave={handleMouseLeave}
@@ -446,6 +493,7 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
                   {width < 130 && data.name.length > 14
                     ? `${data.name.slice(0, 12)}…`
                     : data.name}
+                  {delta?.kind === "new" && width > 150 ? " · NEW" : ""}
                 </text>
               ) : null}
               {showIdentity && identity ? (
@@ -481,6 +529,20 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
                   >
                     {formatPercent(share)}
                   </text>
+                  {delta && width > 130 && height > (showIdentity ? 106 : 82) ? (
+                    <text
+                      x={10}
+                      y={showIdentity ? 88 : 78}
+                      fill="rgba(255,255,255,0.85)"
+                      fontSize={11}
+                      fontWeight={600}
+                      pointerEvents="none"
+                    >
+                      {delta.kind === "new"
+                        ? "NEW"
+                        : `${delta.absolute > 0 ? "+" : ""}${formatNumber(delta.absolute)} (${delta.percent === null ? "n/a" : `${delta.percent > 0 ? "+" : ""}${delta.percent.toFixed(1)}%`})`}
+                    </text>
+                  ) : null}
                 </>
               ) : null}
               {/* <title> provides tooltip on pointer hover and is read by screen readers
@@ -489,6 +551,7 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
                 {identity
                   ? `${data.name}\n${identity}\n${formatNumber(value)} ${metricUnit} · ${formatPercent(share)}`
                   : `${data.name}\n${formatNumber(value)} ${metricUnit} · ${formatPercent(share)}`}
+                {deltaText ? `\n${deltaText}` : ""}
                 {original.meta?.coverage
                   ? `\nCoverage: ${formatPercent(original.meta.coverage.coveragePercent)} (${formatNumber(original.meta.coverage.namedChildValue)} of ${formatNumber(original.meta.coverage.parentValue)}) · ${original.meta.coverage.namedEntityCount} entities · limit ${original.meta.coverage.configuredLimit}`
                   : ""}
@@ -519,6 +582,35 @@ export function D3Treemap({ root, onSelect, path: pathProp, onPathChange }: D3Tr
               <span className="text-zinc-500">·</span>
               <span className="text-zinc-400">{formatPercent(tooltip.share)}</span>
             </div>
+            {tooltip.delta ? (
+              <div
+                className="flex items-center gap-1.5 text-xs"
+                data-testid="treemap-tooltip-delta"
+              >
+                <span aria-hidden="true">
+                  {tooltip.delta.kind === "new"
+                    ? "✦"
+                    : tooltip.delta.absolute > 0
+                      ? "▲"
+                      : tooltip.delta.absolute < 0
+                        ? "▼"
+                        : "="}
+                </span>
+                <span
+                  className={
+                    tooltip.delta.kind === "new"
+                      ? "font-medium text-violet-300"
+                      : tooltip.delta.absolute > 0
+                        ? "font-medium text-emerald-300"
+                        : tooltip.delta.absolute < 0
+                          ? "font-medium text-red-300"
+                          : "text-zinc-400"
+                  }
+                >
+                  {formatTreemapDeltaText(tooltip.delta)}
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

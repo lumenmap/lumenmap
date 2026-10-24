@@ -1,5 +1,12 @@
 export type Period = "1d" | "7d" | "30d" | "month";
 
+/**
+ * Which equal-length window an activity request should resolve:
+ * `current` (default) is the active window, `prev` is the equal-length
+ * window immediately before it (treemap diff mode, issue #447).
+ */
+export type ActivityWindow = "current" | "prev";
+
 export type DataSource = "hubble" | "fixture";
 
 /** Stable identifiers used by the public treemap contract. */

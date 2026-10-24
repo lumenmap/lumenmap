@@ -43,6 +43,11 @@ export const FIXTURE_CONTRACTS = {
   soroswapPool: "CA2TZIB56KYKD46F7IFBF6XPO5TDNK6N2U6BRTGZ5AF4WUSBN6BKZMGF",
   soroswapRouter: "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH",
   unknown: "CDJNK5S2JYK6N7PRBGEKU3HVTL2GXQDAB5WJ5NJ3GMU2ZKZYQWGNHW54",
+  /**
+   * Exists only in the previous-window fixture rows so the treemap diff
+   * overlay can render a "dropped" tile/table row (issue #447).
+   */
+  dropped: "CDROPPEDFIXTURECONTRACTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 } as const;
 
 /** Stellar account ids used by the fixtures (named ones resolve locally). */
@@ -153,6 +158,59 @@ const BASE_ACCOUNTS: AccountRow[] = [
   },
 ];
 
+/**
+ * Previous equal-length window adjustments (issue #447).
+ *
+ * `getFixturePreviousRawActivity` scales the same base rows by these factors
+ * so the diff overlay always has deterministic tiles in every diverging
+ * bucket: growth (payment), strong growth (change_trust), decline
+ * (invoke_host_function), strong decline (set_options), and flat (anything
+ * unlisted). Factors are multipliers on the previous window, so a factor
+ * above 1 makes the *current* tile look like it declined, and vice versa.
+ */
+const PREVIOUS_WINDOW_CATEGORY_FACTORS: Record<string, number> = {
+  invoke_host_function: 1.25,
+  restore_footprint: 0.75,
+  payment: 0.8,
+  path_payment_strict_receive: 1.15,
+  manage_sell_offer: 0.85,
+  manage_buy_offer: 1.2,
+  change_trust: 0.6,
+  set_options: 1.4,
+  inflation: 0.5,
+};
+
+const PREVIOUS_WINDOW_TXN_CATEGORY_FACTORS: Record<string, number> = {
+  payment: 0.75,
+  invoke_host_function: 1.3,
+  manage_sell_offer: 0.9,
+};
+
+/**
+ * `soroswapRouter` is intentionally absent from the previous window: it is
+ * "new" in the current window. `dropped` is added below so it only exists in
+ * the previous window.
+ */
+const PREVIOUS_WINDOW_CONTRACT_FACTORS: Record<string, number> = {
+  [FIXTURE_CONTRACTS.soroswap]: 1.25,
+  [FIXTURE_CONTRACTS.soroswapPool]: 0.8,
+  [FIXTURE_CONTRACTS.unknown]: 1,
+  [FIXTURE_CONTRACTS.dropped]: 1,
+};
+
+const PREVIOUS_WINDOW_DROPPED_CONTRACT_OPS = 45_000;
+
+const PREVIOUS_WINDOW_ACCOUNT_FACTORS: Record<string, number> = {
+  [FIXTURE_ACCOUNTS.kraken]: 0.9,
+  [FIXTURE_ACCOUNTS.lobstr]: 1.1,
+};
+
+const PREVIOUS_WINDOW_SOROBAN_FUNCTION_FACTORS: Record<string, number> = {
+  transfer: 1.2,
+  swap: 0.85,
+  balance: 1.25,
+};
+
 /** Soroban function invocations for a single day (scaled per period). */
 const BASE_SOROBAN_FUNCTIONS: SorobanFunctionRow[] = [
   { function_name: "transfer", op_count: 190_000 },
@@ -188,6 +246,19 @@ function scaleTxnRows(
   return rows.map((row) => ({ ...row, txn_count: row.txn_count * multiplier }));
 }
 
+function scaleRowsWithFactors<T extends { op_count: number }>(
+  rows: T[],
+  multiplier: number,
+  factors: Record<string, number>,
+  key: (row: T) => string,
+): T[] {
+  return rows.map((row) => ({
+    ...row,
+    op_count:
+      row.op_count * multiplier * (factors[key(row)] ?? 1),
+  }));
+}
+
 /**
  * Returns the deterministic raw activity rows for a period.
  * Every period gets a distinct, stable total so tests can assert that
@@ -206,5 +277,79 @@ export function getFixtureRawActivity(period: Period): FixtureRawActivity {
       BASE_SOROBAN_FUNCTION_CONTRACTS,
       multiplier,
     ),
+  };
+}
+
+/**
+ * Returns the deterministic raw activity rows for the previous equal-length
+ * window (issue #447). The same base rows are scaled per entity so the
+ * treemap diff overlay can force growth, decline, new, and dropped tiles:
+ *
+ * - `payment` categories grew (+25%) while `invoke_host_function` declined
+ *   (-20%) versus the previous window.
+ * - `soroswapRouter` exists only in the current window ("new" tile).
+ * - `FIXTURE_CONTRACTS.dropped` exists only in the previous window
+ *   ("dropped" table row).
+ *
+ * Unlisted rows keep the same scale, giving flat tiles for comparison.
+ */
+export function getFixturePreviousRawActivity(
+  period: Period,
+): FixtureRawActivity {
+  const multiplier = FIXTURE_PERIOD_MULTIPLIERS[period];
+
+  const contracts = BASE_CONTRACTS.filter(
+    (row) => row.contract_id !== FIXTURE_CONTRACTS.soroswapRouter,
+  )
+    .concat([
+      {
+        contract_id: FIXTURE_CONTRACTS.dropped,
+        op_count: PREVIOUS_WINDOW_DROPPED_CONTRACT_OPS,
+      },
+    ])
+    .map((row) => ({
+      ...row,
+      op_count:
+        row.op_count *
+        multiplier *
+        (PREVIOUS_WINDOW_CONTRACT_FACTORS[row.contract_id] ?? 1),
+    }));
+
+  return {
+    categories: scaleRowsWithFactors(
+      BASE_CATEGORIES,
+      multiplier,
+      PREVIOUS_WINDOW_CATEGORY_FACTORS,
+      (row) => row.type_string,
+    ),
+    transactionCategories: BASE_TRANSACTION_CATEGORIES.map((row) => ({
+      ...row,
+      txn_count:
+        row.txn_count *
+        multiplier *
+        (PREVIOUS_WINDOW_TXN_CATEGORY_FACTORS[row.type_string] ?? 1),
+    })),
+    contracts,
+    accounts: scaleRowsWithFactors(
+      BASE_ACCOUNTS,
+      multiplier,
+      PREVIOUS_WINDOW_ACCOUNT_FACTORS,
+      (row) => row.account_id,
+    ),
+    sorobanFunctions: scaleRowsWithFactors(
+      BASE_SOROBAN_FUNCTIONS,
+      multiplier,
+      PREVIOUS_WINDOW_SOROBAN_FUNCTION_FACTORS,
+      (row) => row.function_name,
+    ),
+    sorobanFunctionContracts: BASE_SOROBAN_FUNCTION_CONTRACTS.filter(
+      (row) => row.contract_id !== FIXTURE_CONTRACTS.soroswapRouter,
+    ).map((row) => ({
+      ...row,
+      op_count:
+        row.op_count *
+        multiplier *
+        (PREVIOUS_WINDOW_SOROBAN_FUNCTION_FACTORS[row.function_name] ?? 1),
+    })),
   };
 }

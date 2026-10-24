@@ -61,7 +61,7 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
     network,
     setTreemapView,
     setActiveLevelPath,
-    network,
+    readOnly,
   } = useDashboard();
 
   useEffect(() => {
@@ -249,6 +249,11 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
               </Button>
             )}
           </div>
+        ) : null}
+
+        {address && !readOnly &&
+        (selectedNode.meta?.type === "account" || selectedNode.meta?.type === "contract") ? (
+          <FirstSeenDetails id={address} type={selectedNode.meta.type} network={network} />
         ) : null}
 
         {address ? (

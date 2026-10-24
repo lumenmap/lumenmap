@@ -25,13 +25,13 @@ import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { AddressComparisonPanel } from "@/components/dashboard/AddressComparisonPanel";
 import { ComparisonPanel } from "@/components/dashboard/ComparisonPanel";
-import { AddressComparisonPanel } from "@/components/dashboard/AddressComparisonPanel";
 import { IssuerIntelligence } from "@/components/dashboard/IssuerIntelligence";
 import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { WatchlistPanel } from "@/components/dashboard/WatchlistPanel";
 import { SnapshotBanner } from "@/components/dashboard/SnapshotBanner";
 import { SnapshotShareControls } from "@/components/dashboard/SnapshotShareControls";
 import { NetworkSelector } from "@/components/dashboard/NetworkSelector";
+import { KeyboardShortcuts } from "@/components/dashboard/KeyboardShortcuts";
 import { AnomalyBanner } from "@/components/dashboard/AnomalyBanner";
 import { useEffect, useState } from "react";
 import {
@@ -65,7 +65,12 @@ function AnomalyBannerHost() {
   const [forced, setForced] = useState<string | null>(null);
 
   useEffect(() => {
-    setForced(new URLSearchParams(window.location.search).get("anomaly"));
+    // Deferred so the forced-fixture read does not set state synchronously
+    // during the effect body (same pattern as the URL-parse effect in
+    // DashboardProvider).
+    queueMicrotask(() => {
+      setForced(new URLSearchParams(window.location.search).get("anomaly"));
+    });
   }, []);
 
   if (forced === "spike") {
@@ -114,6 +119,7 @@ function DashboardContent() {
           <div className={readOnly ? "pointer-events-none opacity-70" : undefined}>
             <NetworkSelector />
           </div>
+          <KeyboardShortcuts />
         </div>
         <div className={`flex items-center gap-3 ${readOnly ? "pointer-events-none opacity-70" : ""}`}>
           <FreshnessIndicator />

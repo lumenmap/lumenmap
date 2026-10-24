@@ -21,6 +21,7 @@ import { materializeSnapshot } from "@/lib/snapshots/materialize";
 import type { ResearchSnapshot } from "@/lib/snapshots/types";
 import type {
   ActivityVisualizationResponse,
+  ActivityWindow,
   ApiErrorResponse,
   DashboardMetricId,
   Period,
@@ -38,6 +39,17 @@ interface DashboardContextValue {
   comparisonData?: ActivityVisualizationResponse;
   comparisonLoading: boolean;
   comparisonError: Error | null;
+  /**
+   * Treemap period-over-period diff overlay (issue #447). When enabled, the
+   * dashboard fetches the previous equal-length window so tiles can be
+   * colored by percent change against it.
+   */
+  treemapDiff: boolean;
+  setTreemapDiff: (enabled: boolean) => void;
+  /** Dataset for the previous equal-length window; only fetched in diff mode. */
+  previousData?: ActivityVisualizationResponse;
+  previousLoading: boolean;
+  previousError: Error | null;
   treemapView: TreemapViewId;
   setTreemapView: (view: TreemapViewId) => void;
   /** Top-level chart view: hierarchical treemap or experimental flow. */
@@ -80,15 +92,19 @@ const DashboardContext = createContext<DashboardContextValue | null>(null);
 async function fetchActivity(
   period: Period,
   network: import("@/lib/network").DashboardNetworkId,
+  window: ActivityWindow = "current",
 ): Promise<ActivityVisualizationResponse> {
   const params = new URLSearchParams({ period });
   if (network !== "mainnet") params.set("network", network);
+  if (window !== "current") params.set("window", window);
   const response = await fetch(`/api/v1/activity?${params}`);
   if (!response.ok) {
     const body = (await response.json()) as { code?: string; message?: string };
-    const error = new Error(body.message ?? "Failed to load activity data");
+    const error = new Error(body.message ?? "Failed to load activity data") as Error & {
+      code?: string;
+    };
     if (body.code) {
-      (error as any).code = body.code;
+      error.code = body.code;
     }
     throw error;
   }
@@ -174,6 +190,7 @@ export function DashboardProvider({
   const readOnly = snapshot != null;
   const [period, setPeriodState] = useState<Period>(snapshot?.period ?? "1d");
   const [comparePeriod, setComparePeriod] = useState<Period | null>(null);
+  const [treemapDiff, setTreemapDiffState] = useState(false);
   const [treemapView, setTreemapViewState] = useState<TreemapViewId>(
     snapshot && snapshot.view !== "flow" ? snapshot.view : "events",
   );
@@ -201,8 +218,12 @@ export function DashboardProvider({
   useEffect(() => {
     if (!frozen || selectionApplied.current) return;
     selectionApplied.current = true;
-    setActiveLevelPath(frozen.path);
-    if (frozen.selected) setSelectedNode(frozen.selected);
+    // Deferred so the restore does not cascade synchronously during the
+    // effect body (same pattern as the URL-parse effect below).
+    queueMicrotask(() => {
+      setActiveLevelPath(frozen.path);
+      if (frozen.selected) setSelectedNode(frozen.selected);
+    });
   }, [frozen]);
 
   useEffect(() => {
@@ -218,6 +239,7 @@ export function DashboardProvider({
       }
       if (parsed.period) setPeriodState(parsed.period);
       if (parsed.comparePeriod) setComparePeriod(parsed.comparePeriod);
+      if (parsed.treemapDiff) setTreemapDiffState(true);
       if (parsed.metric) setMetricState(parsed.metric);
       if (parsed.view) setTreemapViewState(parsed.view);
       if (parsed.chartView === "flow" && flowViewEnabled) {
@@ -276,6 +298,14 @@ export function DashboardProvider({
     setComparePeriod(next);
   }, [readOnly]);
 
+  const handleSetTreemapDiff = useCallback(
+    (enabled: boolean) => {
+      if (readOnly) return;
+      setTreemapDiffState(enabled);
+    },
+    [readOnly],
+  );
+
   const handleSetNetwork = useCallback(
     (next: import("@/lib/network").DashboardNetworkId) => {
       if (readOnly) return;
@@ -299,6 +329,19 @@ export function DashboardProvider({
     queryKey: ["activity", comparePeriod, network],
     queryFn: () => fetchActivity(comparePeriod as Period, network),
     enabled: urlReady && comparePeriod !== null && !readOnly,
+    staleTime: 60_000,
+  });
+
+  // Previous equal-length window backing the treemap diff overlay (#447).
+  // Protocol TVL is excluded: adapters report a current snapshot, so a
+  // "previous" fetch would return today's values and every tile would read
+  // as flat.
+  const diffEnabled =
+    urlReady && !readOnly && treemapDiff && metric !== "protocol_tvl";
+  const previousQuery = useQuery({
+    queryKey: ["activity", period, network, "previous-window"],
+    queryFn: () => fetchActivity(period, network, "prev"),
+    enabled: diffEnabled,
     staleTime: 60_000,
   });
 
@@ -326,6 +369,7 @@ export function DashboardProvider({
       network,
       flowMode,
       egoAddress,
+      treemapDiff,
     });
     if (visualization === "flow") {
       const params = new URLSearchParams(next);
@@ -339,7 +383,7 @@ export function DashboardProvider({
         `${window.location.pathname}${next}`,
       );
     }
-  }, [urlReady, period, metric, treemapView, chartView, visualization, searchQuery, activeLevelPath, comparePeriod, network, flowMode, egoAddress]);
+  }, [urlReady, period, metric, treemapView, chartView, visualization, searchQuery, activeLevelPath, comparePeriod, network, flowMode, egoAddress, treemapDiff]);
 
   const selectSearchResult = useCallback(
     (result: SearchResult) => {
@@ -380,6 +424,11 @@ export function DashboardProvider({
       comparisonLoading:
         comparisonQuery.isLoading || comparisonQuery.isFetching,
       comparisonError: comparisonQuery.error,
+      treemapDiff,
+      setTreemapDiff: handleSetTreemapDiff,
+      previousData: previousQuery.data,
+      previousLoading: previousQuery.isLoading || previousQuery.isFetching,
+      previousError: previousQuery.error,
       treemapView,
       setTreemapView: handleSetTreemapView,
       chartView,
@@ -449,6 +498,12 @@ export function DashboardProvider({
       readOnly,
       frozen,
       handleSetComparePeriod,
+      handleSetTreemapDiff,
+      treemapDiff,
+      previousQuery.data,
+      previousQuery.isLoading,
+      previousQuery.isFetching,
+      previousQuery.error,
       snapshot,
     ],
   );

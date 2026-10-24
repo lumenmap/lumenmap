@@ -17,7 +17,11 @@ import {
   resolveDashboardNetwork,
   type DashboardNetworkId,
 } from "@/lib/network";
-import { isValidPeriod, PERIOD_OPTIONS } from "@/lib/periods";
+import {
+  isValidPeriod,
+  PERIOD_OPTIONS,
+  previousPeriodAnchor,
+} from "@/lib/periods";
 import { NO_STORE_HEADERS, activityCacheHeaders } from "@/lib/http/cache-headers";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import {
@@ -29,6 +33,7 @@ import type {
   ActivityDataset,
   ActivityRawResearchResponse,
   ActivityVisualizationResponse,
+  ActivityWindow,
   ApiErrorResponse,
   Period,
 } from "@/lib/types";
@@ -37,6 +42,7 @@ export type ActivityFetcher = (
   period: Period,
   correlationId?: string,
   network?: DashboardNetworkId,
+  options?: { anchor?: Date },
 ) => Promise<ActivityDataset>;
 
 const SUPPORTED_PERIODS = PERIOD_OPTIONS.map((period) => period.value);
@@ -72,6 +78,35 @@ export function parseActivityPeriod(
   }
 
   return { ok: true, period: periodParam };
+}
+
+/**
+ * Parses the optional `window` query param. `prev` serves the equal-length
+ * window immediately before the active one (treemap diff mode, #447);
+ * anything else than `prev` or absent means the active window.
+ */
+export function parseActivityWindow(
+  windowParam: string | null,
+):
+  | { ok: true; window: ActivityWindow }
+  | { ok: false; body: ApiErrorResponse; status: 400 } {
+  if (windowParam === null || windowParam === "current") {
+    return { ok: true, window: "current" };
+  }
+
+  if (windowParam === "prev") {
+    return { ok: true, window: "prev" };
+  }
+
+  return {
+    ok: false,
+    body: {
+      code: "INVALID_WINDOW",
+      message: "Unsupported activity window.",
+      supported: ["current", "prev"],
+    },
+    status: 400,
+  };
 }
 
 export function toVisualizationResponse(
@@ -145,6 +180,20 @@ export async function handleActivityRequest(
   }
   const network = resolveDashboardNetwork(networkParam);
 
+  const parsedWindow = parseActivityWindow(searchParams.get("window"));
+  if (!parsedWindow.ok) {
+    recordActivityResponseSize(
+      searchParams.get("window") ?? "",
+      "4xx",
+      parsedWindow.body,
+    );
+    return NextResponse.json(parsedWindow.body, {
+      status: parsedWindow.status,
+      headers: NO_STORE_HEADERS,
+    });
+  }
+  const window: ActivityWindow = parsedWindow.window;
+
   if (!parsed.ok) {
     recordActivityResponseSize(
       new URL(request.url).searchParams.get("period") ?? "",
@@ -184,7 +233,7 @@ export async function handleActivityRequest(
   }
 
   if (fetchActivityData === getActivityData && dataSourceMode === "fixture") {
-    const data = getFixtureActivityData(parsed.period, network);
+    const data = getFixtureActivityData(parsed.period, network, window);
     const validated = validateActivityResponse({
       ...toVisualizationResponse(data),
       source: "fixture",
@@ -205,7 +254,16 @@ export async function handleActivityRequest(
   }
 
   try {
-    const data = await fetchActivityData(parsed.period, correlationId, network);
+    const data = await fetchActivityData(
+      parsed.period,
+      correlationId,
+      network,
+      // Anchor inside the previous equal-length window so the resolved range
+      // ends exactly where the active window starts.
+      window === "prev"
+        ? { anchor: previousPeriodAnchor(parsed.period) }
+        : {},
+    );
     const validated = validateActivityResponse(toVisualizationResponse(data));
     logInfo({
       event: "activity.request.complete",

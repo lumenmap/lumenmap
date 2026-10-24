@@ -3,8 +3,13 @@
 import { FlowView } from "@/components/dashboard/FlowView";
 
 import { useMemo, useState } from "react";
-import { CATEGORY_COLORS, TREEMAP_VIEWS } from "@/lib/constants";
+import {
+  CATEGORY_COLORS,
+  TREEMAP_VIEWS,
+  type TreemapViewId,
+} from "@/lib/constants";
 import { PERIOD_OPTIONS } from "@/lib/periods";
+import { buildTreemapDiffIndex, treemapPathKey } from "@/lib/treemap-diff";
 import { PATTERN_DEFS, PATTERN_OPACITY, getCategoryPatternId } from "@/lib/treemap-patterns";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import {
@@ -17,12 +22,18 @@ import { resolveActiveLevel } from "@/lib/entities/treemap-level";
 import { ExportControls } from "@/components/dashboard/ExportControls";
 import { TreemapViewSelector } from "@/components/dashboard/TreemapViewSelector";
 import { TreemapMetricSelector } from "@/components/dashboard/TreemapMetricSelector";
+import { TreemapDiffToggle } from "@/components/dashboard/TreemapDiffToggle";
+import { TreemapDiffLegend } from "@/components/dashboard/TreemapDiffLegend";
 import { ViewSwitcher } from "@/components/dashboard/ViewSwitcher";
 import { FlowViewSection } from "@/components/dashboard/FlowViewSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { TreemapNode } from "@/lib/types";
+import type {
+  ActivityVisualizationResponse,
+  DashboardMetricId,
+  TreemapNode,
+} from "@/lib/types";
 import { getErrorCopy } from "@/lib/error-copy";
 
 const CATEGORY_LEGEND = [
@@ -88,6 +99,32 @@ function filterTreemapByCategories(
   return filterNode(root);
 }
 
+/**
+ * Resolves the treemap payload for the active metric/view combination.
+ * Shared with the previous-window payload so the diff compares the same
+ * subtree on both sides.
+ */
+function selectTreemapPayload(
+  data: ActivityVisualizationResponse | null | undefined,
+  metric: DashboardMetricId,
+  treemapView: TreemapViewId,
+): TreemapNode<number | string> | undefined {
+  if (!data) return undefined;
+  const treemaps = data.treemaps;
+  if (metric === "protocol_tvl") return treemaps.protocol_tvl;
+  if (metric === "xlm_volume") {
+    return treemaps[`xlm_${treemapView}` as keyof typeof treemaps];
+  }
+  if (metric === "usdc") {
+    return treemaps[`usdc_${treemapView}` as keyof typeof treemaps];
+  }
+  if (metric === "transactions") {
+    return treemaps[`txn_${treemapView}` as keyof typeof treemaps];
+  }
+  if (treemapView === "flow") return undefined;
+  return treemaps[treemapView as "events" | "actors" | "actors_dest"];
+}
+
 export function NetworkTreemap() {
   const {
     data,
@@ -104,6 +141,10 @@ export function NetworkTreemap() {
     selectedNode,
     activeLevelPath,
     setActiveLevelPath,
+    treemapDiff,
+    previousData,
+    previousLoading,
+    previousError,
   } = useDashboard();
   const isFlowView = chartView === "flow" && flowViewEnabled;
   const chartPanelId = "network-chart-panel";
@@ -122,21 +163,35 @@ export function NetworkTreemap() {
 
   const resetFilters = () => setExcludedCategories(new Set());
 
-  const activePayload = data
-    ? metric === "protocol_tvl"
-      ? data.treemaps.protocol_tvl
-      : metric === "xlm_volume"
-      ? data.treemaps[`xlm_${treemapView}` as keyof typeof data.treemaps]
-      : metric === "usdc"
-        ? data.treemaps[`usdc_${treemapView}` as keyof typeof data.treemaps]
-        : metric === "transactions"
-          ? data.treemaps[`txn_${treemapView}` as keyof typeof data.treemaps]
-          : (treemapView === "flow" ? undefined : data.treemaps[treemapView as "events" | "actors" | "actors_dest"])
-    : null;
-  const activeTreemap = activePayload ? toChartNode(activePayload) : null;
+  const activePayload = selectTreemapPayload(data, metric, treemapView) ?? null;
+  const activeTreemap = useMemo(
+    () => (activePayload ? toChartNode(activePayload) : null),
+    [activePayload],
+  );
   const isEmpty =
     !!activeTreemap &&
     (!activeTreemap.children || activeTreemap.children.length === 0);
+
+  // Period-over-period diff overlay (issue #447). Protocol TVL is excluded:
+  // adapters report a current snapshot, so the previous window would read
+  // as flat.
+  const diffActive = treemapDiff && metric !== "protocol_tvl";
+  const previousTreemap = useMemo(() => {
+    if (!diffActive || !previousData) return null;
+    const payload = selectTreemapPayload(previousData, metric, treemapView);
+    return payload ? toChartNode(payload) : null;
+  }, [diffActive, previousData, metric, treemapView]);
+  const diffIndex = useMemo(
+    () =>
+      diffActive && previousData
+        ? buildTreemapDiffIndex(activeTreemap, previousTreemap)
+        : null,
+    [diffActive, previousData, activeTreemap, previousTreemap],
+  );
+  const currentLevelPathKey = useMemo(
+    () => treemapPathKey(activeLevelPath),
+    [activeLevelPath],
+  );
   const filteredTreemap = useMemo(() => {
     if (!activeTreemap) return null;
     if (metric === "protocol_tvl") return activeTreemap;
@@ -194,6 +249,21 @@ export function NetworkTreemap() {
           />
         </div>
         {!isFlowView ? <TreemapMetricSelector /> : null}
+        {!isFlowView ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <TreemapDiffToggle />
+            {diffActive && previousLoading && !previousData ? (
+              <span role="status" className="text-xs text-zinc-500">
+                Loading previous window…
+              </span>
+            ) : null}
+            {diffActive && previousError ? (
+              <span role="status" className="text-xs text-amber-400">
+                Previous window unavailable — tiles show absolute values.
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         {!isFlowView && metric !== "protocol_tvl" ? (
         <div className="flex flex-wrap gap-2">
           {/* Inject pattern defs so legend swatches can reference them */}
@@ -280,6 +350,9 @@ export function NetworkTreemap() {
             Tile colors encode adapter status: complete, partial, or stale.
           </p>
         ) : null}
+        {!isFlowView && diffActive && previousData ? (
+          <TreemapDiffLegend />
+        ) : null}
         <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
           {filterAnnouncement}
         </div>
@@ -318,6 +391,14 @@ export function NetworkTreemap() {
                 onSelect={setSelectedNode}
                 path={activeLevelPath}
                 onPathChange={setActiveLevelPath}
+                diff={
+                  diffIndex
+                    ? {
+                        deltas: diffIndex.deltas,
+                        parentPathKey: currentLevelPathKey,
+                      }
+                    : null
+                }
               />
             ) : (
               <div
@@ -359,6 +440,18 @@ export function NetworkTreemap() {
                   levelTotal={level.levelTotal}
                   selectedNode={selectedNode}
                   onSelect={setSelectedNode}
+                  diff={
+                    diffIndex
+                      ? {
+                          deltas: diffIndex.deltas,
+                          dropped:
+                            diffIndex.droppedByParent.get(
+                              currentLevelPathKey,
+                            ) ?? [],
+                          parentPathKey: currentLevelPathKey,
+                        }
+                      : null
+                  }
                 />
               );
             })()

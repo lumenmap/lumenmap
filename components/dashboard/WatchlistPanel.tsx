@@ -28,6 +28,9 @@ export function WatchlistPanel() {
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
   const [notes, setNotes] = useState<EntityNote[]>([]);
+  const [skipped, setSkipped] = useState<ImportSkip[]>([]);
+  const [importStatus, setImportStatus] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
