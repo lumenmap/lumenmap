@@ -92,7 +92,12 @@ async function fetchActivity(
     }
     throw error;
   }
-  return response.json() as Promise<ActivityVisualizationResponse>;
+  const isOfflineCache = response.headers.get("X-LumenMap-Offline-Cache") === "true";
+  const data = (await response.json()) as ActivityVisualizationResponse;
+  if (isOfflineCache) {
+    data.isOfflineCache = true;
+  }
+  return data;
 }
 
 function searchResultToSelectedNode(result: SearchResult): SelectedNode {

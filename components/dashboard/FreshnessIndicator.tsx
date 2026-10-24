@@ -31,6 +31,15 @@ function formatLag(dataThrough: string): string {
 
 export function FreshnessIndicator() {
   const { data, isLoading, isError } = useDashboard();
+  const isCached = data?.isOfflineCache === true;
+  const cachedChip = isCached ? (
+    <span
+      data-testid="freshness-cached-chip"
+      className="inline-flex items-center rounded-full bg-surface-soft px-2 py-0.5 text-[11px] font-medium text-amber-300 border border-border"
+    >
+      cached
+    </span>
+  ) : null;
 
   if (isLoading) {
     return (
@@ -45,6 +54,7 @@ export function FreshnessIndicator() {
       <p className="text-xs text-zinc-500">
         Data source:{" "}
         <span className="text-zinc-300">Hubble BigQuery</span>
+        {cachedChip ? <> · {cachedChip}</> : null}
         {" · "}
         <span className="text-amber-500">Data freshness unavailable</span>
       </p>
@@ -67,7 +77,7 @@ export function FreshnessIndicator() {
       <div className="flex flex-col gap-1">
         <p className="text-xs text-amber-400/90">
           Data source:{" "}
-          <span className="text-amber-300">Local fixture data</span>
+          <span className="text-amber-300">Local fixture data</span>{cachedChip ? <> · {cachedChip}</> : null}
           {" · Deterministic data for local development and tests — not Hubble / mainnet"}
         </p>
       </div>
