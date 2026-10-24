@@ -47,6 +47,8 @@
   --data-soroban: #7b61ff;
   --data-payments: #14b8a6;
   --data-dex: #f59e0b;
+  --data-liquidity-pools: #22c55e;
+  --data-claimable-balances: #06b6d4;
   --data-trustlines: #3b82f6;
   --data-account: #ec4899;
   --data-other: #6b7280;
@@ -99,6 +101,8 @@
   --color-soroban: var(--data-soroban);
   --color-payments: var(--data-payments);
   --color-dex: var(--data-dex);
+  --color-liquidity-pools: var(--data-liquidity-pools);
+  --color-claimable-balances: var(--data-claimable-balances);
   --color-trustlines: var(--data-trustlines);
   --color-account: var(--data-account);
   --color-other: var(--data-other);

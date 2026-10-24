@@ -206,6 +206,7 @@ Live mode still requires GCP credentials. Setting `LUMENMAP_DATA_SOURCE=fixture`
 What you can explore in fixture mode (deterministic rows from `lib/fixtures/raw-data.ts` and `lib/fixtures/timeseries.ts`, scaled per period):
 
 - Operation-count and transaction-count treemaps (both views) with drill-down, breadcrumbs, and KPIs including active wallets and destinations
+- Liquidity-pool and claimable-balance categories in the treemap, the category-share chart, and the **DeFi on classic** ranked account tables
 - Operations-vs-transactions time-series, the stacked category-share chart, and the daily activity heatmap on deterministic buckets
 - Dashboard search over the loaded fixture accounts, contracts, assets, and protocols
 - Shareable URL state and side-by-side period comparison
@@ -421,6 +422,14 @@ constraints are discriminated by `kind`; the serialized response can represent
 inclusive time bounds, partial periods, source lag, filters, and top-N limits
 without requiring consumers to parse prose. The example abbreviates repeated
 coverage constraints; the response includes every applicable constraint.
+
+The compact response also carries `classicDeFi`: for each of the **Liquidity
+Pools** and **Claimable Balances** categories, the ranked source accounts
+(`accountId`, `ops`, `scopeShare`, per-type `byType` counts) behind the category's
+operations, capped at ten rows with `distinctAccounts` and `truncated` reporting
+what was left out. Hubble exposes no pool identifier for classic operations, so
+these are accounts, not pools — see
+[Operation categories](docs/metric-methodology.md#operation-categories).
 
 #### Caching
 
@@ -811,10 +820,17 @@ Metric definitions, current-period coverage, Hubble freshness limits, source fie
 | --- | --- |
 | Soroban | `invoke_host_function`, `extend_footprint_ttl`, `restore_footprint` |
 | Payments | `payment`, `path_payment_strict_receive`, `path_payment_strict_send`, `create_account` |
-| DEX | `manage_buy_offer`, `manage_sell_offer`, liquidity pool deposit and withdraw |
+| DEX | `manage_buy_offer`, `manage_sell_offer`, `create_passive_sell_offer` |
+| Liquidity Pools | `liquidity_pool_deposit`, `liquidity_pool_withdraw` |
+| Claimable Balances | `create_claimable_balance`, `claim_claimable_balance`, `clawback_claimable_balance` |
 | Trustlines | `change_trust` |
-| Account | `set_options`, `manage_data`, sponsorship operations |
+| Account | `set_options`, `manage_data`, sponsorship operations, `clawback` |
 | Other | Remaining types |
+
+Category names and the included `type_string` values are the presentation of the
+versioned [`operation-categories`](docs/metric-methodology.md#operation-categories)
+metric; a category counts operations and never identifies a pool or a balance. The
+**DeFi on classic** tables rank the source accounts behind the two DeFi categories.
 
 ## Keyboard shortcuts
 

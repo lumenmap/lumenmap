@@ -83,6 +83,25 @@ export const PATTERN_DEFS: PatternDef[] = [
       { type: "line", x1: 2.5, y1: 0, x2: 2.5, y2: 5, stroke: "white", strokeWidth: 1.5 },
     ],
   },
+  {
+    id: "lm-pattern-grid",
+    width: 6,
+    height: 6,
+    shapes: [
+      { type: "line", x1: 0, y1: 3, x2: 6, y2: 3, stroke: "white", strokeWidth: 1 },
+      { type: "line", x1: 3, y1: 0, x2: 3, y2: 6, stroke: "white", strokeWidth: 1 },
+    ],
+  },
+  {
+    id: "lm-pattern-diamond",
+    width: 8,
+    height: 8,
+    patternTransform: "rotate(45)",
+    shapes: [
+      { type: "line", x1: 0, y1: 0, x2: 8, y2: 8, stroke: "white", strokeWidth: 1 },
+      { type: "line", x1: 8, y1: 0, x2: 0, y2: 8, stroke: "white", strokeWidth: 1 },
+    ],
+  },
 ];
 
 /** Map from pattern variant name → pattern def id */
@@ -92,6 +111,8 @@ const VARIANT_TO_ID: Record<string, string> = {
   crosshatch: "lm-pattern-crosshatch",
   dots: "lm-pattern-dots",
   vertical: "lm-pattern-vertical",
+  grid: "lm-pattern-grid",
+  diamond: "lm-pattern-diamond",
 };
 
 /**

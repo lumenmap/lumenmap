@@ -406,6 +406,7 @@ export const openApiDocument = {
           heatmap: { type: "object", additionalProperties: true },
           protocols: { type: "object", additionalProperties: true },
           assetVolumes: { type: "array", items: { type: "object" } },
+          classicDeFi: { type: "object", additionalProperties: true },
         },
         additionalProperties: true,
       },

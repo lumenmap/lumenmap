@@ -135,7 +135,9 @@ test.describe("LumenMap dashboard user journey", () => {
     await expect(
       page.getByRole("img", { name: "Network activity treemap" }),
     ).toBeVisible();
-    await expect(page.getByTestId("treemap-tile")).toHaveCount(6);
+    await expect(page.getByTestId("treemap-tile")).toHaveCount(
+      Object.keys(GROUP_LABELS).length,
+    );
     for (const label of Object.values(GROUP_LABELS)) {
       await expect(tile(page, label)).toBeVisible();
     }
@@ -331,7 +333,9 @@ test.describe("LumenMap dashboard user journey", () => {
     // Breadcrumb jump back to the root level.
     await breadcrumbs(page).nth(0).click();
     await expect(breadcrumbs(page)).toHaveText(["Network Activity"]);
-    await expect(page.getByTestId("treemap-tile")).toHaveCount(6);
+    await expect(page.getByTestId("treemap-tile")).toHaveCount(
+      Object.keys(GROUP_LABELS).length,
+    );
     await expect(tile(page, GROUP_LABELS.payments)).toBeVisible();
   });
 

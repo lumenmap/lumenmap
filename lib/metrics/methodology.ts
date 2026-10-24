@@ -1,9 +1,9 @@
 /**
- * Canonical metric methodology (v2.0.0).
+ * Canonical metric methodology (v2.1.0).
  * Inline UI definitions link to these section ids via /methodology#<id>.
  */
 
-export const METHODOLOGY_VERSION = "2.0.0";
+export const METHODOLOGY_VERSION = "2.1.0";
 
 export type MethodologySectionId =
   | "operations"
@@ -16,6 +16,7 @@ export type MethodologySectionId =
   | "soroban-share"
   | "soroban-fees"
   | "top-category"
+  | "operation-categories"
   | "time-basis"
   | "hubble-freshness";
 
@@ -240,11 +241,41 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     timeBasis: "Same selected period bounds as operations.",
     source: "Derived from operation type totals and `TYPE_TO_GROUP` mapping.",
     inclusions: [
-      "Soroban, Payments, DEX, Trustlines, Account Operations, Other",
+      "Soroban, Payments, DEX, Liquidity Pools, Claimable Balances, Trustlines, Account Operations, Other",
     ],
     exclusions: ["Entity-level rankings (accounts/contracts)"],
     limitations: [
       "Ties resolve by sort order of aggregated totals; label is categorical, not a numeric volume.",
+    ],
+  },
+  {
+    id: "operation-categories",
+    title: "Operation categories",
+    summary:
+      "Presentation grouping that maps each classic and Soroban operation type to exactly one activity category.",
+    unit: "operations (count), grouped",
+    aggregation:
+      "Every operation-type total is assigned to one category through `TYPE_TO_GROUP`; category totals sum the assigned type counts and unmapped types fall into Other.",
+    timeBasis: "Same selected period bounds as operations.",
+    source:
+      "`TYPE_TO_GROUP` and `GROUP_LABELS` in `lib/constants.ts`. The DeFi-on-classic tables rank the same `op_source_account` rows the treemap uses and are served as `classicDeFi` on `/api/v1/activity`.",
+    inclusions: [
+      "Liquidity Pools: `liquidity_pool_deposit`, `liquidity_pool_withdraw`",
+      "Claimable Balances: `create_claimable_balance`, `claim_claimable_balance`, `clawback_claimable_balance`",
+      "DEX: `manage_buy_offer`, `manage_sell_offer`, `create_passive_sell_offer`",
+      "Account Operations: `set_options`, `bump_sequence`, `allow_trust`, `manage_data`, `begin_sponsoring_future_reserves`, `end_sponsoring_future_reserves`, `revoke_sponsorship`, `clawback`, `set_trust_line_flags`",
+      "Payments: `payment`, `path_payment_strict_receive`, `path_payment_strict_send`, `create_account`, `account_merge`",
+      "Soroban Contracts: `invoke_host_function`, `extend_footprint_ttl`, `restore_footprint`",
+      "Trustlines: `change_trust`",
+      "Other: `inflation` and any type the mapping does not know",
+    ],
+    exclusions: [
+      "Pool or claimable-balance identity: a category counts operations, it does not identify a pool",
+      "Cross-category double counting: an operation belongs to exactly one category",
+    ],
+    limitations: [
+      "Moving a type between categories changes every historical category comparison unless the older version is named.",
+      "Classic liquidity-pool and claimable-balance operations are counted separately from Soroban AMM contracts, which stay in Soroban Contracts.",
     ],
   },
   {

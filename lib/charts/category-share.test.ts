@@ -20,6 +20,19 @@ describe("mapTypeToCategory", () => {
     assert.equal(mapTypeToCategory("weird_custom_op"), "other");
     assert.equal(mapTypeToCategory("inflation"), "other");
   });
+
+  it("maps classic liquidity-pool and claimable-balance types to their own categories", () => {
+    assert.equal(mapTypeToCategory("liquidity_pool_deposit"), "liquidity_pools");
+    assert.equal(mapTypeToCategory("liquidity_pool_withdraw"), "liquidity_pools");
+    assert.equal(mapTypeToCategory("create_claimable_balance"), "claimable_balances");
+    assert.equal(mapTypeToCategory("claim_claimable_balance"), "claimable_balances");
+    assert.equal(
+      mapTypeToCategory("clawback_claimable_balance"),
+      "claimable_balances",
+    );
+    assert.equal(mapTypeToCategory("manage_sell_offer"), "dex");
+    assert.equal(mapTypeToCategory("clawback"), "account");
+  });
 });
 
 describe("buildCategoryShareSeries", () => {
@@ -83,6 +96,29 @@ describe("buildCategoryShareSeries", () => {
     }
   });
 
+  it("keeps fixture liquidity-pool and claimable-balance counts in their own buckets", () => {
+    const series = getFixtureCategoryShareSeries("1d", now);
+    const deposit = series.buckets.find(
+      (bucket) => bucket.bucketStart === "2026-07-28T08:00:00.000Z",
+    );
+    assert.ok(deposit);
+    assert.equal(deposit.categories.liquidity_pools, 30);
+    assert.equal(deposit.categories.dex, 0);
+
+    const withdraw = series.buckets.find(
+      (bucket) => bucket.bucketStart === "2026-07-28T09:00:00.000Z",
+    );
+    assert.ok(withdraw);
+    assert.equal(withdraw.categories.liquidity_pools, 12);
+
+    const create = series.buckets.find(
+      (bucket) => bucket.bucketStart === "2026-07-28T10:00:00.000Z",
+    );
+    assert.ok(create);
+    assert.equal(create.categories.claimable_balances, 26);
+    assert.equal(create.categories.account, 0);
+  });
+
   it("supports changing category mix across buckets", () => {
     const series = buildCategoryShareSeries({
       period: "1d",
@@ -117,7 +153,7 @@ describe("buildCategoryLegend", () => {
     const legend = buildCategoryLegend();
     assert.deepEqual(
       legend.map((item) => item.id),
-      ["soroban", "payments", "dex", "trustlines", "account", "other"],
+      ["soroban", "payments", "dex", "liquidity_pools", "claimable_balances", "trustlines", "account", "other"],
     );
   });
 });

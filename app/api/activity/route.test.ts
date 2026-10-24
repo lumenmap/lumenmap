@@ -18,6 +18,7 @@ import type {
   Period,
 } from "@/lib/types";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
+import { getFixtureActivityData } from "@/lib/fixtures/activity";
 import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
 
 const supportedPeriods: Period[] = ["1d", "7d", "30d", "month"];
@@ -296,6 +297,50 @@ describe("GET /api/activity and /api/v1/activity", () => {
     assert.ok("kpis" in body);
     assert.ok("treemaps" in body);
     assert.ok("metricProvenance" in body);
+  });
+
+  test("carries classic DeFi account rankings in the compact response", async () => {
+    const fixture = getFixtureActivityData("1d");
+    const response = await handleActivityRequest(
+      new Request("http://localhost/api/v1/activity?period=1d"),
+      async () => fixture,
+    );
+    const body = (await response.json()) as ActivityVisualizationResponse;
+
+    const liquidityPools = body.classicDeFi?.liquidityPools;
+    const claimableBalances = body.classicDeFi?.claimableBalances;
+    assert.ok(liquidityPools, "liquidity-pool breakdown is missing");
+    assert.ok(claimableBalances, "claimable-balance breakdown is missing");
+
+    assert.equal(liquidityPools.scope, "liquidity_pools");
+    assert.ok(liquidityPools.totalOps > 0, "fixture LP ops should be ranked");
+    assert.ok(claimableBalances.totalOps > 0, "fixture claimable ops should be ranked");
+    assert.ok(liquidityPools.rows.length > 0);
+    assert.ok(claimableBalances.rows.length > 0);
+
+    const rows = [...liquidityPools.rows, ...claimableBalances.rows];
+    for (const row of rows) {
+      assert.ok(row.ops > 0);
+      assert.ok(row.byType.length > 0, `${row.accountId} has no per-type counts`);
+    }
+    for (const breakdown of [liquidityPools, claimableBalances]) {
+      const ops = breakdown.rows.map((row) => row.ops);
+      assert.deepEqual(
+        [...ops].sort((a, b) => b - a),
+        ops,
+        "rows must stay ranked by operations",
+      );
+    }
+
+    // Rankings are derived from the same source-account rows the treemap uses.
+    const lpTypes = new Set(
+      fixture.accounts
+        .filter((row) => row.type_string.startsWith("liquidity_pool_"))
+        .map((row) => row.account_id),
+    );
+    for (const row of liquidityPools.rows) {
+      assert.ok(lpTypes.has(row.accountId), `${row.accountId} is not an LP source account`);
+    }
   });
 
   test("keeps the representative compact payload below 40% of the combined fixture", () => {

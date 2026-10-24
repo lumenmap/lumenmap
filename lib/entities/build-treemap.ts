@@ -54,10 +54,21 @@ const GROUP_ORDER = [
   "soroban",
   "payments",
   "dex",
+  "liquidity_pools",
+  "claimable_balances",
   "trustlines",
   "account",
   "other",
 ] as const;
+
+/** Groups whose treemap children are ranked source accounts rather than types. */
+const ACCOUNT_LEAF_GROUPS = new Set([
+  "payments",
+  "dex",
+  "liquidity_pools",
+  "claimable_balances",
+  "trustlines",
+]);
 
 function getGroupForType(type: string): string {
   return TYPE_TO_GROUP[type] ?? "other";
@@ -353,7 +364,7 @@ function buildCategoryGroupChildren(
     return buildContractLeaves(input.contracts, input.labels, metric);
   }
 
-  if (group === "payments" || group === "dex" || group === "trustlines") {
+  if (ACCOUNT_LEAF_GROUPS.has(group)) {
     const accountLeaves = buildAccountLeaves(
       input.accounts,
       group,
@@ -382,11 +393,7 @@ function buildGroupCoverage(
   if (group === "soroban") {
     // Soroban contracts are capped at TOP_CONTRACT_LIMIT
     configuredLimit = TOP_CONTRACT_LIMIT;
-  } else if (
-    group === "payments" ||
-    group === "dex" ||
-    group === "trustlines"
-  ) {
+  } else if (ACCOUNT_LEAF_GROUPS.has(group)) {
     // Accounts per type are capped at TOP_ACCOUNTS_PER_TYPE
     configuredLimit = TOP_ACCOUNTS_PER_TYPE;
   }

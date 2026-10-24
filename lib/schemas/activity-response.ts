@@ -357,6 +357,28 @@ const protocolSummarySchema = z.object({
   unknownCount: z.number(),
 });
 
+const classicDefiAccountRowSchema = z.object({
+  accountId: z.string(),
+  ops: z.number(),
+  scopeShare: z.number(),
+  byType: z.array(
+    z.object({ type_string: z.string(), ops: z.number() }),
+  ),
+});
+
+const classicDefiBreakdownSchema = z.object({
+  scope: z.enum(["liquidity_pools", "claimable_balances"]),
+  totalOps: z.number(),
+  rows: z.array(classicDefiAccountRowSchema),
+  distinctAccounts: z.number(),
+  truncated: z.boolean(),
+});
+
+const classicDefiBreakdownsSchema = z.object({
+  liquidityPools: classicDefiBreakdownSchema,
+  claimableBalances: classicDefiBreakdownSchema,
+});
+
 export const activityResponseSchema = z.object({
   period: periodSchema,
   start: isoTimestampSchema,
@@ -381,6 +403,7 @@ export const activityResponseSchema = z.object({
   timeseries: activityTimeseriesSchema.optional(),
   heatmap: activityHeatmapSchema.optional(),
   assetVolumes: z.array(assetPaymentVolumeSchema).optional(),
+  classicDeFi: classicDefiBreakdownsSchema.optional(),
   fixture: z.boolean().optional(),
 });
 

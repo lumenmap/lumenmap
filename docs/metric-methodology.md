@@ -1,8 +1,8 @@
 # LumenMap metric methodology
 
-**Methodology version:** 2.0.0\
+**Methodology version:** 2.1.0\
 **Status:** Canonical for the current mainnet dashboard and its planned metrics  
-**Last updated:** 2026-09-30
+**Last updated:** 2026-10-24
 
 This document is the authoritative definition of LumenMap metrics. A label in the
 application, API, README, or a future chart must use the definition here. A metric
@@ -60,9 +60,30 @@ explorer statistic.
 | **Aggregation** | `COUNT(*)`, grouped by `type_string` where a breakdown is needed; **Total Operations** is the sum of those grouped counts. |
 | **Time basis** | `closed_at BETWEEN @start AND @end`, using the common period convention. |
 | **Source** | `crypto-stellar.crypto_stellar_dbt.enriched_history_operations`; fields `closed_at` and `type_string`. Implemented by `categoryQuery` in `lib/hubble/queries.ts`. |
-| **Includes** | Every operation row returned by that table in the selected range, across all `type_string` values. Category totals map types using `TYPE_TO_GROUP`; unmapped types are **Other**. |
+| **Includes** | Every operation row returned by that table in the selected range, across all `type_string` values. Category totals map types using `TYPE_TO_GROUP` (see [Operation categories](#operation-categories)); unmapped types are **Other**. |
 | **Excludes** | No operation type is deliberately excluded from Total Operations. A missing or delayed Hubble row is not counted. |
 | **Limitations** | This is not a transaction count: one transaction can contain multiple operations. Category mapping is a presentation grouping and can change only with a methodology version change. Subject to the common partial-period, freshness, cache, and inclusive-boundary limitations. |
+
+### Operation categories
+
+**Methodology ID:** `operation-categories` · **Version:** `1.0.0`
+
+| Property | Canonical definition |
+| --- | --- |
+| **Unit** | One Stellar operation record, assigned to exactly one category. |
+| **Aggregation** | Each `type_string` count from [Operations](#operations) is mapped by `TYPE_TO_GROUP` and summed per category. A type appears in one category only, so category sums reconcile to Total Operations. |
+| **Time basis** | Same selected period bounds as operations. |
+| **Source** | `TYPE_TO_GROUP`, `GROUP_LABELS`, and `CATEGORY_COLORS` in `lib/constants.ts`; rendered by the **Operation Types** treemap view, the category-share chart, and the treemap category legend. |
+| **Includes** | **Liquidity Pools** — `liquidity_pool_deposit`, `liquidity_pool_withdraw`. **Claimable Balances** — `create_claimable_balance`, `claim_claimable_balance`, `clawback_claimable_balance`. **DEX Trades** — `manage_buy_offer`, `manage_sell_offer`, `create_passive_sell_offer`. **Trustlines** — `change_trust`. **Payments** — `payment`, `path_payment_strict_receive`, `path_payment_strict_send`, `create_account`, `account_merge`. **Soroban Contracts** — `invoke_host_function`, `extend_footprint_ttl`, `restore_footprint`. **Account Operations** — `set_options`, `bump_sequence`, `allow_trust`, `manage_data`, `begin_sponsoring_future_reserves`, `end_sponsoring_future_reserves`, `revoke_sponsorship`, `clawback`, `set_trust_line_flags`. **Other** — `inflation` and any `type_string` the mapping does not know. |
+| **Excludes** | Pool, claimable-balance, or offer identity: a category counts operations, it never identifies a pool or a balance. Soroban AMM activity, which stays in **Soroban Contracts** because it is recorded as `invoke_host_function`, not as a classic liquidity-pool operation. |
+| **Limitations** | Classic liquidity-pool and claimable-balance volume is not measurable from these counts; they are operation counts. Before methodology 2.1.0 these types were counted inside **DEX Trades** and **Account Operations**, so category comparisons that cross that version compare different groupings. Releasing a category to a different group requires a version change and is labelled with the version that produced it. |
+
+The **DeFi on classic** panel ranks source accounts inside these two categories from
+the same top-accounts-per-type rows the treemap uses (`op_source_account` grouped
+per `type_string`, top 70 per type), and the API serves that ranking as
+`classicDeFi` on the activity response. Hubble's classic operations feed carries no
+pool identifier in the columns LumenMap reads, so pools are represented by the accounts
+submitting those operations and the panel is labelled as accounts, not pools.
 
 ### Transactions
 
@@ -223,6 +244,8 @@ documents the flattened columns and transaction success flag.
 | --- | --- | --- |
 | `kpis.totalOps` / “Total Operations” | Operations | All Hubble operation rows in range. |
 | `categories[].op_count` and operation-type treemap values | Operations | Counted by `type_string`. |
+| Category treemap nodes, category-share stacks, and treemap legend | Operation categories | `TYPE_TO_GROUP` mapping of `type_string` counts; exactly one category per type, so category totals reconcile to Total Operations. |
+| **DeFi on classic** tables (`classicDeFi.liquidityPools` / `classicDeFi.claimableBalances`) | Operations attributed to `op_source_account` | Ranked within `liquidity_pools` and `claimable_balances` only; accounts, not pools or balances — Hubble exposes no pool identifier in the columns LumenMap reads. |
 | `accounts[].op_count` / source treemap values | Operations attributed to `op_source_account` | Top-70-per-type, selected operation types only; not active accounts and not monetary volume. |
 | `destinationAccounts[].op_count` / receiver treemap values | Operations attributed to destination fields | Top-70-per-type, payment-style types only; extracts `to`, `account`, or `into` fields based on operation type. |
 | `contracts[].op_count` / contract treemap values | `SUM(txn_count)` per contract | Legacy field name only; this is transaction activity, not operation count. |
@@ -299,7 +322,8 @@ Incomplete periods and a missing baseline produce no banner. `?anomaly=spike` an
 
 ### Version history
 
-- **2.0.0 (current):** Optional query soft-failure for activeDestinationCount, activeContractCount, and transactionCategory queries.
+- **2.1.0 (current):** Added the `operation-categories` metric and split **Liquidity Pools** (`liquidity_pool_deposit`, `liquidity_pool_withdraw`) out of **DEX Trades** and **Claimable Balances** (`create_claimable_balance`, `claim_claimable_balance`, `clawback_claimable_balance`) out of **Account Operations**; added the DeFi-on-classic ranked account tables. Category totals produced before 2.1.0 use the previous grouping and must be labelled as such rather than compared with current values. No other metric definition changed.
+- **2.0.0:** Optional query soft-failure for activeDestinationCount, activeContractCount, and transactionCategory queries.
 
 ## Returning-wallet cohorts
 

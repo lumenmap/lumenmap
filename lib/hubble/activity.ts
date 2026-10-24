@@ -639,7 +639,7 @@ export async function getActivityData(
   }
 
   const range = resolvePeriod(period);
-  const cacheKey = `activity:v14:${network}:${period}:${range.start.toISOString()}`;
+  const cacheKey = `activity:v15:${network}:${period}:${range.start.toISOString()}`;
 
   const cached = getCached<ActivityDataset>(cacheKey, { track: true });
   if (cached) {
