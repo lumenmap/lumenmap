@@ -1,5 +1,7 @@
 import { getBigQueryClient, hasBigQueryCredentials } from "@/lib/hubble/client";
 import { getCached, setCache } from "@/lib/hubble/cache";
+import { isRollupEnabled } from "@/lib/hubble/rollups-config";
+import { rollupDailyTimeseriesQuery } from "@/lib/hubble/rollup-queries";
 import { buildTimeseries } from "@/lib/hubble/activity";
 import {
   dailyTimeseriesQuery,
@@ -98,7 +100,9 @@ async function fetchTimeseriesRows(
   }
 
   const query =
-    granularity === "hour" ? hourlyTimeseriesQuery : dailyTimeseriesQuery;
+    granularity === "hour"
+      ? hourlyTimeseriesQuery
+      : (isRollupEnabled() ? rollupDailyTimeseriesQuery() : dailyTimeseriesQuery);
 
   const [rows] = await client.query({
     query,

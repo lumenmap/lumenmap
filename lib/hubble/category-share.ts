@@ -1,5 +1,7 @@
 import { getBigQueryClient, hasBigQueryCredentials } from "@/lib/hubble/client";
 import { getCached, setCache } from "@/lib/hubble/cache";
+import { isRollupEnabled } from "@/lib/hubble/rollups-config";
+import { rollupCategoryShareQuery } from "@/lib/hubble/rollup-queries";
 import {
   buildCategoryShareSeries,
   type CategoryShareRawRow,
@@ -62,8 +64,12 @@ async function fetchCategoryShareRows(
     throw new Error("BigQuery client is not configured");
   }
 
+  const query = isRollupEnabled()
+    ? rollupCategoryShareQuery(granularity)
+    : categoryShareQuery(granularity);
+
   const [rows] = await client.query({
-    query: categoryShareQuery(granularity),
+    query,
     params: { start, end },
   });
 

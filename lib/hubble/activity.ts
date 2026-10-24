@@ -11,6 +11,13 @@ import {
 } from "@/lib/hubble/errors";
 import { coalesceInflight } from "@/lib/hubble/inflight";
 import { runOptionalQuery } from "@/lib/hubble/soft-fail";
+import { isRollupEnabled } from "@/lib/hubble/rollups-config";
+import {
+  rollupCategoryQuery,
+  rollupTransactionCategoryQuery,
+  rollupActiveSourceAccountsQuery,
+  rollupDailyTimeseriesQuery,
+} from "@/lib/hubble/rollup-queries";
 import {
   accountQuery,
   assetPaymentVolumeQuery,
@@ -200,8 +207,18 @@ async function fetchFromHubble(
   period: Period,
 ): Promise<RawQueryResults> {
   const params = { start, end };
-  const timeseriesQuery =
-    period === "1d" ? hourlyTimeseriesQuery : dailyTimeseriesQuery;
+  const useRollups = isRollupEnabled();
+  const activeCategoryQuery = useRollups ? rollupCategoryQuery() : categoryQuery;
+  const activeTransactionCategoryQuery = useRollups
+    ? rollupTransactionCategoryQuery()
+    : transactionCategoryQuery;
+  const activeSourceAccountsSql = useRollups
+    ? rollupActiveSourceAccountsQuery()
+    : activeSourceAccountsQuery;
+  const activeTimeseriesQuery =
+    useRollups && period !== "1d"
+      ? rollupDailyTimeseriesQuery()
+      : (period === "1d" ? hourlyTimeseriesQuery : dailyTimeseriesQuery);
 
   /**
    * Query classification for soft failure handling.
@@ -249,7 +266,7 @@ async function fetchFromHubble(
     ),
     runQuery<Record<string, unknown>>(
       "category",
-      categoryQuery,
+      activeCategoryQuery,
       params,
       correlationId,
     ),
@@ -258,7 +275,7 @@ async function fetchFromHubble(
       () =>
         runQuery<Record<string, unknown>>(
           "transactionCategory",
-          transactionCategoryQuery,
+          activeTransactionCategoryQuery,
           params,
           correlationId,
         ),
@@ -303,7 +320,7 @@ async function fetchFromHubble(
     ),
     runQuery<Record<string, unknown>>(
       "activeSourceAccounts",
-      activeSourceAccountsQuery,
+      activeSourceAccountsSql,
       params,
       correlationId,
     ),
@@ -363,7 +380,7 @@ async function fetchFromHubble(
     ),
     runQuery<Record<string, unknown>>(
       "timeseries",
-      timeseriesQuery,
+      activeTimeseriesQuery,
       params,
       correlationId,
     ),
