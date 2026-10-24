@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useDashboard, DashboardProvider } from "@/components/dashboard/DashboardProvider";
 import { CategoryShareChart } from "@/components/dashboard/CategoryShareChart";
+import { ClassicDefiActivity } from "@/components/dashboard/ClassicDefiActivity";
 import { DetailPanel } from "@/components/dashboard/DetailPanel";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
@@ -195,6 +196,7 @@ function DashboardContent() {
               <div className="flex flex-col gap-6">
                 <AssetVolumePanel />
                 <CategoryShareChart />
+                <ClassicDefiActivity />
               </div>
             ),
           },

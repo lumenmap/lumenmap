@@ -29,6 +29,8 @@ const CATEGORY_LEGEND = [
   { key: "soroban", label: "Soroban" },
   { key: "payments", label: "Payments" },
   { key: "dex", label: "DEX" },
+  { key: "liquidity_pools", label: "Liquidity Pools" },
+  { key: "claimable_balances", label: "Claimable Balances" },
   { key: "trustlines", label: "Trustlines" },
   { key: "account", label: "Account Ops" },
   { key: "other", label: "Other" },

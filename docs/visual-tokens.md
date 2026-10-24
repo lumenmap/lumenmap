@@ -37,6 +37,8 @@ Data category colors are intentionally separate from interface accents.
 - `--color-soroban`: Soroban contract activity.
 - `--color-payments`: Payments activity.
 - `--color-dex`: DEX and market activity.
+- `--color-liquidity-pools`: Classic liquidity-pool activity.
+- `--color-claimable-balances`: Classic claimable-balance activity.
 - `--color-trustlines`: Trustline activity.
 - `--color-account`: Account operation activity.
 - `--color-other`: Miscellaneous activity.

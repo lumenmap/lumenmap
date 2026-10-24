@@ -164,6 +164,8 @@ describe("activity error hierarchy (#305)", () => {
             soroban: 10,
             payments: 0,
             dex: 0,
+            liquidity_pools: 0,
+            claimable_balances: 0,
             trustlines: 0,
             account: 0,
             other: 0,
