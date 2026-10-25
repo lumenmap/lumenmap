@@ -33,6 +33,7 @@ import { SnapshotBanner } from "@/components/dashboard/SnapshotBanner";
 import { SnapshotShareControls } from "@/components/dashboard/SnapshotShareControls";
 import { NetworkSelector } from "@/components/dashboard/NetworkSelector";
 import { AnomalyBanner } from "@/components/dashboard/AnomalyBanner";
+import { WhatChangedCard } from "@/components/dashboard/WhatChangedCard";
 import { useEffect, useState } from "react";
 import {
   detectKpiAnomalies,
@@ -130,6 +131,7 @@ function DashboardContent() {
 
       <FreshnessWarning />
       <AnomalyBannerHost />
+      <WhatChangedCard />
 
       <ActivityErrorBanner />
 
