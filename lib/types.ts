@@ -438,6 +438,8 @@ export interface ActivityTreemaps {
 }
 
 export interface ActivityResponseMetadata {
+  /** Present and true when the response was served from offline service worker cache. */
+  isOfflineCache?: boolean;
   period: Period;
   start: string;
   end: string;

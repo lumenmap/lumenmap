@@ -99,6 +99,33 @@ export function FreshnessWarning() {
     );
   }
 
+  if (data.isOfflineCache) {
+    return (
+      <div
+        role="alert"
+        aria-live="polite"
+        data-testid="offline-stale-banner"
+        className="flex items-start gap-3 rounded-lg border border-amber-500/40 bg-surface-soft px-4 py-3 text-sm text-amber-200"
+      >
+        <AlertTriangle
+          className="mt-0.5 h-4 w-4 shrink-0 text-amber-400"
+          aria-hidden="true"
+        />
+        <span>
+          <strong className="font-medium text-amber-300">
+            Offline mode — displaying cached data.
+          </strong>{" "}
+          Network connection is unavailable. Showing the last successfully loaded dashboard state.{" "}
+          {data.sourceTimestamp ? (
+            <span className="break-words font-mono text-xs text-amber-300/80">
+              Data through: {formatDataThrough(data.sourceTimestamp)} UTC
+            </span>
+          ) : null}
+        </span>
+      </div>
+    );
+  }
+
   const state = classifyFreshness(data.sourceTimestamp);
 
   if (state === "fresh") {
