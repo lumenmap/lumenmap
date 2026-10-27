@@ -25,7 +25,6 @@ import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { AddressComparisonPanel } from "@/components/dashboard/AddressComparisonPanel";
 import { ComparisonPanel } from "@/components/dashboard/ComparisonPanel";
-import { AddressComparisonPanel } from "@/components/dashboard/AddressComparisonPanel";
 import { IssuerIntelligence } from "@/components/dashboard/IssuerIntelligence";
 import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { WatchlistPanel } from "@/components/dashboard/WatchlistPanel";
@@ -33,7 +32,7 @@ import { SnapshotBanner } from "@/components/dashboard/SnapshotBanner";
 import { SnapshotShareControls } from "@/components/dashboard/SnapshotShareControls";
 import { NetworkSelector } from "@/components/dashboard/NetworkSelector";
 import { AnomalyBanner } from "@/components/dashboard/AnomalyBanner";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   detectKpiAnomalies,
   QUIET_FIXTURE,
@@ -60,13 +59,17 @@ function snapshotFromKpis(kpis: {
   };
 }
 
+// The ?anomaly override is URL-only state: subscribe-free external store
+// reads instead of a mount effect that calls setState (react-hooks/set-state-in-effect).
+const subscribeToUrlChanges = () => () => {};
+
 function AnomalyBannerHost() {
   const { data, comparisonData } = useDashboard();
-  const [forced, setForced] = useState<string | null>(null);
-
-  useEffect(() => {
-    setForced(new URLSearchParams(window.location.search).get("anomaly"));
-  }, []);
+  const forced = useSyncExternalStore(
+    subscribeToUrlChanges,
+    () => new URLSearchParams(window.location.search).get("anomaly"),
+    () => null,
+  );
 
   if (forced === "spike") {
     return <AnomalyBanner findings={detectKpiAnomalies(SPIKE_FIXTURE)} />;

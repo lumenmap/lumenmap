@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useFreshnessStream } from "@/lib/hooks/useFreshnessStream";
 import type { ChartViewId, TreemapViewId } from "@/lib/constants";
 import {
   parseDashboardUrlSearch,
@@ -300,6 +301,12 @@ export function DashboardProvider({
     queryFn: () => fetchActivity(comparePeriod as Period, network),
     enabled: urlReady && comparePeriod !== null && !readOnly,
     staleTime: 60_000,
+  });
+
+  useFreshnessStream({
+    enabled: urlReady && !readOnly,
+    currentPeriod: period,
+    currentNetwork: network,
   });
 
   useEffect(() => {

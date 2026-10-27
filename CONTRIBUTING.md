@@ -21,6 +21,7 @@ Thank you for your interest in contributing. This guide covers everything you ne
 - [Issue sizing (Wave estimate guide)](#issue-sizing-wave-estimate-guide)
 - [Branch and PR workflow](#branch-and-pr-workflow)
 - [Changelog workflow](#changelog-workflow)
+- [Soft real-time freshness channel (SSE)](#soft-real-time-freshness-channel-sse)
 - [Pull request expectations](#pull-request-expectations)
 
 ---
@@ -433,6 +434,59 @@ npm run changelog:generate -- --fixture scripts/fixtures/changelog-commits.json
 
 Do not hand-edit text between the generated markers. Curated release summaries
 outside those markers remain untouched.
+
+---
+
+## Soft real-time freshness channel (SSE)
+
+LumenMap caches Hubble query results in-memory with a 15-minute TTL. To keep persistent dashboard tabs fresh without full-page reloads, heavy WebSockets, or continuous polling, the server provides a lightweight Server-Sent Events (SSE) stream.
+
+### Endpoint & Protocol
+- **Route**: `GET /api/v1/events/freshness`
+- **Protocol**: HTTP/1.1 or HTTP/2 Server-Sent Events (`Content-Type: text/event-stream; charset=utf-8`).
+- **Authentication**: Authless, public endpoint.
+- **Headers**:
+  - `Cache-Control: no-cache, no-transform, no-store, must-revalidate`
+  - `Connection: keep-alive`
+  - `X-Accel-Buffering: no` (disables intermediate reverse proxy buffering)
+
+### Event Payload Schema
+Whenever the backend cache rotates or invalidates (e.g. `setCache` / `clearCache`), a `freshness` event is emitted:
+```text
+event: freshness
+data: {"epoch":1774191600000,"generatedAt":"2026-10-22T14:40:00.000Z","keys":["activity:v14:mainnet:1d:2026-10-22T00:00:00.000Z"],"reason":"cache_set"}
+```
+
+- `epoch`: Millisecond timestamp representing the current cache generation.
+- `generatedAt`: ISO 8601 string of the rotation event.
+- `keys`: Array of cache keys that were rotated (e.g., `activity:v14:<network>:<period>:<start>`).
+- `reason`: One of `"initial"` (immediate connection snapshot), `"cache_set"`, or `"cache_clear"`.
+
+### Heartbeats, Limits & Reconnection
+- **Heartbeat Comments**: Every 25 seconds, `: ping\n\n` comments are sent down the wire to prevent edge routers, cloud load balancers, and firewalls from dropping idle TCP connections.
+- **Max Connection Lifetime**: The server gracefully closes connections after 5 minutes (`MAX_CONNECTION_LIFETIME_MS = 300_000`). Native browser `EventSource` automatically reconnects seamlessly.
+- **Client Debouncing**: The `useFreshnessStream` hook coalesces events within a 2-second debounce window (`debounceMs = 2000`) before invalidating TanStack Query activity queries. This prevents duplicate refetch storms when multiple cache entries update concurrently.
+- **Selective Query Invalidation**: Events specifying affected cache keys only invalidate queries matching the currently active `period` and `network`.
+- **Fallback Polling**: If `EventSource` is unsupported in the client browser or if connections are blocked, the client automatically falls back to periodic polling every 5 minutes (`fallbackPollingIntervalMs = 300_000`).
+
+### Manual Verification in DevTools
+1. Run the local development server:
+   ```bash
+   npm run dev
+   ```
+2. Open Chrome/Firefox DevTools (`F12`), navigate to the **Network** tab, and filter by `freshness` or `EventStream`.
+3. Load `http://localhost:3000/`.
+4. Inspect the `GET /api/v1/events/freshness` request:
+   - Status: `200 OK`
+   - Type: `eventsource`
+5. Switch to the **EventStream** tab in DevTools:
+   - Observe the initial `freshness` event with `"reason": "initial"`.
+   - Observe periodic comment pings (`: ping`).
+6. Trigger a cache rotation in another terminal:
+   ```bash
+   curl -s "http://localhost:3000/api/v1/activity?period=1d" > /dev/null
+   ```
+7. Verify that a new `freshness` event appears in the DevTools EventStream and that the TanStack Query activity query invalidates cleanly without a full-page reload.
 
 ---
 
