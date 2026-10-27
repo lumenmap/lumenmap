@@ -1,12 +1,21 @@
 "use client";
 
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatExactNumber, formatPercent, truncateAddress } from "@/lib/utils";
+import { useDashboard } from "@/components/dashboard/DashboardProvider";
+import type { SelectedNode } from "@/lib/types";
 import {
   FLOW_METHODOLOGY_ANCHORS,
   flowMethodologyHref,
 } from "@/lib/metrics/flow-methodology-anchors";
+import {
+  encodeFlowEdges,
+  type FlowEdgeEncoding,
+  type FlowEdgeWeightMetric,
+} from "@/lib/metrics/flow-edge-encoding";
 
 /**
  * Minimal structural shapes of the Flow graph model. They are intentionally a
@@ -100,6 +109,50 @@ export function FlowCoverageBadge({ coverage }: { coverage: FlowCoverage }) {
       </a>
     </p>
   );
+}
+
+export interface FlowNodeMetrics {
+  inflowOps: number;
+  outflowOps: number;
+}
+
+/**
+ * Maps a Flow node to the shared `SelectedNode` entity context consumed by
+ * `DetailPanel` (same shape treemap selection uses): label as name,
+ * address as `meta.id`, category as category/protocol, and summed
+ * in/out operation counts as the value. Restored from #290 wiring whose
+ * helper definition was lost in a later merge.
+ */
+export function flowTableNodeToSelectedNode(
+  node: FlowTableNode,
+  metrics: FlowNodeMetrics,
+): SelectedNode {
+  const opCount = metrics.inflowOps + metrics.outflowOps;
+  return {
+    name: node.label,
+    value: opCount,
+    share: 0,
+    meta: {
+      type: "account",
+      id: node.id,
+      nodeId: node.id,
+      category: node.category ?? "account",
+      protocol: node.category,
+      opCount,
+    },
+  };
+}
+
+/**
+ * Returns the dashboard context when rendered inside `DashboardProvider`,
+ * else null so the table stays usable standalone (e.g. unit tests).
+ */
+function useOptionalDashboard() {
+  try {
+    return useDashboard();
+  } catch {
+    return null;
+  }
 }
 
 type SortDirection = "asc" | "desc";
@@ -221,6 +274,18 @@ export interface FlowDataTableProps {
   caption?: string;
   /** Top-N sampling coverage; badge renders only when coverage is below 100%. */
   coverage?: FlowCoverage | null;
+  /** Renders table-shaped loading skeletons instead of data. */
+  isLoading?: boolean;
+  /** Renders the error panel with retry instead of data. */
+  isError?: boolean;
+  /** Error copy shown in the error panel. */
+  errorMessage?: string;
+  /** Refetch trigger invoked by the retry button. */
+  onRetry?: () => void | Promise<void>;
+  /** Disables the retry button while a refetch is in flight. */
+  retryPending?: boolean;
+  /** Weight metric used for edge thickness (operations or asset amount). */
+  weightMetric?: FlowEdgeWeightMetric;
 }
 
 const HEADER_CELL =
@@ -386,9 +451,16 @@ export function FlowDataTable({
   onSelect,
   caption = "Flow graph edges",
   coverage = null,
+  isLoading = false,
+  isError = false,
+  errorMessage = "Unable to load flow data.",
+  onRetry,
+  retryPending = false,
+  weightMetric = "op_count",
 }: FlowDataTableProps) {
   const edgeSort = useSort<EdgeSortKey>("amount");
   const nodeSort = useSort<NodeSortKey>("outflow");
+  const dashboard = useOptionalDashboard();
   const [isRetrying, setIsRetrying] = useState(false);
   const retryBusy = isRetrying || retryPending;
 
@@ -463,6 +535,7 @@ export function FlowDataTable({
         labelById.get(edge.destination) ?? truncateAddress(edge.destination),
       asset: assetLabel(edge),
       amount: edge.amountComplete === false ? null : amountToUnits(edge.amount),
+      encoding: edgeEncodings.get(edge.id),
     }));
     const { sortKey, direction } = edgeSort;
     return rows.sort((a, b) => {

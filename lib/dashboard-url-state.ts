@@ -93,7 +93,11 @@ export type DashboardUrlState = {
   network?: "mainnet" | "testnet";
   flowMode?: "graph" | "table";
   egoAddress?: string;
-  searchQuery?: string;
+  /**
+   * Treemap period-over-period diff overlay (issue #447). Encoded as
+   * `diff=1`; absent means the overlay is off.
+   */
+  treemapDiff?: boolean;
 };
 
 export function parseDashboardUrlSearch(
@@ -134,6 +138,10 @@ export function parseDashboardUrlSearch(
     next.egoAddress = egoAddress;
   }
 
+  if (params.get("diff") === "1" || params.get("diff") === "true") {
+    next.treemapDiff = true;
+  }
+
   return next;
 }
 
@@ -153,6 +161,7 @@ export function writeDashboardUrlSearch(input: {
   egoAddress?: string | null;
   chartView?: ChartViewId;
   searchQuery?: string;
+  treemapDiff?: boolean;
 }): string {
   const params = new URLSearchParams(
     (input.currentSearch ?? "").replace(/^\?/, ""),
@@ -181,6 +190,9 @@ export function writeDashboardUrlSearch(input: {
 
   if (input.egoAddress) params.set("ego", input.egoAddress);
   else params.delete("ego");
+
+  if (input.treemapDiff) params.set("diff", "1");
+  else params.delete("diff");
 
   const query = params.toString();
   return query ? `?${query}` : "";

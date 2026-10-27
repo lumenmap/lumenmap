@@ -383,7 +383,7 @@ export const FLOW_FIXTURE_ASSET_KEYS: ReadonlyArray<string> = [
  * Raw edge rows as they would arrive from BigQuery (denormalized, one row per transfer).
  * These are deliberately not deduped and include parallel edges between the same pair.
  */
-export const FLOW_FIXRURE_RAW_EDGES = [
+export const FLOW_FIXTURE_RAW_EDGES = [
   {
     from: "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJJ5IAJTGKIN2EX7LBNKNLXLTCV",
     to: "GA5ZSEJYB37JRC5AVCIA5MOP4RhTM335X2KGX3IHOJAPP5RE34K4KZVN",

@@ -42,7 +42,7 @@ export const FLOW_EDGE_STROKE_MAX = 12;
 export const FLOW_EDGE_OPACITY_MIN = 0.35
 
 /** Maximum rendered edge opacity. */
-export const FLOW_EDGE_OPACITY_MAX_ = 1;
+export const FLOW_EDGE_OPACITY_MAX = 1;
 
 /** Metric used to derive edge weight. */
 export type FlowEdgeWeightMetric = "op_count" | "asset_amount";
@@ -86,7 +86,7 @@ export interface FlowEdgeWeightEncoding {
 }
 
 function clamp(value: number, min: number, max: number): number {
-  if (!Number.finite(value)) return min;
+  if (!Number.isFinite(value)) return min;
   if (max < min) return min;
   return Math.min(max, Math.max(min, value));
 }
@@ -96,8 +96,8 @@ function normalizeMetric(
   minMetric: number,
   maxMetric: number,
 ): number {
-  if (!Number.finite(value)) return 0;
-  if (!Number.finite(minMetric) || !Number.finite(maxMetric)) return 0;
+  if (!Number.isFinite(value)) return 0;
+  if (!Number.isFinite(minMetric) || !Number.isFinite(maxMetric)) return 0;
   if (maxMetric <= minMetric) return value > minMetric ? 1 : 0;
   return clamp((value - minMetric) / (maxMetric - minMetric), 0, 1);
 }

@@ -33,6 +33,7 @@ import { WatchlistPanel } from "@/components/dashboard/WatchlistPanel";
 import { SnapshotBanner } from "@/components/dashboard/SnapshotBanner";
 import { SnapshotShareControls } from "@/components/dashboard/SnapshotShareControls";
 import { NetworkSelector } from "@/components/dashboard/NetworkSelector";
+import { KeyboardShortcuts } from "@/components/dashboard/KeyboardShortcuts";
 import { AnomalyBanner } from "@/components/dashboard/AnomalyBanner";
 import { useSyncExternalStore } from "react";
 import {
@@ -67,11 +68,16 @@ const subscribeToUrlChanges = () => () => {};
 
 function AnomalyBannerHost() {
   const { data, comparisonData } = useDashboard();
-  const forced = useSyncExternalStore(
-    subscribeToUrlChanges,
-    () => new URLSearchParams(window.location.search).get("anomaly"),
-    () => null,
-  );
+  const [forced, setForced] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Deferred so the forced-fixture read does not set state synchronously
+    // during the effect body (same pattern as the URL-parse effect in
+    // DashboardProvider).
+    queueMicrotask(() => {
+      setForced(new URLSearchParams(window.location.search).get("anomaly"));
+    });
+  }, []);
 
   if (forced === "spike") {
     return <AnomalyBanner findings={detectKpiAnomalies(SPIKE_FIXTURE)} />;
@@ -119,6 +125,7 @@ function DashboardContent() {
           <div className={readOnly ? "pointer-events-none opacity-70" : undefined}>
             <NetworkSelector />
           </div>
+          <KeyboardShortcuts />
         </div>
         <div className={`flex items-center gap-3 ${readOnly ? "pointer-events-none opacity-70" : ""}`}>
           <FreshnessIndicator />
