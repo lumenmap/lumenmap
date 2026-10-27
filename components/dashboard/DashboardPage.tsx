@@ -35,7 +35,8 @@ import { SnapshotShareControls } from "@/components/dashboard/SnapshotShareContr
 import { NetworkSelector } from "@/components/dashboard/NetworkSelector";
 import { KeyboardShortcuts } from "@/components/dashboard/KeyboardShortcuts";
 import { AnomalyBanner } from "@/components/dashboard/AnomalyBanner";
-import { useSyncExternalStore } from "react";
+import { WhatChangedCard } from "@/components/dashboard/WhatChangedCard";
+import { useEffect, useState } from "react";
 import {
   detectKpiAnomalies,
   QUIET_FIXTURE,
@@ -142,6 +143,7 @@ function DashboardContent() {
 
       <FreshnessWarning />
       <AnomalyBannerHost />
+      <WhatChangedCard />
 
       <ActivityErrorBanner />
 
