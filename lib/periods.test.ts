@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { resolvePeriod, isValidPeriod, PERIOD_OPTIONS } from "./periods";
+import {
+  resolvePeriod,
+  isValidPeriod,
+  PERIOD_OPTIONS,
+  previousPeriodAnchor,
+  resolvePreviousPeriodRange,
+} from "./periods";
 
 describe("PERIOD_OPTIONS", () => {
   it("has the correct entries", () => {
@@ -352,5 +358,104 @@ describe("resolvePeriod", () => {
       assert.ok(r.end.getTime() >= before - 86_400_000);
       assert.ok(r.end.getTime() <= after + 86_400_000);
     });
+  });
+});
+
+describe("previousPeriodAnchor", () => {
+  it("returns the last millisecond before the active window starts", () => {
+    const now = new Date("2024-06-15T12:00:00.000Z");
+
+    assert.equal(
+      previousPeriodAnchor("1d", now).toISOString(),
+      "2024-06-14T23:59:59.999Z",
+    );
+    assert.equal(
+      previousPeriodAnchor("7d", now).toISOString(),
+      "2024-06-08T23:59:59.999Z",
+    );
+    assert.equal(
+      previousPeriodAnchor("month", now).toISOString(),
+      "2024-05-31T23:59:59.999Z",
+    );
+  });
+});
+
+describe("resolvePreviousPeriodRange", () => {
+  const now = new Date("2024-06-15T12:00:00.000Z");
+
+  describe("1d", () => {
+    it("resolves to the previous calendar day, adjacent to the active day", () => {
+      const active = resolvePeriod("1d", now);
+      const previous = resolvePreviousPeriodRange("1d", now);
+
+      assert.equal(previous.period, "1d");
+      assert.equal(previous.label, "Previous day");
+      assert.equal(previous.start.toISOString(), "2024-06-14T00:00:00.000Z");
+      assert.equal(previous.end.toISOString(), "2024-06-14T23:59:59.999Z");
+      // Adjacent: ends exactly one millisecond before the active window.
+      assert.equal(active.start.getTime() - previous.end.getTime(), 1);
+    });
+  });
+
+  describe("7d", () => {
+    it("resolves to the seven days immediately before the active window", () => {
+      const active = resolvePeriod("7d", now);
+      const previous = resolvePreviousPeriodRange("7d", now);
+
+      assert.equal(previous.label, "Previous 7 days");
+      assert.equal(previous.start.toISOString(), "2024-06-02T00:00:00.000Z");
+      assert.equal(previous.end.toISOString(), "2024-06-08T23:59:59.999Z");
+      assert.equal(active.start.getTime() - previous.end.getTime(), 1);
+      assert.equal(
+        previous.end.getTime() - previous.start.getTime(),
+        active.end.getTime() - active.start.getTime(),
+      );
+    });
+  });
+
+  describe("30d", () => {
+    it("resolves to the thirty days immediately before the active window", () => {
+      const active = resolvePeriod("30d", now);
+      const previous = resolvePreviousPeriodRange("30d", now);
+
+      assert.equal(previous.label, "Previous 30 days");
+      assert.equal(previous.start.toISOString(), "2024-04-17T00:00:00.000Z");
+      assert.equal(previous.end.toISOString(), "2024-05-16T23:59:59.999Z");
+      assert.equal(active.start.getTime() - previous.end.getTime(), 1);
+      assert.equal(
+        previous.end.getTime() - previous.start.getTime(),
+        active.end.getTime() - active.start.getTime(),
+      );
+    });
+  });
+
+  describe("month", () => {
+    it("resolves to the previous calendar month", () => {
+      const previous = resolvePreviousPeriodRange("month", now);
+
+      assert.equal(previous.label, "Previous month");
+      assert.equal(previous.start.toISOString(), "2024-05-01T00:00:00.000Z");
+      assert.equal(previous.end.toISOString(), "2024-05-31T23:59:59.999Z");
+    });
+
+    it("handles January, which wraps to December of the previous year", () => {
+      const january = new Date("2024-01-10T05:00:00.000Z");
+      const previous = resolvePreviousPeriodRange("month", january);
+
+      assert.equal(previous.start.toISOString(), "2023-12-01T00:00:00.000Z");
+      assert.equal(previous.end.toISOString(), "2023-12-31T23:59:59.999Z");
+    });
+  });
+
+  it("never overlaps the active window for any period", () => {
+    for (const period of ["1d", "7d", "30d", "month"] as const) {
+      const active = resolvePeriod(period, now);
+      const previous = resolvePreviousPeriodRange(period, now);
+
+      assert.ok(
+        previous.end.getTime() < active.start.getTime(),
+        `${period}: previous window must end before the active window starts`,
+      );
+    }
   });
 });

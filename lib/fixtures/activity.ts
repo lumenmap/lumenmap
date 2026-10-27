@@ -3,7 +3,10 @@ import {
   buildKpis,
   buildProtocolSummary,
 } from "@/lib/entities/build-treemap";
-import { getFixtureRawActivity } from "@/lib/fixtures/raw-data";
+import {
+  getFixturePreviousRawActivity,
+  getFixtureRawActivity,
+} from "@/lib/fixtures/raw-data";
 import {
   getFixtureActiveDestinationCount,
   getFixtureActiveWalletCount,
@@ -12,8 +15,8 @@ import {
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
 import type { DashboardNetworkId } from "@/lib/network";
 import { resolveDashboardNetwork } from "@/lib/network";
-import { resolvePeriod } from "@/lib/periods";
-import type { ActivityDataset, Period } from "@/lib/types";
+import { previousPeriodAnchor, resolvePeriod } from "@/lib/periods";
+import type { ActivityDataset, ActivityWindow, Period } from "@/lib/types";
 
 /**
  * Builds a complete dashboard payload from the deterministic fixture rows.
@@ -30,9 +33,15 @@ import type { ActivityDataset, Period } from "@/lib/types";
 export function getFixtureActivityData(
   period: Period,
   network: DashboardNetworkId = resolveDashboardNetwork(),
+  window: ActivityWindow = "current",
 ): ActivityDataset {
-  const raw = getFixtureRawActivity(period);
-  const range = resolvePeriod(period);
+  const previous = window === "prev";
+  const raw = previous
+    ? getFixturePreviousRawActivity(period)
+    : getFixtureRawActivity(period);
+  const range = previous
+    ? resolvePeriod(period, previousPeriodAnchor(period))
+    : resolvePeriod(period);
 
   return {
     period,
@@ -65,6 +74,8 @@ export function getFixtureActivityData(
     },
     usdcCategories: [],
     usdcAccounts: [],
+    // The previous window exists to diff treemap tiles; its timeseries
+    // stays anchored to the active period, which the diff UI never reads.
     timeseries: getFixtureTimeseries(period),
     metricProvenance: buildActivityMetricProvenance(network),
   };

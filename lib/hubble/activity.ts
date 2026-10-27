@@ -28,6 +28,7 @@ import {
   categoryQuery,
   contractQuery,
   dailyTimeseriesQuery,
+  destinationAccountQuery,
   getDestinationQueryTypes,
   hourlyTimeseriesQuery,
   heatmapQuery,
@@ -642,6 +643,7 @@ export async function getActivityData(
   period: Period,
   correlationId: string = createCorrelationId(),
   network: DashboardNetworkId = "mainnet",
+  options: { anchor?: Date } = {},
 ): Promise<ActivityDataset> {
   if (!hasBigQueryCredentials()) {
     throw new CredentialsMissingError(
@@ -655,8 +657,11 @@ export async function getActivityData(
     );
   }
 
-  const range = resolvePeriod(period);
-  const cacheKey = `activity:v15:${network}:${period}:${range.start.toISOString()}`;
+  // An anchor before the active window resolves the previous equal-length
+  // window (treemap diff mode); the cache key below already includes the
+  // resolved start, so both windows coexist in the cache.
+  const range = resolvePeriod(period, options.anchor);
+  const cacheKey = `activity:v14:${network}:${period}:${range.start.toISOString()}`;
 
   const cached = getCached<ActivityDataset>(cacheKey, { track: true });
   if (cached) {

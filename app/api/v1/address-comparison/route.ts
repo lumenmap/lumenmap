@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAddressProfile } from "@/lib/address-comparison-data";
-import { validateAddressComparison } from "@/lib/address-comparison";
+import { validateComparisonAddresses } from "@/lib/address-comparison";
 import { isDashboardNetworkId, resolveDashboardNetwork } from "@/lib/network";
 import { isValidPeriod } from "@/lib/periods";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -22,13 +22,17 @@ export async function handleAddressComparisonRequest(
   if (networkParam !== null && !isDashboardNetworkId(networkParam)) {
     return NextResponse.json({ message: "Unsupported network." }, { status: 400 });
   }
-  const validated = validateAddressComparison(params.get("a") ?? "", params.get("b") ?? "");
+  const validated = validateComparisonAddresses(params.get("a") ?? "", params.get("b") ?? "");
   if (!validated.ok) {
     return NextResponse.json({ message: validated.error }, { status: 400 });
   }
   const network = resolveDashboardNetwork(networkParam);
+  const pair: [string, string] = [
+    (params.get("a") ?? "").trim(),
+    (params.get("b") ?? "").trim(),
+  ];
   try {
-    const [a, b] = await Promise.all(validated.pair.map((address) => getProfile(address, period, network)));
+    const [a, b] = await Promise.all(pair.map((address) => getProfile(address, period, network)));
     return NextResponse.json({ period, network, a, b }, {
       headers: { "Cache-Control": "public, max-age=60, s-maxage=60" },
     });

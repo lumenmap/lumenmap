@@ -99,6 +99,10 @@ export function DashboardSearch() {
     [index, debouncedQuery],
   );
 
+  // True while the debounced query has not caught up with the typed query;
+  // the panel shows a "Searching…" status instead of stale results.
+  const pending = searchQuery !== debouncedQuery;
+
   const flatResults = useMemo(
     () => pending ? [] : results.groups.flatMap((group) => group.results),
     [pending, results],
@@ -322,7 +326,7 @@ export function DashboardSearch() {
                               </div>
                               {result.subtitle ? (
                                 <p className="mt-0.5 truncate font-mono text-[11px] text-zinc-500">
-                                  {highlightedText(result.subtitle, result.highlights?.subtitle ?? [])}
+                                  {result.subtitle}
                                 </p>
                               ) : null}
                               {result.type === "asset" && result.issuer ? (

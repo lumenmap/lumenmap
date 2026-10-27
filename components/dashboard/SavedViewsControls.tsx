@@ -153,9 +153,6 @@ export function SavedViewsControls() {
         <Button type="button" variant="outline" onClick={handleExport}>
           Export JSON
         </Button>
-        <Button type="button" variant="outline" onClick={handleNotesExport}>
-          Export notes JSON
-        </Button>
         <Button
           type="button"
           variant="outline"

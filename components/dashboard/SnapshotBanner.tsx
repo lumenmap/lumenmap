@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export function SnapshotBanner({
   generatedAt,
   detail,
@@ -31,12 +33,12 @@ export function SnapshotMissing() {
         This research snapshot is missing or has expired. Snapshots are kept
         for 7 days and then return this empty state.
       </p>
-      <a
+      <Link
         href="/"
         className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-100 px-4 text-sm font-medium text-zinc-900"
       >
         Back to the live dashboard
-      </a>
+      </Link>
     </div>
   );
 }
