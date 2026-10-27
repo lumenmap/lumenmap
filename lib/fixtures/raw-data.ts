@@ -68,6 +68,9 @@ const BASE_CATEGORIES: CategoryRow[] = [
   { type_string: "manage_buy_offer", op_count: 70_000 },
   { type_string: "liquidity_pool_deposit", op_count: 8_000 },
   { type_string: "liquidity_pool_withdraw", op_count: 6_000 },
+  { type_string: "create_claimable_balance", op_count: 5_200 },
+  { type_string: "claim_claimable_balance", op_count: 4_100 },
+  { type_string: "clawback_claimable_balance", op_count: 900 },
   { type_string: "change_trust", op_count: 21_000 },
   { type_string: "set_options", op_count: 7_500 },
   { type_string: "manage_data", op_count: 4_500 },
@@ -145,6 +148,31 @@ const BASE_ACCOUNTS: AccountRow[] = [
     account_id: FIXTURE_ACCOUNTS.kraken,
     type_string: "liquidity_pool_withdraw",
     op_count: 2_500,
+  },
+  {
+    account_id: FIXTURE_ACCOUNTS.unknownA,
+    type_string: "liquidity_pool_deposit",
+    op_count: 1_600,
+  },
+  {
+    account_id: FIXTURE_ACCOUNTS.moneygram,
+    type_string: "liquidity_pool_withdraw",
+    op_count: 900,
+  },
+  {
+    account_id: FIXTURE_ACCOUNTS.kraken,
+    type_string: "create_claimable_balance",
+    op_count: 2_100,
+  },
+  {
+    account_id: FIXTURE_ACCOUNTS.unknownB,
+    type_string: "claim_claimable_balance",
+    op_count: 1_300,
+  },
+  {
+    account_id: FIXTURE_ACCOUNTS.lobstr,
+    type_string: "clawback_claimable_balance",
+    op_count: 400,
   },
   {
     account_id: FIXTURE_ACCOUNTS.moneygram,

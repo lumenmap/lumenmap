@@ -5,10 +5,16 @@ import assert from "node:assert";
 // Import constants directly from lib/constants.ts via ESM / standard object extraction
 import {
   CATEGORY_COLORS,
+  CATEGORY_PATTERNS,
+  CLAIMABLE_BALANCE_OP_TYPES,
   GROUP_LABELS,
+  LIQUIDITY_POOL_OP_TYPES,
   TYPE_TO_GROUP,
   getCategoryForOperation,
 } from "../lib/constants.ts";
+import { CATEGORY_IDS } from "../lib/charts/category-share.ts";
+import { getCategoryPatternId } from "../lib/treemap-patterns.ts";
+import { ACCOUNT_QUERY_TYPES } from "../lib/hubble/shared-queries.mjs";
 
 console.log("Running operation-to-category mapping unit tests...\n");
 
@@ -32,8 +38,15 @@ const EXPECTED_OPERATION_CATEGORIES = {
   manage_buy_offer: "dex",
   manage_sell_offer: "dex",
   create_passive_sell_offer: "dex",
-  liquidity_pool_deposit: "dex",
-  liquidity_pool_withdraw: "dex",
+
+  // Liquidity Pool Operations (classic AMM pools)
+  liquidity_pool_deposit: "liquidity_pools",
+  liquidity_pool_withdraw: "liquidity_pools",
+
+  // Claimable Balance Operations (classic claimable balances)
+  create_claimable_balance: "claimable_balances",
+  claim_claimable_balance: "claimable_balances",
+  clawback_claimable_balance: "claimable_balances",
 
   // Trustline Operations
   change_trust: "trustlines",
@@ -43,13 +56,10 @@ const EXPECTED_OPERATION_CATEGORIES = {
   bump_sequence: "account",
   allow_trust: "account",
   manage_data: "account",
-  create_claimable_balance: "account",
-  claim_claimable_balance: "account",
   begin_sponsoring_future_reserves: "account",
   end_sponsoring_future_reserves: "account",
   revoke_sponsorship: "account",
   clawback: "account",
-  clawback_claimable_balance: "account",
   set_trust_line_flags: "account",
 
   // Other Operations
@@ -134,7 +144,9 @@ runTest("Every category referenced in TYPE_TO_GROUP has valid label in GROUP_LAB
       `Category '${cat}' is used in TYPE_TO_GROUP but missing a color in CATEGORY_COLORS`,
     );
     assert.ok(
-      typeof CATEGORY_COLORS[cat] === "string" && CATEGORY_COLORS[cat].startsWith("#"),
+      typeof CATEGORY_COLORS[cat] === "string" &&
+        (CATEGORY_COLORS[cat].startsWith("#") ||
+          CATEGORY_COLORS[cat].startsWith("var(--")),
       `Category '${cat}' has invalid color format in CATEGORY_COLORS: '${CATEGORY_COLORS[cat]}'`,
     );
   }
@@ -149,6 +161,50 @@ runTest("CATEGORY_COLORS and GROUP_LABELS keys are in 1-to-1 sync", () => {
     labelKeys,
     `CATEGORY_COLORS keys (${colorKeys.join(", ")}) do not match GROUP_LABELS keys (${labelKeys.join(", ")})`,
   );
+});
+
+// Test 6: The chart's category ids are the same set the mapping can produce,
+// so a new category is never silently folded into Other in category share.
+runTest("Every mapped category is a chart category id", () => {
+  const chartIds = new Set(CATEGORY_IDS);
+  for (const cat of new Set(Object.values(TYPE_TO_GROUP))) {
+    assert.ok(
+      chartIds.has(cat),
+      `Category '${cat}' is produced by TYPE_TO_GROUP but is missing from CATEGORY_IDS`,
+    );
+  }
+  assert.deepStrictEqual(
+    [...CATEGORY_IDS].sort(),
+    Object.keys(CATEGORY_COLORS).sort(),
+    `CATEGORY_IDS and CATEGORY_COLORS cover different categories`,
+  );
+});
+
+// Test 7: Every category has a treemap pattern cue and that cue is rendered.
+runTest("Every category has a resolvable treemap pattern", () => {
+  for (const cat of Object.keys(CATEGORY_COLORS)) {
+    assert.ok(cat in CATEGORY_PATTERNS, `Category '${cat}' has no pattern variant`);
+    const variant = CATEGORY_PATTERNS[cat];
+    if (variant === "none") continue;
+    assert.ok(
+      getCategoryPatternId(cat),
+      `Category '${cat}' pattern '${variant}' has no SVG pattern definition`,
+    );
+  }
+});
+
+// Test 8: The classic DeFi groups are non-empty and ranked from queried accounts.
+runTest("Liquidity-pool and claimable-balance types are ranked from Hubble accounts", () => {
+  assert.ok(LIQUIDITY_POOL_OP_TYPES.length > 0, "No liquidity-pool operation types");
+  assert.ok(CLAIMABLE_BALANCE_OP_TYPES.length > 0, "No claimable-balance operation types");
+
+  const queried = new Set(ACCOUNT_QUERY_TYPES);
+  for (const type of [...LIQUIDITY_POOL_OP_TYPES, ...CLAIMABLE_BALANCE_OP_TYPES]) {
+    assert.ok(
+      queried.has(type),
+      `Operation type '${type}' is not in ACCOUNT_QUERY_TYPES, so the ranked table has no live rows`,
+    );
+  }
 });
 
 console.log(`\nTest Results: ${passed}/${total} passed.`);

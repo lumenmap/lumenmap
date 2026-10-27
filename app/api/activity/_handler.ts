@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { metrics } from "@/lib/telemetry/metrics";
 import { getActivityData, CredentialsMissingError, UpstreamQueryFailedError } from "@/lib/hubble/activity";
 import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
+import { buildClassicDefiBreakdowns } from "@/lib/defi/classic-defi";
 import { resolveDataSource } from "@/lib/data-source";
 import { getFixtureActivityData } from "@/lib/fixtures/activity";
 import {
@@ -90,6 +91,7 @@ export function toVisualizationResponse(
     timeseries: data.timeseries,
     heatmap: data.heatmap,
     assetVolumes: data.assetVolumes,
+    classicDeFi: buildClassicDefiBreakdowns(data.accounts),
     metricProvenance: data.metricProvenance,
   };
 }

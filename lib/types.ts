@@ -460,6 +460,37 @@ export interface RawResearchRows {
   usdcAccounts: UsdcAccountRow[];
 }
 
+/** Categories whose accounts are ranked for the DeFi-on-classic tables. */
+export type ClassicDefiScope = "liquidity_pools" | "claimable_balances";
+
+/** One ranked source account inside a classic DeFi operation category. */
+export interface ClassicDefiAccountRow {
+  accountId: string;
+  /** Operations in the category, summed across every type of the category. */
+  ops: number;
+  /** Share of the category total, 0-100. */
+  scopeShare: number;
+  /** Per-operation-type counts, ordered by the category's type list. */
+  byType: { type_string: string; ops: number }[];
+}
+
+/** Ranked accounts for one classic DeFi category (Liquidity Pools or Claimable Balances). */
+export interface ClassicDefiBreakdown {
+  scope: ClassicDefiScope;
+  totalOps: number;
+  /** Accounts in scope, ranked by operations and capped by the builder. */
+  rows: ClassicDefiAccountRow[];
+  /** Distinct accounts seen in scope before the cap. */
+  distinctAccounts: number;
+  /** True when `distinctAccounts` exceeds the returned rows. */
+  truncated: boolean;
+}
+
+export interface ClassicDefiBreakdowns {
+  liquidityPools: ClassicDefiBreakdown;
+  claimableBalances: ClassicDefiBreakdown;
+}
+
 export interface ActivityVisualizationResponse extends ActivityResponseMetadata {
   kpis: ActivityKpis;
   treemaps: ActivityTreemaps;
@@ -468,6 +499,7 @@ export interface ActivityVisualizationResponse extends ActivityResponseMetadata 
   timeseries?: ActivityTimeseries;
   heatmap?: ActivityHeatmap;
   assetVolumes?: AssetPaymentVolumeRow[];
+  classicDeFi?: ClassicDefiBreakdowns;
   /** Present and true when the API returned static fixture data (no GCP credentials). */
   fixture?: boolean;
 }

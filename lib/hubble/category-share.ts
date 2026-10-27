@@ -79,7 +79,7 @@ export async function getCategoryShareData(
   }
 
   const range = resolvePeriod(period);
-  const cacheKey = `category-share:v1:${period}:${range.start.toISOString()}`;
+  const cacheKey = `category-share:v2:${period}:${range.start.toISOString()}`;
   const cached = getCached<CategoryShareResponse>(cacheKey);
   if (cached) {
     return cached;
