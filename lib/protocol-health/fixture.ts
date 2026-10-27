@@ -5,7 +5,7 @@ import type { ProtocolHealthRawInput } from "@/lib/protocol-health/score";
 import type { Period } from "@/lib/types";
 
 /**
- * Static scorecard sample. Four protocols, one of them without TVL.
+ * Static scorecard sample. Five protocols, including missing TVL and volume.
  * Magnitudes are a one-day illustration scaled by the same period multipliers
  * as the activity fixture. No Hubble or venue calls.
  */
@@ -44,6 +44,13 @@ export const PROTOCOL_HEALTH_FIXTURE_INPUTS: ProtocolHealthRawInput[] = [
     tvlUsd: null,
     timeseries: [5, 12, 9, 15],
     entityId: "GBZVELEQD3WBN3R3VAG64HVBDOZ76ZL6QPLSFGKWPFED33Q3234NSLVR",
+  },
+  {
+    protocol: "Orbit",
+    ops: 18_000,
+    wallets: 4,
+    volumeXlm: null,
+    tvlUsd: null,
   },
 ];
 
