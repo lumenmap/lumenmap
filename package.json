@@ -40,7 +40,7 @@
     "test:changelog": "node --test scripts/generate-changelog.test.mjs"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^8.3.1",
+    "@google-cloud/bigquery": "^9.5.0",
     "@opentelemetry/api": "1.9.1",
     "@opentelemetry/exporter-trace-otlp-http": "0.212.0",
     "@opentelemetry/resources": "2.11.0",
