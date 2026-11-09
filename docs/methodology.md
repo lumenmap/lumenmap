@@ -28,3 +28,7 @@ The interactive copy lives at [`/methodology`](/methodology). Section anchors:
 Source of truth for metric section bodies: [`lib/metrics/methodology.ts`](../lib/metrics/methodology.ts).
 
 Payment-flow graph anchors are exported from [`lib/metrics/flow-methodology-anchors.ts`](../lib/metrics/flow-methodology-anchors.ts) so the Flow legend and coverage badge link to stable ids. The canonical edge rules are in [`metric-methodology.md`](./metric-methodology.md#payment-flow-graph).
+
+## Trustline Creation and Removal Velocity (`#trustline-velocity`)
+
+The Trustline Velocity chart separates `change_trust` operations by limit: positive limits (`limit > 0`) are counted as trustline creations/updates, and zero limits (`limit = 0`) are counted as trustline removals across UTC time buckets for the selected period, exposing `netTrustlineChange = created - removed`. When subtype limit columns are unavailable, the chart soft-fails to an `unavailable` status.
