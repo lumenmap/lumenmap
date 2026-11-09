@@ -405,6 +405,13 @@ export const activityResponseSchema = z.object({
   assetVolumes: z.array(assetPaymentVolumeSchema).optional(),
   classicDeFi: classicDefiBreakdownsSchema.optional(),
   fixture: z.boolean().optional(),
+  degradedFallback: z
+    .object({
+      active: z.boolean(),
+      provider: z.literal("horizon"),
+      banner: z.string().min(1),
+    })
+    .optional(),
 });
 
 export type ActivityResponse = z.infer<typeof activityResponseSchema>;

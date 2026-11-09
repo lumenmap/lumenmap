@@ -5,6 +5,7 @@ import { BigQueryLimitExceededError } from "@/lib/hubble/errors";
 import { buildClassicDefiBreakdowns } from "@/lib/defi/classic-defi";
 import { resolveDataSource } from "@/lib/data-source";
 import { getFixtureActivityData } from "@/lib/fixtures/activity";
+import { fetchHorizonFallbackDataset, HORIZON_FALLBACK_BANNER_TEXT, isHorizonFallbackEnabled, markHorizonFallbackActive } from "@/lib/horizon/fallback";
 import {
   classifyError,
   createCorrelationId,
@@ -266,6 +267,7 @@ export async function handleActivityRequest(
         ? { anchor: previousPeriodAnchor(parsed.period) }
         : {},
     );
+    markHorizonFallbackActive(false);
     const validated = validateActivityResponse(toVisualizationResponse(data));
     logInfo({
       event: "activity.request.complete",
@@ -280,6 +282,33 @@ export async function handleActivityRequest(
       }),
     });
   } catch (error) {
+    if (
+      (error instanceof CredentialsMissingError ||
+        error instanceof UpstreamQueryFailedError) &&
+      isHorizonFallbackEnabled()
+    ) {
+      try {
+        const fallbackData = await fetchHorizonFallbackDataset(
+          parsed.period,
+          network,
+        );
+        const validated = validateActivityResponse({
+          ...toVisualizationResponse(fallbackData),
+          degradedFallback: {
+            active: true,
+            provider: "horizon",
+            banner: HORIZON_FALLBACK_BANNER_TEXT,
+          },
+        });
+        recordActivityResponseSize(parsed.period, "2xx", validated);
+        return NextResponse.json(validated, {
+          headers: NO_STORE_HEADERS,
+        });
+      } catch {
+        // Fall through to standard 503 handling if Horizon also fails
+      }
+    }
+
     if (error instanceof CredentialsMissingError) {
       logError({
         event: "activity.request.error",

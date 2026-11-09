@@ -511,6 +511,11 @@ export interface ActivityVisualizationResponse extends ActivityResponseMetadata 
   classicDeFi?: ClassicDefiBreakdowns;
   /** Present and true when the API returned static fixture data (no GCP credentials). */
   fixture?: boolean;
+  degradedFallback?: {
+    active: boolean;
+    provider: "horizon";
+    banner: string;
+  };
 }
 
 export interface ActivityRawResearchResponse extends ActivityResponseMetadata {

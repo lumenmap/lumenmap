@@ -11,6 +11,7 @@ import {
   getRollingBytesBilled,
 } from "@/lib/hubble/bytes-billed-telemetry";
 import { getAllEntities } from "@/lib/entities/registry";
+import { HORIZON_FALLBACK_BANNER_TEXT, isHorizonFallbackActive, isHorizonFallbackEnabled } from "@/lib/horizon/fallback";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { withApiTrace } from "@/lib/telemetry/tracing";
 
@@ -262,6 +263,13 @@ async function handleHealthRequest(request: Request) {
     {
       status: aggregateStatus,
       timestamp: new Date().toISOString(),
+      horizonFallback: {
+        enabled: isHorizonFallbackEnabled(),
+        active: isHorizonFallbackActive(),
+        banner: isHorizonFallbackActive()
+          ? HORIZON_FALLBACK_BANNER_TEXT
+          : undefined,
+      },
       checks: {
         bigquery: {
           status: bq.status,
