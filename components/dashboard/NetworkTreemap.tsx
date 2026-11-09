@@ -29,9 +29,15 @@ import { FlowViewSection } from "@/components/dashboard/FlowViewSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  PROTOCOL_TAG_LABELS,
+  PROTOCOL_TAXONOMY_TAGS,
+  filterTreemapByProtocolTags,
+} from "@/lib/entities/taxonomy";
 import type {
   ActivityVisualizationResponse,
   DashboardMetricId,
+  ProtocolTag,
   TreemapNode,
 } from "@/lib/types";
 import { getErrorCopy } from "@/lib/error-copy";
@@ -153,6 +159,16 @@ export function NetworkTreemap() {
   const [excludedCategories, setExcludedCategories] = useState<Set<string>>(
     new Set(),
   );
+  const [selectedProtocolTags, setSelectedProtocolTags] = useState<Set<ProtocolTag>>(new Set());
+  const isActorView = treemapView === "actors" || treemapView === "actors_dest";
+  const toggleProtocolTag = (tag: ProtocolTag) => {
+    setSelectedProtocolTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
+  };
 
   const toggleCategory = (key: string) => {
     setExcludedCategories((prev) => {
@@ -163,7 +179,7 @@ export function NetworkTreemap() {
     });
   };
 
-  const resetFilters = () => setExcludedCategories(new Set());
+  const resetFilters = () => { setExcludedCategories(new Set()); setSelectedProtocolTags(new Set()); };
 
   const activePayload = selectTreemapPayload(data, metric, treemapView) ?? null;
   const activeTreemap = useMemo(
@@ -197,8 +213,10 @@ export function NetworkTreemap() {
   const filteredTreemap = useMemo(() => {
     if (!activeTreemap) return null;
     if (metric === "protocol_tvl") return activeTreemap;
-    return filterTreemapByCategories(activeTreemap, excludedCategories);
-  }, [activeTreemap, excludedCategories, metric]);
+    const byCategory = filterTreemapByCategories(activeTreemap, excludedCategories);
+    if (!byCategory || !isActorView || selectedProtocolTags.size === 0) return byCategory;
+    return filterTreemapByProtocolTags(byCategory, selectedProtocolTags);
+  }, [activeTreemap, excludedCategories, isActorView, metric, selectedProtocolTags]);
 
   const filterAnnouncement =
     excludedCategories.size === 0
@@ -351,6 +369,30 @@ export function NetworkTreemap() {
           <p className="text-xs text-zinc-500">
             Tile colors encode adapter status: complete, partial, or stale.
           </p>
+        ) : null}
+        {!isFlowView && isActorView && metric !== "protocol_tvl" ? (
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter actors by protocol taxonomy tag">
+            <span className="mr-1 text-xs text-zinc-500">Protocol tag:</span>
+            {PROTOCOL_TAXONOMY_TAGS.map((tag) => {
+              const active = selectedProtocolTags.has(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => toggleProtocolTag(tag)}
+                  className={active ? "rounded-full border px-2.5 py-0.5 text-xs transition-colors border-stellar-light/60 bg-stellar-light/20 text-white" : "rounded-full border px-2.5 py-0.5 text-xs transition-colors border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200"}
+                >
+                  {PROTOCOL_TAG_LABELS[tag]}
+                </button>
+              );
+            })}
+            {selectedProtocolTags.size > 0 ? (
+              <Button variant="ghost" size="sm" onClick={() => setSelectedProtocolTags(new Set())} className="h-6 px-2 text-xs text-zinc-400 hover:text-white">
+                Clear tags
+              </Button>
+            ) : null}
+          </div>
         ) : null}
         {!isFlowView && diffActive && previousData ? (
           <TreemapDiffLegend />

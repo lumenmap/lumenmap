@@ -309,6 +309,8 @@ Entries in `entities.json` override `directory.json` for the same address. Use `
 
 Valid categories: `defi`, `exchange`, `wallet`, `anchor`, `issuer`, `other`.
 
+Valid protocol taxonomy tags (`tags` array): `dex`, `anchor`, `payments`, `infra`, `nft`, `other`.
+
 ### Proposing a label
 
 Open an [Entity Label Proposal](.github/ISSUE_TEMPLATE/entity_label_proposal.yml) issue before changing `data/entities.json`, or include the same evidence in the entity review section of your PR. Provide the full G account or C contract address and network, proposed `name`, `category`, and `protocol`, an explorer link for the exact address, and a public source controlled by the operator (official site, docs, or signed announcement) that connects that address to the name. Explain corrections to existing labels. Reviewers check the links and the address-to-name relationship manually; the validator only checks registry structure.

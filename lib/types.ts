@@ -207,10 +207,13 @@ export interface UsdcAccountRow {
 export type TreemapNodeType =
   "root" | "category" | "entity" | "contract" | "account" | "protocol";
 
+export type ProtocolTag = "dex" | "anchor" | "payments" | "infra" | "nft" | "other";
+
 export interface EntityInfo {
   name: string;
   category: string;
   protocol: string;
+  tags?: ProtocolTag[];
 }
 
 export interface CategoryRow {
@@ -350,6 +353,7 @@ export interface TreemapNodeMeta {
   id?: string;
   category?: string;
   protocol?: string;
+  tags?: ProtocolTag[];
   share?: number;
   opCount?: number;
   txnCount?: number;
@@ -524,6 +528,7 @@ export interface ProtocolBar {
   share: number;
   rank: number;
   entityCount: number;
+  tags?: ProtocolTag[];
 }
 
 export interface ProtocolSummary {

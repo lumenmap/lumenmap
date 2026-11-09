@@ -24,6 +24,7 @@ import type {
   UsdcCategoryRow,
   ProtocolBar,
   ProtocolSummary,
+  ProtocolTag,
 } from "@/lib/types";
 import {
   OPERATION_COUNT_UNIT,
@@ -107,6 +108,7 @@ function buildContractLeaves(
           id: row.contract_id,
           category: "soroban",
           protocol: entity?.protocol,
+          tags: entity?.tags,
           opCount: row.op_count,
         },
       };
@@ -135,6 +137,7 @@ function buildAccountLeavesFromRows(
           id: row.account_id,
           category: group,
           protocol: entity?.protocol,
+          tags: entity?.tags,
           opCount: row.op_count,
           xlmVolume: row.xlm_volume,
         },
@@ -494,6 +497,7 @@ function buildUsdcAccountLeavesFromRows(
           id: row.account_id,
           category: group,
           protocol: entity?.protocol,
+          tags: entity?.tags,
           usdcVolume: row.amount,
         },
       };
@@ -909,6 +913,7 @@ export function buildProtocolSummary(
 ): ProtocolSummary {
   const protoOps = new Map<string, number>();
   const protoEntities = new Map<string, Set<string>>();
+  const protoTags = new Map<string, Set<ProtocolTag>>();
 
   const allAccounts = accounts.map((r) => ({
     id: r.account_id,
@@ -929,6 +934,10 @@ export function buildProtocolSummary(
       protoEntities.set(protocol, new Set());
     }
     protoEntities.get(protocol)!.add(entry.id);
+    if (entity?.tags?.length) {
+      if (!protoTags.has(protocol)) protoTags.set(protocol, new Set());
+      for (const tag of entity.tags) protoTags.get(protocol)!.add(tag);
+    }
   }
 
   const totalOps =
@@ -951,6 +960,7 @@ export function buildProtocolSummary(
     share: totalOps > 0 ? (opCount / totalOps) * 100 : 0,
     rank: i + 1,
     entityCount: protoEntities.get(protocol)?.size ?? 0,
+    tags: protoTags.has(protocol) ? [...protoTags.get(protocol)!] : undefined,
   }));
 
   return {
