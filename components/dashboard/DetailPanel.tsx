@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, type KeyboardEvent, type TouchEvent } from "react";
+import { cycleFocusWithinSheet, shouldDismissBottomSheetOnSwipe } from "@/lib/ui/detail-bottom-sheet";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +82,67 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
     };
   }, [selectedNode?.meta?.nodeId]);
 
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const touchStartYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedNode || typeof window === "undefined") return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedNode(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedNode, setSelectedNode]);
+
+  const handleSheetKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      setSelectedNode(null);
+      return;
+    }
+    if (event.key !== "Tab" || !sheetRef.current) return;
+    const focusables = Array.from(
+      sheetRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    if (focusables.length === 0) return;
+    const currentIndex = focusables.indexOf(
+      document.activeElement as HTMLElement,
+    );
+    const nextIndex = cycleFocusWithinSheet(
+      focusables.length,
+      currentIndex,
+      event.shiftKey,
+    );
+    if (
+      (event.shiftKey && currentIndex <= 0) ||
+      (!event.shiftKey && currentIndex === focusables.length - 1)
+    ) {
+      event.preventDefault();
+      focusables[nextIndex]?.focus();
+    }
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    touchStartYRef.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const startY = touchStartYRef.current;
+    const endY = event.changedTouches[0]?.clientY ?? null;
+    touchStartYRef.current = null;
+    if (
+      startY !== null &&
+      endY !== null &&
+      shouldDismissBottomSheetOnSwipe(startY, endY)
+    ) {
+      setSelectedNode(null);
+    }
+  };
+
   const contractId =
     selectedNode?.meta?.type === "contract" ? selectedNode.meta.id : undefined;
 
@@ -127,10 +189,25 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
   const opsUnitLabel = getMetricUnit("ops").unitLabel;
 
   return (
-    <Card className="xl:h-full">
+    <div
+      ref={sheetRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detail-panel-title"
+      data-testid="detail-bottom-sheet"
+      onKeyDown={handleSheetKeyDown}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] max-w-full overflow-x-hidden overflow-y-auto rounded-t-2xl border-t border-white/15 bg-zinc-950/95 shadow-2xl transition-transform duration-200 motion-reduce:transition-none xl:static xl:z-auto xl:max-h-none xl:rounded-none xl:border-0 xl:bg-transparent xl:shadow-none"
+    >
+      <div
+        aria-hidden="true"
+        className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-white/20 xl:hidden"
+      />
+      <Card className="max-w-full overflow-x-hidden xl:h-full">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-2">
-          <CardTitle data-testid="detail-title" className="text-base text-white">
+          <CardTitle id="detail-panel-title" data-testid="detail-title" className="text-base text-white">
             {selectedNode.name}
           </CardTitle>
           {selectedNode.meta?.category ? (
@@ -370,5 +447,6 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }
