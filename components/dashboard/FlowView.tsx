@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { FlowCanvas } from "./FlowCanvas";
 import { FlowDataTable, FlowViewToggle } from "./FlowDataTable";
+import { FlowSankey } from "./FlowSankey";
 import { useDashboard } from "./DashboardProvider";
 import type { FlowTableNode, FlowTableEdge } from "./FlowDataTable";
 import type { TreemapNode } from "@/lib/types";
@@ -116,6 +117,13 @@ export function FlowView() {
             onSelect={handleSelect}
           />
         </div>
+      ) : flowView === "sankey" ? (
+        <FlowSankey
+          nodes={nodes}
+          edges={edges}
+          selectedId={selectedNode?.meta?.id}
+          onSelect={handleSelect}
+        />
       ) : (
         <FlowDataTable
           nodes={nodes}

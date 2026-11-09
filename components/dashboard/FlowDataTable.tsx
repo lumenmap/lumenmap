@@ -752,7 +752,7 @@ function EdgeWeightBar({ encoding }: { encoding?: FlowEdgeEncoding }) {
   );
 }
 
-export type FlowView = "graph" | "table";
+export type FlowView = "graph" | "sankey" | "table";
 
 export type FlowAssetMode = "xlm" | "usdc" | "op_count";
 
@@ -766,6 +766,7 @@ export function FlowViewToggle({
 }) {
   const options: { value: FlowView; label: string }[] = [
     { value: "graph", label: "Graph" },
+    { value: "sankey", label: "Sankey" },
     { value: "table", label: "Table" },
   ];
   return (
