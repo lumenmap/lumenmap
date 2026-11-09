@@ -6,8 +6,10 @@ import {
 } from "@/lib/hubble/client";
 import { getCached } from "@/lib/hubble/cache";
 import {
+  formatDailyBurnLine,
   getBytesBilledDegradedThreshold,
   getBytesBilledWindowMinutes,
+  getDailyBudgetSnapshot,
   getRollingBytesBilled,
 } from "@/lib/hubble/bytes-billed-telemetry";
 import { getAllEntities } from "@/lib/entities/registry";
@@ -16,35 +18,9 @@ import { withApiTrace } from "@/lib/telemetry/tracing";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Health check configuration.
- *
- * ## Liveness vs Readiness
- *
- * - **Liveness** (`/api/health?type=liveness`): Is the application process running?
- *   Always returns healthy if the route responds. Use for process-level probes.
- *
- * - **Readiness** (`/api/health?type=readiness` or no type): Is the application
- *   ready to serve traffic? Verifies upstream dependencies (BigQuery, data files).
- *   Use for load-balancer / ingress probes. This is the default.
- *
- * ## Status codes
- *
- * - `200` – healthy (all checks pass) or degraded (partial upstream failures)
- * - `503` – unavailable (critical dependency failure)
- *
- * ## Probe safety
- *
- * - Every upstream check has a strict low-cost timeout.
- * - No full activity queries are executed.
- * - The response never exposes credentials, raw provider errors, or project IDs.
- */
-
 const HEALTH_CHECK_TIMEOUT_MS = 4_000;
 const OK_STATUS = 200;
 const UNAVAILABLE_STATUS = 503;
-
-// ── Check helpers ──────────────────────────────────────────────────────────
 
 type CheckResult = {
   status: "ok" | "degraded" | "unavailable";
@@ -55,6 +31,13 @@ type CheckResult = {
 type BytesBilledCheckResult = CheckResult & {
   rollingBytesBilled: number;
   windowMinutes: number;
+  dailyBytesUsed: number;
+  dailyBytesBudget: number;
+  dailyBytesRemaining: number;
+  dailyBurnRatio: number;
+  softThresholdExceeded: boolean;
+  hardFailNonCriticalActive: boolean;
+  dailyBurnLine: string;
 };
 
 async function withTimeout<T>(
@@ -159,10 +142,8 @@ function checkCache(): CheckResult {
   const start = Date.now();
 
   try {
-    // Verify the cache Map is reachable by reading a non-existent key.
-    // If this runs without throwing, the cache is operational.
     const testKey = "__health_check_test__";
-    getCached(testKey); // reads (returns null — expected)
+    getCached(testKey);
 
     return {
       status: "ok",
@@ -181,27 +162,50 @@ function checkCache(): CheckResult {
 function checkBytesBilled(): BytesBilledCheckResult {
   const start = Date.now();
   const windowMinutes = getBytesBilledWindowMinutes();
+  const fixture = isFixtureMode();
+  const budget = getDailyBudgetSnapshot(start, { fixtureMode: fixture });
+  const dailyBurnLine = formatDailyBurnLine(budget);
 
-  if (isFixtureMode()) {
+  if (fixture) {
     return {
       status: "ok",
       latencyMs: Date.now() - start,
       message: "Fixture mode reports zero bytes billed",
       rollingBytesBilled: 0,
       windowMinutes,
+      dailyBytesUsed: budget.dailyBytesUsed,
+      dailyBytesBudget: budget.dailyBytesBudget,
+      dailyBytesRemaining: budget.dailyBytesRemaining,
+      dailyBurnRatio: budget.dailyBurnRatio,
+      softThresholdExceeded: budget.softThresholdExceeded,
+      hardFailNonCriticalActive: budget.hardFailNonCriticalActive,
+      dailyBurnLine,
     };
   }
 
-  const rollingBytesBilled = getRollingBytesBilled();
+  const rollingBytesBilled = getRollingBytesBilled(start);
   const threshold = getBytesBilledDegradedThreshold();
 
-  if (rollingBytesBilled > threshold) {
+  if (rollingBytesBilled > threshold || budget.softThresholdExceeded) {
+    const message =
+      rollingBytesBilled > threshold
+        ? "Rolling BigQuery bytes billed exceeded configured threshold"
+        : budget.budgetExceeded
+          ? "Daily BigQuery cost budget exceeded"
+          : "Daily BigQuery bytes burn exceeded soft warning threshold";
     return {
       status: "degraded",
       latencyMs: Date.now() - start,
-      message: "Rolling BigQuery bytes billed exceeded configured threshold",
+      message,
       rollingBytesBilled,
       windowMinutes,
+      dailyBytesUsed: budget.dailyBytesUsed,
+      dailyBytesBudget: budget.dailyBytesBudget,
+      dailyBytesRemaining: budget.dailyBytesRemaining,
+      dailyBurnRatio: budget.dailyBurnRatio,
+      softThresholdExceeded: budget.softThresholdExceeded,
+      hardFailNonCriticalActive: budget.hardFailNonCriticalActive,
+      dailyBurnLine,
     };
   }
 
@@ -211,10 +215,15 @@ function checkBytesBilled(): BytesBilledCheckResult {
     message: "Rolling BigQuery bytes billed within threshold",
     rollingBytesBilled,
     windowMinutes,
+    dailyBytesUsed: budget.dailyBytesUsed,
+    dailyBytesBudget: budget.dailyBytesBudget,
+    dailyBytesRemaining: budget.dailyBytesRemaining,
+    dailyBurnRatio: budget.dailyBurnRatio,
+    softThresholdExceeded: budget.softThresholdExceeded,
+    hardFailNonCriticalActive: budget.hardFailNonCriticalActive,
+    dailyBurnLine,
   };
 }
-
-// ── Handler ────────────────────────────────────────────────────────────────
 
 async function handleHealthRequest(request: Request) {
   const limited = enforceRateLimit(request, "health");
@@ -223,7 +232,6 @@ async function handleHealthRequest(request: Request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") ?? "readiness";
 
-  // Liveness: only confirm the process is alive.
   if (type === "liveness") {
     return NextResponse.json({
       status: "healthy",
@@ -231,7 +239,6 @@ async function handleHealthRequest(request: Request) {
     });
   }
 
-  // Readiness: run upstream dependency checks.
   const [bq, data, cache] = await Promise.all([
     checkBigQuery(),
     checkDataFiles(),
@@ -283,6 +290,13 @@ async function handleHealthRequest(request: Request) {
           latencyMs: bytesBilled.latencyMs,
           rollingBytesBilled: bytesBilled.rollingBytesBilled,
           windowMinutes: bytesBilled.windowMinutes,
+          dailyBytesUsed: bytesBilled.dailyBytesUsed,
+          dailyBytesBudget: bytesBilled.dailyBytesBudget,
+          dailyBytesRemaining: bytesBilled.dailyBytesRemaining,
+          dailyBurnRatio: bytesBilled.dailyBurnRatio,
+          softThresholdExceeded: bytesBilled.softThresholdExceeded,
+          hardFailNonCriticalActive: bytesBilled.hardFailNonCriticalActive,
+          dailyBurnLine: bytesBilled.dailyBurnLine,
           message:
             bytesBilled.status !== "ok" ? bytesBilled.message : undefined,
         },

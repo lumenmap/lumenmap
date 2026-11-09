@@ -16,6 +16,9 @@ LumenMap relies on environment variables to authenticate with Google Cloud BigQu
 | `GOOGLE_APPLICATION_CREDENTIALS` | Local | File path string (e.g., `./gcp-sa.json`) | None | Path to local GCP service account JSON key file for local development. |
 | `GCP_SERVICE_ACCOUNT_KEY` | Preview, Production, Local | Base64-encoded string | None | Base64-encoded GCP Service Account JSON key. Required for Vercel serverless functions where local filesystem paths do not exist. |
 | `CACHE_TTL_SECONDS` | Local, Preview, Production | Integer (seconds) | `900` (15 minutes) | Controls in-memory server cache TTL for BigQuery activity query results to manage BigQuery cost and rate limits. |
+| `BIGQUERY_DAILY_BYTES_BUDGET` | Local, Preview, Production | Integer (bytes) | `107374182400` (100 GiB) | 24-hour BigQuery bytes-billed ceiling surfaced in `/api/health` readiness and operator burn status line. |
+| `BIGQUERY_DAILY_BUDGET_SOFT_RATIO` | Local, Preview, Production | Float `(0, 1]` | `0.8` (80%) | Soft warning ratio at which `/api/health` marks `bytesBilled` as `degraded` without blocking core activity queries. |
+| `BIGQUERY_DAILY_BUDGET_HARD_FAIL_NON_CRITICAL` | Local, Preview, Production | Boolean (`true`/`false`) | `false` | Optional guardrail that blocks non-critical queries once `dailyBytesUsed >= BIGQUERY_DAILY_BYTES_BUDGET`. |
 
 ### Explicit Environment Differences
 
