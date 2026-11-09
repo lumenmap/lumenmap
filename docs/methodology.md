@@ -28,3 +28,7 @@ The interactive copy lives at [`/methodology`](/methodology). Section anchors:
 Source of truth for metric section bodies: [`lib/metrics/methodology.ts`](../lib/metrics/methodology.ts).
 
 Payment-flow graph anchors are exported from [`lib/metrics/flow-methodology-anchors.ts`](../lib/metrics/flow-methodology-anchors.ts) so the Flow legend and coverage badge link to stable ids. The canonical edge rules are in [`metric-methodology.md`](./metric-methodology.md#payment-flow-graph).
+
+## Network Fee Pressure (`#network-fee-pressure`)
+
+The Network Fee Pressure panel surfaces classic transaction median/total fee stats alongside Soroban non-refundable resource fees in **stroops** (`1 XLM = 10,000,000 stroops`), correlated with same-period operation counts. If either or both fee columns are absent in Hubble due to schema drift, the query soft-fails without throwing a 500 error and hides the panel when both series are unavailable.
