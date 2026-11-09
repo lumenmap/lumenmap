@@ -28,3 +28,7 @@ The interactive copy lives at [`/methodology`](/methodology). Section anchors:
 Source of truth for metric section bodies: [`lib/metrics/methodology.ts`](../lib/metrics/methodology.ts).
 
 Payment-flow graph anchors are exported from [`lib/metrics/flow-methodology-anchors.ts`](../lib/metrics/flow-methodology-anchors.ts) so the Flow legend and coverage badge link to stable ids. The canonical edge rules are in [`metric-methodology.md`](./metric-methodology.md#payment-flow-graph).
+
+## Soroban Contract Invoke Success vs Failure Rate (`#soroban-invoke-outcomes`)
+
+When a Soroban contract entity is selected in `DetailPanel`, LumenMap computes the selected period's invoke outcome split (`successful_count` vs `failed_count`). To remain accessible without relying on color alone, the rate is presented as explicit text (`"<rate>% succeeded (<succeeded> succeeded ? <failed> failed of <total> invokes)"`). If upstream Hubble columns are missing or null due to schema drift, the panel soft-fails to `"Unavailable"`.

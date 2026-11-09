@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { isEligibleAddress } from "@/lib/clipboard";
 import { buildContractFunctionBreakdown } from "@/lib/entities/contract-function-breakdown";
+import { getFixtureContractInvokeSuccess } from "@/lib/entities/contract-invoke-success";
 import { ContractFunctionBarChart } from "@/components/dashboard/ContractFunctionBarChart";
 import { ResearchNoteEditor } from "@/components/dashboard/ResearchNoteEditor";
 import { resolveWatchlistKind } from "@/lib/watchlist";
@@ -275,6 +276,24 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
             </p>
           </div>
         ) : null}
+
+        {contractId ? (() => {
+          const invokeOutcome = getFixtureContractInvokeSuccess(contractId);
+          return (
+            <section
+              aria-label="Soroban invoke success vs failure rate"
+              data-testid="contract-invoke-success-rate"
+              className="rounded-lg border border-white/10 bg-black/20 p-3"
+            >
+              <p className="mb-1 text-xs font-semibold text-zinc-400">
+                Soroban invoke outcome rate
+              </p>
+              <p className="text-xs text-zinc-200">
+                {invokeOutcome.accessibleSummary}
+              </p>
+            </section>
+          );
+        })() : null}
 
         {contractId ? (
           <section
