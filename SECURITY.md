@@ -17,3 +17,16 @@ If Push Protection blocks a commit due to a suspected secret that is actually a 
 **Important:** 
 - Bypasses are audited. Maintainers periodically review bypass logs.
 - **Never bypass push protection for a real secret.** If a real secret is detected, remove it from your commit history before pushing. If it was already exposed, it must be rotated immediately.
+
+## HTTP Security Headers and Content Security Policy (#459)
+
+LumenMap applies hardened HTTP security headers across both dashboard HTML pages and `/api/*` responses via [`next.config.ts`](next.config.ts), [`middleware.ts`](middleware.ts), and [`lib/http/security-headers.ts`](lib/http/security-headers.ts).
+
+| Header | Value / Policy | Rationale |
+| --- | --- | --- |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'` | Restricts scripts, XHR/SSE connections (`connect-src 'self'`), and workers to same-origin. Stellar Expert outbound links are top-level `<a target="_blank" rel="noopener noreferrer">` navigations, so no third-party script or connect allowlist is required. |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Sends only the origin on cross-origin navigations (such as Stellar Expert explorer links) and strips query parameters / deep-link state. |
+| `X-Content-Type-Options` | `nosniff` | Prevents MIME-sniffing on HTML and JSON API responses. |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()` | Disables sensitive browser APIs unused by the research dashboard. |
+| `X-DNS-Prefetch-Control` | `off` | Prevents unsolicited DNS prefetch leaks for unvisited external links. |
+| `X-Frame-Options` | `DENY` (omitted on `/embed/*`) | Blocks framing of standard dashboard routes while allowing `/embed/*` routes to be governed by `EMBED_FRAME_ANCESTORS` in `frame-ancestors`. |
