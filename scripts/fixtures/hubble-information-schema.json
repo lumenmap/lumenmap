@@ -1,0 +1,45 @@
+{
+  "dataset": "crypto-stellar.crypto_stellar_dbt",
+  "recordedAt": "2026-10-25T00:00:00.000Z",
+  "tables": {
+    "enriched_history_operations": [
+      { "column_name": "closed_at", "field_path": "closed_at", "data_type": "TIMESTAMP" },
+      { "column_name": "type_string", "field_path": "type_string", "data_type": "STRING" },
+      { "column_name": "amount", "field_path": "amount", "data_type": "NUMERIC" },
+      { "column_name": "asset_type", "field_path": "asset_type", "data_type": "STRING" },
+      { "column_name": "asset_code", "field_path": "asset_code", "data_type": "STRING" },
+      { "column_name": "asset_issuer", "field_path": "asset_issuer", "data_type": "STRING" },
+      { "column_name": "source_asset_type", "field_path": "source_asset_type", "data_type": "STRING" },
+      { "column_name": "source_asset_code", "field_path": "source_asset_code", "data_type": "STRING" },
+      { "column_name": "source_asset_issuer", "field_path": "source_asset_issuer", "data_type": "STRING" },
+      { "column_name": "source_amount", "field_path": "source_amount", "data_type": "NUMERIC" },
+      { "column_name": "dest_asset_code", "field_path": "dest_asset_code", "data_type": "STRING" },
+      { "column_name": "dest_asset_issuer", "field_path": "dest_asset_issuer", "data_type": "STRING" },
+      { "column_name": "dest_amount", "field_path": "dest_amount", "data_type": "NUMERIC" },
+      { "column_name": "op_source_account", "field_path": "op_source_account", "data_type": "STRING" },
+      { "column_name": "transaction_hash", "field_path": "transaction_hash", "data_type": "STRING" },
+      { "column_name": "transaction_id", "field_path": "transaction_id", "data_type": "INT64" },
+      { "column_name": "details", "field_path": "details", "data_type": "STRUCT" },
+      { "column_name": "details", "field_path": "details.to", "data_type": "STRING" },
+      { "column_name": "details", "field_path": "details.new_account", "data_type": "STRING" },
+      { "column_name": "details", "field_path": "details.into", "data_type": "STRING" }
+    ],
+    "enriched_history_operations_soroban": [
+      { "column_name": "closed_at", "field_path": "closed_at", "data_type": "TIMESTAMP" },
+      { "column_name": "soroban_operation_type", "field_path": "soroban_operation_type", "data_type": "STRING" },
+      { "column_name": "parameters_decoded", "field_path": "parameters_decoded", "data_type": "ARRAY<STRUCT>" },
+      { "column_name": "contract_id", "field_path": "contract_id", "data_type": "STRING" }
+    ],
+    "hourly_soroban_fee_agg_contract": [
+      { "column_name": "hour_agg", "field_path": "hour_agg", "data_type": "TIMESTAMP" },
+      { "column_name": "contract_id", "field_path": "contract_id", "data_type": "STRING" },
+      { "column_name": "txn_count", "field_path": "txn_count", "data_type": "INT64" },
+      { "column_name": "total_fee_charged", "field_path": "total_fee_charged", "data_type": "INT64" },
+      { "column_name": "total_non_refundable_resource_fee", "field_path": "total_non_refundable_resource_fee", "data_type": "INT64" }
+    ],
+    "accounts_current": [
+      { "column_name": "account_id", "field_path": "account_id", "data_type": "STRING" },
+      { "column_name": "home_domain", "field_path": "home_domain", "data_type": "STRING" }
+    ]
+  }
+}

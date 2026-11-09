@@ -213,5 +213,8 @@ Copy this block into the PR description whenever you touch
   as the SQL change.
 - A query is added → add a row to the query matrix; `npm run test:hubble:registry`
   will remind you if you forget the registry half.
-- Automated schema-diff CI against live BigQuery is deliberately out of scope
-  here; until it exists, this page plus the checklist above is the guard rail.
+- Optional CI workflow (`.github/workflows/hubble-schema-contract.yml`) and
+  `npm run hubble:contract` check these contracted columns against BigQuery
+  `INFORMATION_SCHEMA.COLUMN_FIELD_PATHS` when GCP secrets are present, or run
+  against the recorded fixture snapshot (`scripts/fixtures/hubble-information-schema.json`)
+  via `npm run hubble:contract -- --dry-run` and `npm run test:hubble:contract`.

@@ -219,6 +219,8 @@ scripts/
 | `npm test` | Unit/integration tests |
 | `npm run smoke` | Post-deploy smoke check |
 | `npm run test:hubble` | Smoke-tests all BigQuery queries (requires GCP) |
+| `npm run hubble:contract` | Verifies [Hubble column contract](docs/hubble-column-contract.md) against `INFORMATION_SCHEMA` (or `--dry-run` fixture) |
+| `npm run test:hubble:contract` | Runs fixture schema snapshot and column-to-query mapping unit tests |
 | `npm run sync:directory` | Pulls entity labels from Stellar Expert |
 | `npm run entities:validate` | Check curated entity addresses and required fields |
 | `npm run test:entities` | Exercise valid and invalid entity fixtures |

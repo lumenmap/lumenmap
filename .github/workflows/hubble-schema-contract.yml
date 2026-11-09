@@ -1,0 +1,46 @@
+name: Hubble Column Contract
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode (auto queries BigQuery when secrets exist; dry-run uses recorded fixture)"
+        required: false
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - dry-run
+      skip:
+        description: "Skip schema verification with neutral summary"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  column-contract:
+    name: Verify Hubble INFORMATION_SCHEMA contract
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-hubble-schema') }}
+    env:
+      SKIP_HUBBLE_SCHEMA_CHECK: ${{ inputs.skip && '1' || vars.SKIP_HUBBLE_SCHEMA_CHECK || '' }}
+      GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Run fixture schema contract unit tests
+        run: npm run test:hubble:contract
+      - name: Check Hubble column contract (${{ inputs.mode || 'auto' }})
+        run: |
+          if [ "${{ inputs.mode }}" = "dry-run" ]; then
+            npm run hubble:contract -- --dry-run
+          else
+            npm run hubble:contract
+          fi
