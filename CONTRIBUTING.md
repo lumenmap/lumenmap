@@ -222,6 +222,8 @@ scripts/
 | `npm run sync:directory` | Pulls entity labels from Stellar Expert |
 | `npm run entities:validate` | Check curated entity addresses and required fields |
 | `npm run test:entities` | Exercise valid and invalid entity fixtures |
+| `npm run storybook` | Launch isolated fixture-only component stories locally |
+| `npm run build-storybook` | Build static Storybook catalog (`storybook-static/`) |
 
 ---
 

@@ -37,7 +37,9 @@
     "test:fixtures": "npx tsx scripts/verify-fixture-mode.ts",
     "test:e2e:flow": "FLOW_FIXTURE_MODE=1 playwright test e2e/flow.spec.ts",
     "changelog:generate": "node scripts/generate-changelog.mjs",
-    "test:changelog": "node --test scripts/generate-changelog.test.mjs"
+    "test:changelog": "node --test scripts/generate-changelog.test.mjs",
+    "storybook": "node scripts/storybook.mjs dev",
+    "build-storybook": "node scripts/storybook.mjs build"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.3.1",
