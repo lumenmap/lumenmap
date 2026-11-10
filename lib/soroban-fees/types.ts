@@ -1,4 +1,5 @@
 import type { Period } from "@/lib/types";
+import type { NetworkFeePressureSummary } from "@/lib/soroban-fees/fee-pressure";
 
 /** Hubble table the fee panel reads. Columns are optional at runtime. */
 export const SOROBAN_FEE_SOURCE_TABLE =
@@ -43,6 +44,7 @@ export interface SorobanFeeAvailable {
   topContracts: SorobanFeeContractRank[];
   columns: readonly SorobanFeeColumn[];
   note: string;
+  feePressure?: NetworkFeePressureSummary;
 }
 
 export interface SorobanFeeUnavailable {

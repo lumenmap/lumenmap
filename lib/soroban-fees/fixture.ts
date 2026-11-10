@@ -1,4 +1,5 @@
 import type { Period } from "@/lib/types";
+import { buildFeePressureFixture } from "@/lib/soroban-fees/fee-pressure";
 import {
   SOROBAN_FEE_COLUMNS,
   type SorobanFeeAvailable,
@@ -65,5 +66,6 @@ export function buildSorobanFeeFixture(input: {
     topContracts: FIXTURE_CONTRACTS.map((row) => ({ ...row })),
     columns: SOROBAN_FEE_COLUMNS,
     note: SOROBAN_FEE_FIXTURE_NOTE,
+    feePressure: buildFeePressureFixture(input.period),
   };
 }

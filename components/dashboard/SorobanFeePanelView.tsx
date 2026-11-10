@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NetworkFeePressurePanelView } from "@/components/dashboard/NetworkFeePressurePanel";
 import { truncateAddress } from "@/lib/utils";
 import type {
   SorobanFeeAnalytics,
@@ -171,6 +172,10 @@ function AvailablePanel({ result }: { result: SorobanFeeAvailable }) {
             Methodology
           </a>
         </p>
+
+        {result.feePressure && (
+          <NetworkFeePressurePanelView summary={result.feePressure} />
+        )}
       </CardContent>
     </Card>
   );
