@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FlowCanvas } from "./FlowCanvas";
 import { FlowDataTable, FlowViewToggle } from "./FlowDataTable";
+import { FlowSankeyView } from "./FlowSankeyView";
 import { useDashboard } from "./DashboardProvider";
 import type { FlowTableNode, FlowTableEdge } from "./FlowDataTable";
 import type { TreemapNode } from "@/lib/types";
 
 export function FlowView() {
   const { data, flowView, setFlowView, selectedNode, setSelectedNode } = useDashboard();
+  const [showSankey, setShowSankey] = useState(false);
 
   // Convert treemap data to flow graph nodes and edges
   const { nodes, edges } = useMemo(() => {
@@ -102,12 +104,30 @@ export function FlowView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-white">Flow Graph</h2>
-        <FlowViewToggle view={flowView} onChange={setFlowView} />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-testid="flow-sankey-toggle"
+            aria-pressed={showSankey}
+            onClick={() => setShowSankey((prev) => !prev)}
+            className="rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+          >
+            {showSankey ? "Force Graph" : "Sankey View"}
+          </button>
+          <FlowViewToggle view={flowView} onChange={setFlowView} />
+        </div>
       </div>
 
-      {flowView === "graph" ? (
+      {showSankey ? (
+        <FlowSankeyView
+          nodes={nodes}
+          edges={edges}
+          selectedId={selectedNode?.meta?.id}
+          onSelect={handleSelect}
+        />
+      ) : flowView === "graph" ? (
         <div className="h-[600px] w-full rounded-xl border border-white/5 bg-canvas">
           <FlowCanvas
             nodes={nodes}
