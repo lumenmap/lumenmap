@@ -1,4 +1,4 @@
-import { isValidPeriod } from "@/lib/periods";
+import { isValidPeriod, parseCustomUtcDateRange } from "@/lib/periods";
 import type { DashboardMetricId, Period, TreemapNode } from "@/lib/types";
 import type { ChartViewId, TreemapViewId } from "@/lib/constants";
 import { CHART_VIEWS, TREEMAP_VIEWS } from "@/lib/constants";
@@ -98,6 +98,8 @@ export type DashboardUrlState = {
    * `diff=1`; absent means the overlay is off.
    */
   treemapDiff?: boolean;
+  customStart?: string;
+  customEnd?: string;
 };
 
 export function parseDashboardUrlSearch(
@@ -142,6 +144,15 @@ export function parseDashboardUrlSearch(
     next.treemapDiff = true;
   }
 
+  const customRange = parseCustomUtcDateRange(
+    params.get("start"),
+    params.get("end"),
+  );
+  if (customRange.ok && customRange.range) {
+    next.customStart = customRange.range.startInput;
+    next.customEnd = customRange.range.endInput;
+  }
+
   return next;
 }
 
@@ -162,6 +173,8 @@ export function writeDashboardUrlSearch(input: {
   chartView?: ChartViewId;
   searchQuery?: string;
   treemapDiff?: boolean;
+  customStart?: string | null;
+  customEnd?: string | null;
 }): string {
   const params = new URLSearchParams(
     (input.currentSearch ?? "").replace(/^\?/, ""),
@@ -193,6 +206,20 @@ export function writeDashboardUrlSearch(input: {
 
   if (input.treemapDiff) params.set("diff", "1");
   else params.delete("diff");
+
+  if (input.customStart !== undefined || input.customEnd !== undefined) {
+    const customRange = parseCustomUtcDateRange(
+      input.customStart,
+      input.customEnd,
+    );
+    if (customRange.ok && customRange.range) {
+      params.set("start", customRange.range.startInput);
+      params.set("end", customRange.range.endInput);
+    } else {
+      params.delete("start");
+      params.delete("end");
+    }
+  }
 
   const query = params.toString();
   return query ? `?${query}` : "";

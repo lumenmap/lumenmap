@@ -20,6 +20,7 @@ import {
 } from "@/lib/network";
 import {
   isValidPeriod,
+  parseCustomUtcDateRange,
   PERIOD_OPTIONS,
   previousPeriodAnchor,
 } from "@/lib/periods";
@@ -167,6 +168,21 @@ export async function handleActivityRequest(
   const timer = startTimer();
   const { searchParams } = new URL(request.url);
   const parsed = parseActivityPeriod(searchParams.get("period"));
+  const customRange = parseCustomUtcDateRange(
+    searchParams.get("start"),
+    searchParams.get("end"),
+  );
+  if (!customRange.ok) {
+    const body: ApiErrorResponse = {
+      code: customRange.code,
+      message: customRange.message,
+    };
+    recordActivityResponseSize("custom", "4xx", body);
+    return NextResponse.json(body, {
+      status: 400,
+      headers: NO_STORE_HEADERS,
+    });
+  }
   const networkParam = searchParams.get("network");
   if (networkParam !== null && !isDashboardNetworkId(networkParam)) {
     const body: ApiErrorResponse = {
@@ -235,7 +251,14 @@ export async function handleActivityRequest(
   }
 
   if (fetchActivityData === getActivityData && dataSourceMode === "fixture") {
-    const data = getFixtureActivityData(parsed.period, network, window);
+    const baseData = getFixtureActivityData(parsed.period, network, window);
+    const data = customRange.range
+      ? {
+          ...baseData,
+          start: customRange.range.start.toISOString(),
+          end: customRange.range.end.toISOString(),
+        }
+      : baseData;
     const validated = validateActivityResponse({
       ...toVisualizationResponse(data),
       source: "fixture",

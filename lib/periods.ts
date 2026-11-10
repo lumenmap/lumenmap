@@ -1,4 +1,101 @@
+import { z } from "zod";
 import type { Period } from "@/lib/types";
+
+export const MAX_CUSTOM_RANGE_DAYS = 90;
+
+const UTC_DATE_STRING_SCHEMA = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected UTC date in YYYY-MM-DD format");
+
+export interface CustomUtcDateRange {
+  startInput: string;
+  endInput: string;
+  start: Date;
+  end: Date;
+  days: number;
+}
+
+export function parseCustomUtcDateRange(
+  startParam: string | null | undefined,
+  endParam: string | null | undefined,
+):
+  | { ok: true; range: CustomUtcDateRange | null }
+  | { ok: false; code: "INVALID_DATE_RANGE"; message: string } {
+  const rawStart = startParam?.trim() ?? "";
+  const rawEnd = endParam?.trim() ?? "";
+
+  if (!rawStart && !rawEnd) {
+    return { ok: true, range: null };
+  }
+
+  if (!rawStart || !rawEnd) {
+    return {
+      ok: false,
+      code: "INVALID_DATE_RANGE",
+      message: "Both start and end UTC dates (YYYY-MM-DD) are required for a custom range.",
+    };
+  }
+
+  const startCheck = UTC_DATE_STRING_SCHEMA.safeParse(rawStart);
+  const endCheck = UTC_DATE_STRING_SCHEMA.safeParse(rawEnd);
+  if (!startCheck.success || !endCheck.success) {
+    return {
+      ok: false,
+      code: "INVALID_DATE_RANGE",
+      message: "Custom range dates must be valid YYYY-MM-DD UTC dates.",
+    };
+  }
+
+  const [sYear, sMonth, sDay] = rawStart.split("-").map(Number);
+  const [eYear, eMonth, eDay] = rawEnd.split("-").map(Number);
+
+  const start = new Date(Date.UTC(sYear, sMonth - 1, sDay, 0, 0, 0, 0));
+  const end = new Date(Date.UTC(eYear, eMonth - 1, eDay, 23, 59, 59, 999));
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime()) ||
+    start.toISOString().slice(0, 10) !== rawStart ||
+    end.toISOString().slice(0, 10) !== rawEnd
+  ) {
+    return {
+      ok: false,
+      code: "INVALID_DATE_RANGE",
+      message: "Custom range contains an invalid calendar date.",
+    };
+  }
+
+  if (start.getTime() > end.getTime()) {
+    return {
+      ok: false,
+      code: "INVALID_DATE_RANGE",
+      message: "Custom range start date must not be after end date.",
+    };
+  }
+
+  const days =
+    Math.floor((startOfDayUTC(end).getTime() - start.getTime()) / 86_400_000) +
+    1;
+  if (days > MAX_CUSTOM_RANGE_DAYS) {
+    return {
+      ok: false,
+      code: "INVALID_DATE_RANGE",
+      message: `Custom UTC range cannot exceed ${MAX_CUSTOM_RANGE_DAYS} days (requested ${days} days).`,
+    };
+  }
+
+  return {
+    ok: true,
+    range: {
+      startInput: rawStart,
+      endInput: rawEnd,
+      start,
+      end,
+      days,
+    },
+  };
+}
 
 export interface PeriodRange {
   period: Period;
