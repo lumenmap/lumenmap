@@ -20,6 +20,7 @@
     "sync:directory": "node scripts/sync-stellar-directory.mjs",
     "test:hubble": "node scripts/test-hubble-queries.mjs",
     "test:hubble:registry": "node scripts/test-query-registry.mjs",
+    "test:schema-drift": "npx tsx scripts/check-hubble-schema-drift.mjs",
     "test:mapper": "npx tsx tests/test-destination-mapper.mjs",
     "test:usdc-volume": "node scripts/test-usdc-volume.mjs",
     "test:usdc": "npx tsx scripts/test-usdc-metric.mjs",

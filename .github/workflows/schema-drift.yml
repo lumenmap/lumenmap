@@ -1,0 +1,30 @@
+name: Hubble Schema Drift Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/hubble/**"
+      - "docs/hubble-column-contract.md"
+      - "scripts/check-hubble-schema-drift.mjs"
+      - ".github/workflows/schema-drift.yml"
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  schema-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Verify query registry and Hubble column contract
+        run: |
+          npm run test:hubble:registry
+          npm run test:schema-drift
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
