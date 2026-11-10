@@ -17,6 +17,7 @@ import { ProtocolHealthScorecards } from "@/components/dashboard/ProtocolHealthS
 import { ProtocolScatterChart } from "@/components/dashboard/ProtocolScatterChart";
 
 import { TimeSeriesChart } from "@/components/dashboard/TimeSeriesChart";
+import { TrustlineVelocityChart } from "@/components/dashboard/TrustlineVelocityChart";
 import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
 import { HourOfWeekHeatmap } from "@/components/dashboard/HourOfWeekHeatmap";
 
@@ -222,6 +223,7 @@ function DashboardContent() {
                 <ProtocolBarChart />
                 <ActivityHeatmap />
                 <TimeSeriesChart />
+                <TrustlineVelocityChart />
                 <HourOfWeekHeatmap />
               </div>
             ),
