@@ -1,5 +1,11 @@
 import { isValidPeriod } from "@/lib/periods";
-import type { DashboardMetricId, Period, TreemapNode } from "@/lib/types";
+import { isValidProtocolTag } from "@/lib/entities/registry";
+import type {
+  DashboardMetricId,
+  Period,
+  ProtocolTag,
+  TreemapNode,
+} from "@/lib/types";
 import type { ChartViewId, TreemapViewId } from "@/lib/constants";
 import { CHART_VIEWS, TREEMAP_VIEWS } from "@/lib/constants";
 
@@ -98,6 +104,8 @@ export type DashboardUrlState = {
    * `diff=1`; absent means the overlay is off.
    */
   treemapDiff?: boolean;
+  /** Selected protocol taxonomy tags filter (`tags=dex,stablecoin`). */
+  tags?: ProtocolTag[];
 };
 
 export function parseDashboardUrlSearch(
@@ -142,6 +150,21 @@ export function parseDashboardUrlSearch(
     next.treemapDiff = true;
   }
 
+  const rawTags = params.get("tags");
+  if (rawTags) {
+    const parsedTags = Array.from(
+      new Set(
+        rawTags
+          .split(",")
+          .map((t) => t.trim().toLowerCase())
+          .filter(isValidProtocolTag),
+      ),
+    );
+    if (parsedTags.length > 0) {
+      next.tags = parsedTags;
+    }
+  }
+
   return next;
 }
 
@@ -162,6 +185,7 @@ export function writeDashboardUrlSearch(input: {
   chartView?: ChartViewId;
   searchQuery?: string;
   treemapDiff?: boolean;
+  tags?: readonly ProtocolTag[] | null;
 }): string {
   const params = new URLSearchParams(
     (input.currentSearch ?? "").replace(/^\?/, ""),
@@ -193,6 +217,13 @@ export function writeDashboardUrlSearch(input: {
 
   if (input.treemapDiff) params.set("diff", "1");
   else params.delete("diff");
+
+  const validTags = (input.tags ?? []).filter(isValidProtocolTag);
+  if (validTags.length > 0) {
+    params.set("tags", Array.from(new Set(validTags)).join(","));
+  } else {
+    params.delete("tags");
+  }
 
   const query = params.toString();
   return query ? `?${query}` : "";

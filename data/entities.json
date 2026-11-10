@@ -2,96 +2,115 @@
   "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN": {
     "name": "Circle USDC",
     "category": "issuer",
-    "protocol": "Circle"
+    "protocol": "Circle",
+    "tags": ["stablecoin", "payments"]
   },
   "GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2": {
     "name": "Circle EURC",
     "category": "issuer",
-    "protocol": "Circle"
+    "protocol": "Circle",
+    "tags": ["stablecoin", "payments"]
   },
   "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5": {
     "name": "Centre USDC (Testnet)",
     "category": "issuer",
-    "protocol": "Circle"
+    "protocol": "Circle",
+    "tags": ["stablecoin", "payments"]
   },
   "GA5XIGA5C7QTPTWXQHY6MCJRMTRZDOSHR6EFIBNDQTCQHG262N4GGKTM": {
     "name": "Kraken",
     "category": "exchange",
-    "protocol": "Kraken"
+    "protocol": "Kraken",
+    "tags": ["exchange"]
   },
   "GDKJ3ZXB5RA2MV5T2Y3Z5D3D3VKR5F7EFRB2A3BMBC3IHGBOK5GDI2LQ": {
     "name": "LOBSTR",
     "category": "wallet",
-    "protocol": "LOBSTR"
+    "protocol": "LOBSTR",
+    "tags": ["wallet"]
   },
   "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNKNLXLTCV": {
     "name": "MoneyGram",
     "category": "anchor",
-    "protocol": "MoneyGram"
+    "protocol": "MoneyGram",
+    "tags": ["anchor", "payments"]
   },
   "CA4HEQTL2WPEUYKYKCDOHCDNIV4QHNJ7EL4J4NQ6VADP7SYHVRYZ7AW2": {
     "name": "Soroswap",
     "category": "defi",
-    "protocol": "Soroswap"
+    "protocol": "Soroswap",
+    "tags": ["dex"]
   },
   "CA2TZIB56KYKD46F7IFBF6XPO5TDNK6N2U6BRTGZ5AF4WUSBN6BKZMGF": {
     "name": "Soroswap Pool",
     "category": "defi",
-    "protocol": "Soroswap"
+    "protocol": "Soroswap",
+    "tags": ["dex"]
   },
   "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH": {
     "name": "Soroswap Router",
     "category": "defi",
-    "protocol": "Soroswap"
+    "protocol": "Soroswap",
+    "tags": ["dex"]
   },
   "GBOVQKJYHXRR3DX6NOX2RRYFRCUMSADGDESTDNBDS6CDVLGVESRTAC47": {
     "name": "ThreeFold TFT Issuer",
     "category": "issuer",
-    "protocol": "ThreeFold"
+    "protocol": "ThreeFold",
+    "tags": ["infra"]
   },
   "GDC7X2MXTYSAKUUGAIQ7J7RPEIM7GXSAIWFYWWH4GLNFECQVJJLB2EEU": {
     "name": "AUDD Issuer",
     "category": "issuer",
-    "protocol": "AUDD"
+    "protocol": "AUDD",
+    "tags": ["stablecoin", "payments"]
   },
   "GBBS25EGYQPGEZCGCFBKG4OAGFXU6DSOQBGTHELLJT3HZXZJ34HWS6XV": {
     "name": "Glo Dollar USDGLO Issuer",
     "category": "issuer",
-    "protocol": "Glo Dollar"
+    "protocol": "Glo Dollar",
+    "tags": ["stablecoin", "payments"]
   },
   "GCBNWTCCMC32UHZ5OCC2PNMFDGXRVPA7MFFBFFTCVW77SX5PMRB7Q4BY": {
     "name": "Mesh mZAR Issuer",
     "category": "issuer",
-    "protocol": "Mesh"
+    "protocol": "Mesh",
+    "tags": ["stablecoin", "payments"]
   },
   "GDHDC4GBNPMENZAOBB4NCQ25TGZPDRK6ZGWUGSI22TVFATOLRPSUUSDM": {
     "name": "Montelibero USDM Issuer",
     "category": "issuer",
-    "protocol": "Montelibero"
+    "protocol": "Montelibero",
+    "tags": ["stablecoin", "payments"]
   },
   "GBX6YI45VU7WNAAKA3RBFDR3I3UKNFHTJPQ5F6KOOKSGYIAM4TRQN54W": {
     "name": "Afreum AFR Issuer",
     "category": "issuer",
-    "protocol": "Afreum"
+    "protocol": "Afreum",
+    "tags": ["payments"]
   },
   "GBZVELEQD3WBN3R3VAG64HVBDOZ76ZL6QPLSFGKWPFED33Q3234NSLVR": {
     "name": "MintX Silver Gram (SLVR) Issuer",
     "category": "issuer",
-    "protocol": "MintX"
+    "protocol": "MintX",
+    "tags": ["rwa"]
   },
   "GBC5ZGK6MQU3XG5Y72SXPA7P5R5NHYT2475SNEJB2U3EQ6J56QLVGOLD": {
     "name": "MintX Gold Gram (GOLD) Issuer",
     "category": "issuer",
-    "protocol": "MintX"
+    "protocol": "MintX",
+    "tags": ["rwa"]
   },
   "GDKA6WVMFSA73BMEVKPO6WXSSWP4MPRBDJVSXLLSEVIEVH226L5RJ7NL": {
     "name": "Lumenaire xLMNR Issuer",
     "category": "issuer",
-    "protocol": "Lumenaire"
+    "protocol": "Lumenaire",
+    "tags": ["rwa"]
   },
   "GBE6IZPK5MPLVPMD3NZ2YW5BY4GBB5IDYDXTIERGA3A5S2XANCUCTXLD": {
     "name": "XLM Domains XLD Issuer",
     "category": "issuer",
-    "protocol": "XLM Domains"
+    "protocol": "XLM Domains",
+    "tags": ["infra"]
   }
 }

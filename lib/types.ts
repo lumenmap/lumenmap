@@ -207,10 +207,27 @@ export interface UsdcAccountRow {
 export type TreemapNodeType =
   "root" | "category" | "entity" | "contract" | "account" | "protocol";
 
+export const PROTOCOL_TAGS = [
+  "dex",
+  "lending",
+  "stablecoin",
+  "rwa",
+  "payments",
+  "bridge",
+  "oracle",
+  "infra",
+  "wallet",
+  "exchange",
+  "anchor",
+] as const;
+
+export type ProtocolTag = (typeof PROTOCOL_TAGS)[number];
+
 export interface EntityInfo {
   name: string;
   category: string;
   protocol: string;
+  tags?: ProtocolTag[];
 }
 
 export interface CategoryRow {

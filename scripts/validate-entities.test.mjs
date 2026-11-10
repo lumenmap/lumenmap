@@ -40,3 +40,22 @@ test("malformed data and missing fields fail", () => {
   assert.match(validateEntities(JSON.stringify({ [address]: null })).join("\n"), /entity must be an object/);
   assert.match(validateEntities(JSON.stringify({ [address]: { name: " ", category: "defi", protocol: 42 } })).join("\n"), /name must be a non-empty string/);
 });
+
+test("protocol tags taxonomy validation enforces canonical tags and uniqueness", () => {
+  assert.deepEqual(
+    validateEntities(JSON.stringify({ [address]: { ...valid, tags: ["dex", "payments"] } })),
+    [],
+  );
+  assert.match(
+    validateEntities(JSON.stringify({ [address]: { ...valid, tags: [] } })).join("\n"),
+    /tags must be a non-empty array/,
+  );
+  assert.match(
+    validateEntities(JSON.stringify({ [address]: { ...valid, tags: ["unknown-tag"] } })).join("\n"),
+    /tag "unknown-tag" must be one of/,
+  );
+  assert.match(
+    validateEntities(JSON.stringify({ [address]: { ...valid, tags: ["dex", "dex"] } })).join("\n"),
+    /duplicate tag "dex"/,
+  );
+});

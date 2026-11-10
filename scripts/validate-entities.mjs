@@ -5,6 +5,19 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const CATEGORIES = new Set(["defi", "exchange", "wallet", "anchor", "issuer", "other"]);
+export const PROTOCOL_TAGS = new Set([
+  "dex",
+  "lending",
+  "stablecoin",
+  "rwa",
+  "payments",
+  "bridge",
+  "oracle",
+  "infra",
+  "wallet",
+  "exchange",
+  "anchor",
+]);
 const ADDRESS = /^[GC][A-Z2-7]{55}$/;
 
 // JSON.parse keeps only the last value of a duplicate key. Scan the already parsed
@@ -79,6 +92,22 @@ export function validateEntities(source) {
     }
     if (typeof entity.category === "string" && entity.category.trim() && !CATEGORIES.has(entity.category)) {
       errors.push(`${address}: category must be one of ${[...CATEGORIES].join(", ")}`);
+    }
+    if (entity.tags !== undefined) {
+      if (!Array.isArray(entity.tags) || entity.tags.length === 0) {
+        errors.push(`${address}: tags must be a non-empty array of protocol tags`);
+      } else {
+        const seenTags = new Set();
+        for (const tag of entity.tags) {
+          if (typeof tag !== "string" || !PROTOCOL_TAGS.has(tag)) {
+            errors.push(`${address}: tag "${String(tag)}" must be one of ${[...PROTOCOL_TAGS].join(", ")}`);
+          } else if (seenTags.has(tag)) {
+            errors.push(`${address}: duplicate tag "${tag}"`);
+          } else {
+            seenTags.add(tag);
+          }
+        }
+      }
     }
   }
 

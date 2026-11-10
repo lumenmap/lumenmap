@@ -1,6 +1,16 @@
 import entities from "@/data/entities.json";
 import directory from "@/data/directory.json";
-import type { EntityInfo } from "@/lib/types";
+import { PROTOCOL_TAGS, type EntityInfo, type ProtocolTag } from "@/lib/types";
+
+export { PROTOCOL_TAGS, type ProtocolTag };
+
+const PROTOCOL_TAG_SET = new Set<string>(PROTOCOL_TAGS);
+
+export function isValidProtocolTag(
+  value: string | null | undefined,
+): value is ProtocolTag {
+  return typeof value === "string" && PROTOCOL_TAG_SET.has(value);
+}
 
 const registry: Record<string, EntityInfo> = {
   ...(directory as Record<string, EntityInfo>),
@@ -48,4 +58,37 @@ export function getDisplayName(
 
 export function getAllEntities(): Record<string, EntityInfo> {
   return registry;
+}
+
+export function getEntityTags(
+  id: string,
+  labels?: Record<string, EntityInfo>,
+): ProtocolTag[] {
+  const entity = lookupEntity(id, labels);
+  if (!entity?.tags || !Array.isArray(entity.tags)) {
+    return [];
+  }
+  return entity.tags.filter(isValidProtocolTag);
+}
+
+export function filterEntitiesByTags(
+  source: Record<string, EntityInfo>,
+  selectedTags: readonly ProtocolTag[],
+): Record<string, EntityInfo> {
+  const validSelected = selectedTags.filter(isValidProtocolTag);
+  if (validSelected.length === 0) {
+    return { ...source };
+  }
+
+  const tagSet = new Set<ProtocolTag>(validSelected);
+  const filtered: Record<string, EntityInfo> = {};
+
+  for (const [address, entity] of Object.entries(source)) {
+    const entityTags = entity.tags ?? [];
+    if (entityTags.some((tag) => tagSet.has(tag))) {
+      filtered[address] = entity;
+    }
+  }
+
+  return filtered;
 }

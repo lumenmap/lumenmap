@@ -4,6 +4,7 @@ import type {
   ActivityVisualizationResponse,
   ActivityDataset,
   EntityInfo,
+  ProtocolTag,
   TreemapNode,
 } from "@/lib/types";
 import type { SearchIndexEntry, SearchResultType } from "@/lib/search/types";
@@ -18,6 +19,7 @@ interface MutableEntry {
   issuer?: string;
   protocol?: string;
   category?: string;
+  tags?: ProtocolTag[];
   opCount: number;
   treemapView: TreemapViewId;
   nodeType: SearchIndexEntry["nodeType"];
@@ -99,6 +101,7 @@ function finalize(entry: MutableEntry): SearchIndexEntry {
     issuer: entry.issuer,
     protocol: entry.protocol,
     category: entry.category,
+    tags: entry.tags,
     opCount: entry.opCount > 0 ? entry.opCount : undefined,
     treemapView: entry.treemapView,
     nodeType: entry.nodeType,
@@ -129,6 +132,13 @@ function ensureEntry(
     if (!existing.category && seed.category) {
       existing.category = seed.category;
     }
+    if (seed.tags && seed.tags.length > 0) {
+      const merged = new Set<ProtocolTag>([
+        ...(existing.tags ?? []),
+        ...seed.tags,
+      ]);
+      existing.tags = [...merged];
+    }
     if (!existing.label && seed.label) {
       existing.label = seed.label;
     }
@@ -145,6 +155,7 @@ function ensureEntry(
     issuer: seed.issuer,
     protocol: seed.protocol,
     category: seed.category,
+    tags: seed.tags,
     opCount: seed.opCount ?? 0,
     treemapView: seed.treemapView,
     nodeType: seed.nodeType,
@@ -189,6 +200,7 @@ function indexAccountOrContract(
     id: rawId,
     protocol,
     category,
+    tags: entity?.tags,
     opCount,
     treemapView: "actors",
     nodeType: kind,
@@ -198,6 +210,9 @@ function indexAccountOrContract(
   addTerm(entry, label);
   addTerm(entry, protocol);
   addTerm(entry, category);
+  for (const tag of entity?.tags ?? []) {
+    addTerm(entry, tag);
+  }
 
   // Issuer-style entities also contribute an asset identity.
   if (kind === "account" && (category === "issuer" || entity?.category === "issuer")) {
@@ -230,6 +245,7 @@ function indexAssetFromIssuer(
     issuer,
     protocol: entity?.protocol ?? protocol,
     category: "issuer",
+    tags: entity?.tags,
     opCount,
     treemapView: "actors",
     nodeType: "account",
@@ -242,6 +258,9 @@ function indexAssetFromIssuer(
   addTerm(entry, displayName);
   addTerm(entry, entity?.protocol ?? protocol);
   addTerm(entry, issuer);
+  for (const tag of entity?.tags ?? []) {
+    addTerm(entry, tag);
+  }
 }
 
 function indexProtocol(

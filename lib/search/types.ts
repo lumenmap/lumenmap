@@ -1,5 +1,5 @@
 import type { TreemapViewId } from "@/lib/constants";
-import type { TreemapNodeType } from "@/lib/types";
+import type { ProtocolTag, TreemapNodeType } from "@/lib/types";
 
 /** Result kinds surfaced in the dashboard search UI. */
 export type SearchResultType =
@@ -42,6 +42,7 @@ export interface SearchResult {
   issuer?: string;
   protocol?: string;
   category?: string;
+  tags?: ProtocolTag[];
   opCount?: number;
   /** Which treemap view best hosts this result. */
   treemapView: TreemapViewId;

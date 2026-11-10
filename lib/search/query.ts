@@ -7,6 +7,7 @@ import {
   type SearchQueryResult,
   type SearchResult,
 } from "@/lib/search/types";
+import type { ProtocolTag } from "@/lib/types";
 
 const DEFAULT_LIMIT = 40;
 
@@ -48,6 +49,7 @@ function toResult(entry: SearchIndexEntry, folded: string): SearchResult {
     issuer: entry.issuer,
     protocol: entry.protocol,
     category: entry.category,
+    tags: entry.tags,
     opCount: entry.opCount,
     treemapView: entry.treemapView,
     nodeType: entry.nodeType,
@@ -145,6 +147,7 @@ export function searchIndex(
   index: SearchIndexEntry[],
   query: string,
   limit = DEFAULT_LIMIT,
+  options?: { tags?: readonly ProtocolTag[] },
 ): SearchQueryResult {
   const rawQuery = query.trim();
   if (!rawQuery) {
@@ -155,8 +158,15 @@ export function searchIndex(
   const resultLimit = Number.isFinite(limit)
     ? Math.max(0, Math.min(DEFAULT_LIMIT, Math.floor(limit)))
     : DEFAULT_LIMIT;
+  const requiredTags = options?.tags && options.tags.length > 0
+    ? new Set<ProtocolTag>(options.tags)
+    : null;
 
   const ranked = index
+    .filter((entry) => {
+      if (!requiredTags) return true;
+      return (entry.tags ?? []).some((tag) => requiredTags.has(tag));
+    })
     .map((entry) => ({ entry, score: scoreEntry(entry, rawQuery, folded) }))
     .filter((row) => row.score > 0)
     .sort((a, b) => {
