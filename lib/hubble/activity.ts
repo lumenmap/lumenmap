@@ -65,6 +65,10 @@ import {
   type DashboardNetworkId,
 } from "@/lib/network";
 import {
+  fetchHorizonFallbackDataset,
+  isHorizonFallbackEnabled,
+} from "@/lib/stellar/horizon-fallback";
+import {
   buildAllTreemaps,
   buildKpis,
   buildProtocolSummary,
@@ -646,6 +650,14 @@ export async function getActivityData(
   options: { anchor?: Date } = {},
 ): Promise<ActivityDataset> {
   if (!hasBigQueryCredentials()) {
+    if (isHorizonFallbackEnabled()) {
+      logInfo({
+        event: "activity.horizon_fallback.credentials_missing",
+        correlationId,
+        period,
+      });
+      return fetchHorizonFallbackDataset(period, network, options);
+    }
     throw new CredentialsMissingError(
       "BigQuery credentials are required. Set GOOGLE_APPLICATION_CREDENTIALS in .env.local",
     );
@@ -692,7 +704,20 @@ export async function getActivityData(
     const end = range.end.toISOString();
 
     const fetchTimer = startTimer();
-    const raw = await fetchFromHubble(start, end, correlationId, period);
+    let raw: RawQueryResults;
+    try {
+      raw = await fetchFromHubble(start, end, correlationId, period);
+    } catch (error) {
+      if (isHorizonFallbackEnabled()) {
+        logInfo({
+          event: "activity.horizon_fallback.upstream_error",
+          correlationId,
+          period,
+        });
+        return fetchHorizonFallbackDataset(period, network, options);
+      }
+      throw error;
+    }
     logInfo({
       event: "activity.fetch.complete",
       correlationId,
