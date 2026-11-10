@@ -5,6 +5,7 @@ import { useDashboard, DashboardProvider } from "@/components/dashboard/Dashboar
 import { CategoryShareChart } from "@/components/dashboard/CategoryShareChart";
 import { ClassicDefiActivity } from "@/components/dashboard/ClassicDefiActivity";
 import { DetailPanel } from "@/components/dashboard/DetailPanel";
+import { ResponsiveDetailPanelContainer } from "@/components/dashboard/MobileBottomSheet";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
 import { ActivityErrorBanner } from "@/components/dashboard/ActivityErrorState";
@@ -98,7 +99,7 @@ function AnomalyBannerHost() {
 }
 
 function DashboardContent() {
-  const { selectedNode, network, metric, setMetric, readOnly, snapshot } =
+  const { selectedNode, setSelectedNode, network, metric, setMetric, readOnly, snapshot } =
     useDashboard();
   const metricSupported = isMetricSupportedOnNetwork(metric, network);
 
@@ -192,9 +193,12 @@ function DashboardContent() {
           <NetworkTreemap />
         </div>
         {selectedNode && (
-          <div className="min-w-0 scroll-mt-4" id="detail-panel-container">
+          <ResponsiveDetailPanelContainer
+            label={selectedNode.name}
+            onDismiss={() => setSelectedNode(null)}
+          >
             <DetailPanel />
-          </div>
+          </ResponsiveDetailPanelContainer>
         )}
       </div>
 
