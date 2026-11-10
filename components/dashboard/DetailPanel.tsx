@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { isEligibleAddress } from "@/lib/clipboard";
 import { buildContractFunctionBreakdown } from "@/lib/entities/contract-function-breakdown";
+import { resolveContractInvokeOutcomes } from "@/lib/entities/invoke-success-rate";
 import { ContractFunctionBarChart } from "@/components/dashboard/ContractFunctionBarChart";
 import { ResearchNoteEditor } from "@/components/dashboard/ResearchNoteEditor";
 import { resolveWatchlistKind } from "@/lib/watchlist";
@@ -91,6 +92,17 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
         contractId ?? "",
       ),
     [data?.treemaps.events, data?.period, metric, contractId],
+  );
+
+  const invokeOutcomes = useMemo(
+    () =>
+      contractId
+        ? resolveContractInvokeOutcomes(
+            selectedNode?.meta,
+            functionBreakdown.contractTotal || Number(selectedNode?.value ?? 0),
+          )
+        : null,
+    [contractId, selectedNode?.meta, selectedNode?.value, functionBreakdown.contractTotal],
   );
 
   if (isLoading) {
@@ -274,6 +286,71 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
               {selectedNode.meta.eventType}
             </p>
           </div>
+        ) : null}
+
+        {contractId && invokeOutcomes ? (
+          <section
+            data-testid="soroban-invoke-outcomes"
+            aria-labelledby="soroban-invoke-outcomes-heading"
+            className="rounded-lg border border-white/10 bg-black/20 p-3"
+          >
+            <h3
+              id="soroban-invoke-outcomes-heading"
+              className="mb-2 text-xs font-semibold text-zinc-400"
+            >
+              Soroban invoke outcomes
+            </h3>
+            {invokeOutcomes.status === "unavailable" ? (
+              <p className="text-xs text-zinc-400" role="status">
+                Invoke success vs failure breakdown is unavailable for this contract in the selected period.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-zinc-500">Success rate</p>
+                    <p
+                      data-testid="soroban-invoke-success-rate"
+                      className="text-sm font-semibold text-emerald-400"
+                    >
+                      {formatPercent(invokeOutcomes.successRatePercent)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500">Failure rate</p>
+                    <p
+                      data-testid="soroban-invoke-failure-rate"
+                      className="text-sm font-semibold text-amber-400"
+                    >
+                      {formatPercent(invokeOutcomes.failureRatePercent)}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className="flex h-2 w-full overflow-hidden rounded-full bg-zinc-800"
+                  role="img"
+                  aria-label={`Success rate ${invokeOutcomes.successRatePercent}%, failure rate ${invokeOutcomes.failureRatePercent}%`}
+                >
+                  <div
+                    className="h-full bg-emerald-500"
+                    style={{ width: `${invokeOutcomes.successRatePercent}%` }}
+                  />
+                  <div
+                    className="h-full bg-amber-500"
+                    style={{ width: `${invokeOutcomes.failureRatePercent}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                  <span>
+                    Successful: {formatNumber(invokeOutcomes.successfulInvokes)}
+                  </span>
+                  <span>
+                    Failed: {formatNumber(invokeOutcomes.failedInvokes)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </section>
         ) : null}
 
         {contractId ? (

@@ -353,6 +353,8 @@ export interface TreemapNodeMeta {
   share?: number;
   opCount?: number;
   txnCount?: number;
+  successfulInvokes?: number;
+  failedInvokes?: number;
   xlmVolume?: number;
   usdcVolume?: number;
   assetCode?: string;
