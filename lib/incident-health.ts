@@ -1,6 +1,12 @@
 export type HealthCheck = {
   status: "ok" | "degraded" | "unavailable";
   message?: string;
+  dailyBytesBilled?: number;
+  dailyBytesRemaining?: number;
+  dailyBytesBudget?: number;
+  dailyBurnPercent?: number;
+  softWarnPercent?: number;
+  dailyBurnLine?: string;
 };
 
 export type ReadinessHealth = {
@@ -8,6 +14,23 @@ export type ReadinessHealth = {
   timestamp?: string;
   checks?: Record<string, HealthCheck>;
 };
+
+export async function fetchReadiness(): Promise<ReadinessHealth> {
+  const response = await fetch("/api/health?type=readiness", {
+    cache: "no-store",
+    headers: { accept: "application/json" },
+  });
+
+  if (!response.ok && response.status !== 503) {
+    throw new Error("HEALTH_REQUEST_FAILED");
+  }
+
+  const body = (await response.json()) as ReadinessHealth;
+  if (!(["healthy", "degraded", "unavailable"] as const).includes(body.status)) {
+    throw new Error("INVALID_HEALTH_RESPONSE");
+  }
+  return body;
+}
 
 export type IncidentKind = "credentials-missing" | "degraded" | "down";
 

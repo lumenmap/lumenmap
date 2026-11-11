@@ -2,6 +2,7 @@ import { getBigQueryClient } from "@/lib/hubble/client";
 import { getCached, setCache } from "@/lib/hubble/cache";
 import { getMaxBytesBilledLimit } from "@/lib/hubble/config";
 import {
+  evaluateQueryBudgetGuardrail,
   extractTotalBytesBilled,
   recordBytesBilled,
 } from "@/lib/hubble/bytes-billed-telemetry";
@@ -99,6 +100,7 @@ import {
   endTimer,
   logError,
   logInfo,
+  logWarn,
   startTimer,
 } from "@/lib/log";
 
@@ -109,6 +111,7 @@ async function runQuery<T>(
   query: string,
   params: Record<string, unknown>,
   correlationId: string,
+  options?: { nonCritical?: boolean },
 ): Promise<T[]> {
   const timer = startTimer();
 
@@ -133,6 +136,38 @@ async function runQuery<T>(
   }
 
   const limit = getMaxBytesBilledLimit();
+  const guardrail = evaluateQueryBudgetGuardrail({
+    nonCritical: options?.nonCritical,
+  });
+
+  if (guardrail.shouldHardFail) {
+    logError({
+      event: "activity.query.error",
+      correlationId,
+      queryName: name,
+      durationMs: endTimer(timer),
+      bytesBilled: guardrail.summary.dailyBytesBilled,
+      errorClass: "cost_limit",
+      errorMessage: `BigQuery daily bytes budget exceeded for non-critical query (dailyBytesBilled=${guardrail.summary.dailyBytesBilled}, dailyBudget=${guardrail.summary.dailyBytesBudget})`,
+    });
+    throw new BigQueryLimitExceededError(
+      "Daily BigQuery scan budget exceeded for non-critical query.",
+      guardrail.summary.dailyBytesBudget,
+      query,
+      params,
+    );
+  }
+
+  if (guardrail.shouldWarn) {
+    logWarn({
+      event: "activity.query.budget_warning",
+      correlationId,
+      queryName: name,
+      bytesBilled: guardrail.summary.dailyBytesBilled,
+      errorClass: "cost_limit",
+      errorMessage: `${guardrail.summary.formattedLine} (softWarn=${guardrail.summary.softWarnPercent}%)`,
+    });
+  }
 
   try {
     const [job] = await client.createQueryJob({
@@ -279,6 +314,7 @@ async function fetchFromHubble(
           activeTransactionCategoryQuery,
           params,
           correlationId,
+          { nonCritical: true },
         ),
       () => [] as Record<string, unknown>[],
       correlationId,
@@ -336,6 +372,7 @@ async function fetchFromHubble(
             types: getDestinationQueryTypes(),
           },
           correlationId,
+          { nonCritical: true },
         ),
       () => [{ active_destination_count: 0 }] as Record<string, unknown>[],
       correlationId,
@@ -360,6 +397,7 @@ async function fetchFromHubble(
             assets: getUsdcPaymentVolumeParams(),
           },
           correlationId,
+          { nonCritical: true },
         ),
       () => [] as Record<string, unknown>[],
       correlationId,
@@ -375,6 +413,7 @@ async function fetchFromHubble(
             assets: getUsdcPaymentVolumeParams(),
           },
           correlationId,
+          { nonCritical: true },
         ),
       () => [] as Record<string, unknown>[],
       correlationId,
@@ -429,6 +468,7 @@ async function fetchHomeDomains(ids: string[], correlationId: string) {
         accountMetadataQuery,
         { ids },
         correlationId,
+        { nonCritical: true },
       ),
     () => [] as Record<string, unknown>[],
     correlationId,
@@ -456,6 +496,7 @@ export async function getActiveContractCount(
           end,
         },
         correlationId,
+        { nonCritical: true },
       ),
     () => [{ active_contract_count: 0 }] as Record<string, unknown>[],
     correlationId,

@@ -16,6 +16,9 @@ LumenMap relies on environment variables to authenticate with Google Cloud BigQu
 | `GOOGLE_APPLICATION_CREDENTIALS` | Local | File path string (e.g., `./gcp-sa.json`) | None | Path to local GCP service account JSON key file for local development. |
 | `GCP_SERVICE_ACCOUNT_KEY` | Preview, Production, Local | Base64-encoded string | None | Base64-encoded GCP Service Account JSON key. Required for Vercel serverless functions where local filesystem paths do not exist. |
 | `CACHE_TTL_SECONDS` | Local, Preview, Production | Integer (seconds) | `900` (15 minutes) | Controls in-memory server cache TTL for BigQuery activity query results to manage BigQuery cost and rate limits. |
+| `BIGQUERY_DAILY_BYTES_BUDGET` | Local, Preview, Production | Positive integer (bytes) | `53687091200` (50 GiB) | Trailing 24-hour BigQuery bytes-billed ceiling tracked in process and surfaced on `/api/health?type=readiness` and the dashboard burn line. |
+| `BIGQUERY_DAILY_BYTES_SOFT_WARN_PERCENT` | Local, Preview, Production | Integer (`1`–`100`) | `80` | Utilization percentage at which `/api/health?type=readiness` degrades `checks.bytesBilled` and emits structured `activity.query.budget_warning` logs without taking down core activity queries. |
+| `BIGQUERY_DAILY_BUDGET_HARD_FAIL` | Local, Preview, Production | Boolean (`true` / `false`) | `false` | Optional hard guardrail: when `true` and the 24-hour budget is exhausted, optional non-critical enrichment queries (`transactionCategory`, `usdcCategory`, `usdcAccount`, `activeDestinationCount`, `activeContractCount`, `accountMetadata`) fast-fail so core treemap queries preserve remaining scan headroom. |
 
 ### Explicit Environment Differences
 
@@ -80,6 +83,24 @@ Verify the returned JSON payload contains all required fields:
 - **Endpoint**: `GET /api/activity?period=1d`
 - **Expected Status**: `200 OK`
 - **Expected Content-Type**: `application/json`
+
+### BigQuery Cost Budget Guardrail & Readiness Diagnostics
+LumenMap tracks rolling and trailing 24-hour BigQuery bytes billed in process (`lib/hubble/bytes-billed-telemetry.ts`) and exposes budget burn on `/api/health?type=readiness` as well as the dashboard freshness footer (`data-testid="daily-burn-line"`):
+
+```bash
+curl -sS "${PREVIEW_URL}/api/health?type=readiness" | jq .checks.bytesBilled
+```
+
+- **Key Telemetry Fields**:
+  - `dailyBytesBilled`: Bytes billed across the trailing 24 hours.
+  - `dailyBytesRemaining`: Remaining bytes before hitting `dailyBytesBudget` (`0` once exhausted).
+  - `dailyBytesBudget`: Configured 24-hour ceiling (`BIGQUERY_DAILY_BYTES_BUDGET`, default `50 GiB`).
+  - `dailyBurnPercent` / `softWarnPercent`: Current burn ratio vs soft warning threshold (`BIGQUERY_DAILY_BYTES_SOFT_WARN_PERCENT`, default `80%`).
+  - `dailyBurnLine`: Human-readable burn summary (`Daily BigQuery burn: X.XX GB / Y.YY GB (Z.Z% · ~$U.UU)`).
+- **Soft Warning vs Optional Hard-Fail**:
+  - Crossing `BIGQUERY_DAILY_BYTES_SOFT_WARN_PERCENT` (or `100%` of `BIGQUERY_DAILY_BYTES_BUDGET`) marks `checks.bytesBilled.status` as `"degraded"` (`HTTP 200` with `status: "degraded"`) and logs `activity.query.budget_warning` **without taking down core activity queries by default**.
+  - Operators who want automatic load-shedding during traffic spikes can set `BIGQUERY_DAILY_BUDGET_HARD_FAIL=true` in Vercel Environment Variables so optional non-critical queries (`transactionCategory`, `usdcCategory`, `usdcAccount`, `activeDestinationCount`, `activeContractCount`, `accountMetadata`) fast-fail via `runOptionalQuery` once `dailyBytesRemaining` reaches `0`, while core treemap queries remain online.
+  - To reduce sustained burn, raise `CACHE_TTL_SECONDS` (e.g., `1800`), enable materialized rollups (`LUMENMAP_USE_ROLLUPS=true`), or adjust `BIGQUERY_DAILY_BYTES_BUDGET` to match project quota.
 
 ### BigQuery Credential Failure Diagnostics
 If `GCP_SERVICE_ACCOUNT_KEY` is missing or corrupted:

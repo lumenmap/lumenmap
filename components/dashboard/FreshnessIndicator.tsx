@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   differenceInDays,
   differenceInHours,
@@ -8,6 +9,8 @@ import {
 } from "date-fns";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDailyBurnLine } from "@/lib/hubble/bytes-billed-telemetry";
+import { fetchReadiness } from "@/lib/incident-health";
 
 function formatLag(dataThrough: string): string {
   const now = Date.now();
@@ -30,7 +33,16 @@ function formatLag(dataThrough: string): string {
 }
 
 export function FreshnessIndicator() {
-  const { data, isLoading, isError } = useDashboard();
+  const { data, isLoading, isError, readOnly } = useDashboard();
+  const readinessQuery = useQuery({
+    queryKey: ["readiness-health"],
+    queryFn: fetchReadiness,
+    enabled: !readOnly && typeof window !== "undefined",
+    staleTime: 10_000,
+    retry: false,
+  });
+  const bytesBilledCheck = readinessQuery.data?.checks?.bytesBilled;
+  const isBurnDegraded = bytesBilledCheck?.status === "degraded";
   const isCached = data?.isOfflineCache === true;
   const cachedChip = isCached ? (
     <span
@@ -128,6 +140,12 @@ export function FreshnessIndicator() {
           Latest available data may be delayed relative to the period end
         </p>
       )}
+      <p
+        data-testid="daily-burn-line"
+        className={isBurnDegraded ? "text-xs text-amber-400" : "text-xs text-zinc-500"}
+      >
+        {bytesBilledCheck?.dailyBurnLine ?? formatDailyBurnLine(0)}
+      </p>
     </div>
   );
 }
