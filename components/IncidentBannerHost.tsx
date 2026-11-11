@@ -5,29 +5,12 @@ import { useQuery } from "@tanstack/react-query";
 import { IncidentBanner } from "@/components/IncidentBanner";
 import {
   classifyIncident,
+  fetchReadiness,
   type IncidentState,
-  type ReadinessHealth,
 } from "@/lib/incident-health";
 
 export const INCIDENT_DEBOUNCE_MS = 2_500;
 const HEALTH_POLL_MS = 30_000;
-
-async function fetchReadiness(): Promise<ReadinessHealth> {
-  const response = await fetch("/api/health?type=readiness", {
-    cache: "no-store",
-    headers: { accept: "application/json" },
-  });
-
-  if (!response.ok && response.status !== 503) {
-    throw new Error("HEALTH_REQUEST_FAILED");
-  }
-
-  const body = (await response.json()) as ReadinessHealth;
-  if (!(["healthy", "degraded", "unavailable"] as const).includes(body.status)) {
-    throw new Error("INVALID_HEALTH_RESPONSE");
-  }
-  return body;
-}
 
 export function IncidentBannerHost({
   debounceMs = INCIDENT_DEBOUNCE_MS,

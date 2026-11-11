@@ -8,6 +8,7 @@ import { getCached } from "@/lib/hubble/cache";
 import {
   getBytesBilledDegradedThreshold,
   getBytesBilledWindowMinutes,
+  getDailyBurnSummary,
   getRollingBytesBilled,
 } from "@/lib/hubble/bytes-billed-telemetry";
 import { getAllEntities } from "@/lib/entities/registry";
@@ -55,6 +56,12 @@ type CheckResult = {
 type BytesBilledCheckResult = CheckResult & {
   rollingBytesBilled: number;
   windowMinutes: number;
+  dailyBytesBilled: number;
+  dailyBytesRemaining: number;
+  dailyBytesBudget: number;
+  dailyBurnPercent: number;
+  softWarnPercent: number;
+  dailyBurnLine: string;
 };
 
 async function withTimeout<T>(
@@ -181,6 +188,7 @@ function checkCache(): CheckResult {
 function checkBytesBilled(): BytesBilledCheckResult {
   const start = Date.now();
   const windowMinutes = getBytesBilledWindowMinutes();
+  const dailySummary = getDailyBurnSummary();
 
   if (isFixtureMode()) {
     return {
@@ -189,11 +197,49 @@ function checkBytesBilled(): BytesBilledCheckResult {
       message: "Fixture mode reports zero bytes billed",
       rollingBytesBilled: 0,
       windowMinutes,
+      dailyBytesBilled: 0,
+      dailyBytesRemaining: dailySummary.dailyBytesBudget,
+      dailyBytesBudget: dailySummary.dailyBytesBudget,
+      dailyBurnPercent: 0,
+      softWarnPercent: dailySummary.softWarnPercent,
+      dailyBurnLine: "Daily BigQuery burn: 0.00 GB (fixture mode)",
     };
   }
 
   const rollingBytesBilled = getRollingBytesBilled();
   const threshold = getBytesBilledDegradedThreshold();
+
+  if (dailySummary.isExceeded) {
+    return {
+      status: "degraded",
+      latencyMs: Date.now() - start,
+      message: "Daily BigQuery bytes budget exceeded configured guardrail",
+      rollingBytesBilled,
+      windowMinutes,
+      dailyBytesBilled: dailySummary.dailyBytesBilled,
+      dailyBytesRemaining: dailySummary.dailyBytesRemaining,
+      dailyBytesBudget: dailySummary.dailyBytesBudget,
+      dailyBurnPercent: dailySummary.utilizationPercent,
+      softWarnPercent: dailySummary.softWarnPercent,
+      dailyBurnLine: dailySummary.formattedLine,
+    };
+  }
+
+  if (dailySummary.isSoftWarning) {
+    return {
+      status: "degraded",
+      latencyMs: Date.now() - start,
+      message: `Daily BigQuery bytes burn exceeded soft warning threshold (${dailySummary.softWarnPercent}%)`,
+      rollingBytesBilled,
+      windowMinutes,
+      dailyBytesBilled: dailySummary.dailyBytesBilled,
+      dailyBytesRemaining: dailySummary.dailyBytesRemaining,
+      dailyBytesBudget: dailySummary.dailyBytesBudget,
+      dailyBurnPercent: dailySummary.utilizationPercent,
+      softWarnPercent: dailySummary.softWarnPercent,
+      dailyBurnLine: dailySummary.formattedLine,
+    };
+  }
 
   if (rollingBytesBilled > threshold) {
     return {
@@ -202,6 +248,12 @@ function checkBytesBilled(): BytesBilledCheckResult {
       message: "Rolling BigQuery bytes billed exceeded configured threshold",
       rollingBytesBilled,
       windowMinutes,
+      dailyBytesBilled: dailySummary.dailyBytesBilled,
+      dailyBytesRemaining: dailySummary.dailyBytesRemaining,
+      dailyBytesBudget: dailySummary.dailyBytesBudget,
+      dailyBurnPercent: dailySummary.utilizationPercent,
+      softWarnPercent: dailySummary.softWarnPercent,
+      dailyBurnLine: dailySummary.formattedLine,
     };
   }
 
@@ -211,6 +263,12 @@ function checkBytesBilled(): BytesBilledCheckResult {
     message: "Rolling BigQuery bytes billed within threshold",
     rollingBytesBilled,
     windowMinutes,
+    dailyBytesBilled: dailySummary.dailyBytesBilled,
+    dailyBytesRemaining: dailySummary.dailyBytesRemaining,
+    dailyBytesBudget: dailySummary.dailyBytesBudget,
+    dailyBurnPercent: dailySummary.utilizationPercent,
+    softWarnPercent: dailySummary.softWarnPercent,
+    dailyBurnLine: dailySummary.formattedLine,
   };
 }
 
@@ -283,6 +341,12 @@ async function handleHealthRequest(request: Request) {
           latencyMs: bytesBilled.latencyMs,
           rollingBytesBilled: bytesBilled.rollingBytesBilled,
           windowMinutes: bytesBilled.windowMinutes,
+          dailyBytesBilled: bytesBilled.dailyBytesBilled,
+          dailyBytesRemaining: bytesBilled.dailyBytesRemaining,
+          dailyBytesBudget: bytesBilled.dailyBytesBudget,
+          dailyBurnPercent: bytesBilled.dailyBurnPercent,
+          softWarnPercent: bytesBilled.softWarnPercent,
+          dailyBurnLine: bytesBilled.dailyBurnLine,
           message:
             bytesBilled.status !== "ok" ? bytesBilled.message : undefined,
         },
