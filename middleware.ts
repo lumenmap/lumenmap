@@ -1,18 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { buildEmbedFramePolicy } from "@/lib/embed";
+import { buildSecurityHeaders } from "@/lib/security-headers";
 
 export function middleware(request: NextRequest) {
-  if (!request.nextUrl.pathname.startsWith("/embed")) {
-    return NextResponse.next();
-  }
+  const pathname = request.nextUrl.pathname;
+  const isEmbed = pathname === "/embed" || pathname.startsWith("/embed/");
+  const securityHeaders = buildSecurityHeaders({
+    pathname,
+    embedAllowlist: process.env.EMBED_FRAME_ANCESTORS,
+  });
 
-  const policy = buildEmbedFramePolicy(process.env.EMBED_FRAME_ANCESTORS);
   const response = NextResponse.next();
-  response.headers.set("Content-Security-Policy", policy.contentSecurityPolicy);
-  response.headers.delete("X-Frame-Options");
+  for (const [key, value] of Object.entries(securityHeaders)) {
+    response.headers.set(key, value);
+  }
+  if (isEmbed) {
+    response.headers.delete("X-Frame-Options");
+  }
   return response;
 }
 
 export const config = {
-  matcher: ["/embed/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
