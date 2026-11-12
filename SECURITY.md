@@ -17,3 +17,22 @@ If Push Protection blocks a commit due to a suspected secret that is actually a 
 **Important:** 
 - Bypasses are audited. Maintainers periodically review bypass logs.
 - **Never bypass push protection for a real secret.** If a real secret is detected, remove it from your commit history before pushing. If it was already exposed, it must be rotated immediately.
+
+## HTTP Security Headers and Content Security Policy
+
+LumenMap applies hardened HTTP response headers across dashboard HTML pages and `/api/*` routes via `lib/security-headers.ts`, `middleware.ts`, and `next.config.ts`:
+
+| Header | Dashboard & API Routes | `/embed/*` Widget Routes | Purpose |
+| --- | --- | --- | --- |
+| `Content-Security-Policy` | `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self' blob:` | Same policy, except `frame-ancestors` follows `EMBED_FRAME_ANCESTORS` (`frame-ancestors *` when unset, or `frame-ancestors 'self' <origins>`) | Restricts executable scripts, styles, fonts, XHR/fetch connections, manifests, and workers strictly to required same-origin and local `data:`/`blob:` chart-export sources |
+| `X-Frame-Options` | `DENY` | Omitted | Blocks clickjacking on primary dashboard routes while allowing authorized parent pages to iframe `/embed/*` widgets |
+| `X-Content-Type-Options` | `nosniff` | `nosniff` | Prevents MIME-type sniffing on HTML, JSON API, and static responses |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | `strict-origin-when-cross-origin` | Avoids leaking full query/account URLs to cross-origin destinations |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), browsing-topics=()` | Same | Disables unused browser device APIs and Topics API |
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` (production only) | Same (production only) | Enforces HTTPS transport in production deployments |
+
+### Design Notes
+
+- **Stellar Expert outbound links:** Explorer links (`https://stellar.expert/...`) are top-level `<a href>` navigations rather than subresource fetches or third-party scripts, so they require no `script-src` or `connect-src` CSP exceptions.
+- **Development HMR:** Outside `NODE_ENV=production`, `script-src` appends `'unsafe-eval'` and `connect-src` appends `ws: wss:` so Next.js fast refresh works locally without loosening production headers.
+
