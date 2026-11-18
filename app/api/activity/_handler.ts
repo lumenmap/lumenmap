@@ -20,6 +20,7 @@ import {
 } from "@/lib/network";
 import {
   isValidPeriod,
+  parseCustomPeriod,
   PERIOD_OPTIONS,
   previousPeriodAnchor,
 } from "@/lib/periods";
@@ -66,7 +67,23 @@ export function parseActivityPeriod(
     return { ok: true, period: "1d" };
   }
 
+  // Try to validate the period (handles both presets and custom ranges)
   if (!isValidPeriod(periodParam)) {
+    // Check if it's an invalid custom period for better error messaging
+    if (periodParam.startsWith("custom:")) {
+      const parsed = parseCustomPeriod(periodParam);
+      if (!parsed.ok) {
+        return {
+          ok: false,
+          body: {
+            code: "INVALID_PERIOD",
+            message: parsed.error,
+          },
+          status: 400,
+        };
+      }
+    }
+    
     return {
       ok: false,
       body: {

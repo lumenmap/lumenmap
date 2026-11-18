@@ -1,4 +1,4 @@
-export type Period = "1d" | "7d" | "30d" | "month";
+export type Period = "1d" | "7d" | "30d" | "month" | `custom:${string}:${string}`;
 
 /**
  * Which equal-length window an activity request should resolve:
@@ -8,6 +8,14 @@ export type Period = "1d" | "7d" | "30d" | "month";
 export type ActivityWindow = "current" | "prev";
 
 export type DataSource = "hubble" | "fixture";
+
+/**
+ * Parsed custom date range from a period string.
+ */
+export interface CustomDateRange {
+  start: Date;
+  end: Date;
+}
 
 /** Stable identifiers used by the public treemap contract. */
 export type MetricId =

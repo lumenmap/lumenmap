@@ -1,4 +1,4 @@
-import type { Period } from "@/lib/types";
+import type { Period, CustomDateRange } from "@/lib/types";
 
 export interface PeriodRange {
   period: Period;
@@ -7,12 +7,15 @@ export interface PeriodRange {
   label: string;
 }
 
-export const PERIOD_OPTIONS: { value: Period; label: string }[] = [
+export const PERIOD_OPTIONS: { value: Exclude<Period, `custom:${string}:${string}`>; label: string }[] = [
   { value: "1d", label: "Today" },
   { value: "7d", label: "7 Days" },
   { value: "30d", label: "30 Days" },
   { value: "month", label: "This Month" },
 ];
+
+/** Maximum allowed span for custom date ranges (90 days) */
+export const MAX_CUSTOM_RANGE_DAYS = 90;
 
 function startOfDayUTC(date: Date): Date {
   return new Date(
@@ -49,6 +52,21 @@ function endOfMonthUTC(date: Date): Date {
 }
 
 export function resolvePeriod(period: Period, now = new Date()): PeriodRange {
+  // Check if it's a custom date range
+  if (period.startsWith("custom:")) {
+    const parsed = parseCustomPeriod(period);
+    if (parsed.ok) {
+      return {
+        period,
+        start: parsed.range.start,
+        end: parsed.range.end,
+        label: formatCustomRangeLabel(parsed.range.start, parsed.range.end),
+      };
+    }
+    // Fall back to 1d for invalid custom ranges
+    return resolvePeriod("1d", now);
+  }
+
   const end = endOfDayUTC(now);
 
   switch (period) {
@@ -86,9 +104,110 @@ export function resolvePeriod(period: Period, now = new Date()): PeriodRange {
 }
 
 export function isValidPeriod(value: string | null): value is Period {
-  return (
-    value === "1d" || value === "7d" || value === "30d" || value === "month"
-  );
+  if (!value) return false;
+  if (value === "1d" || value === "7d" || value === "30d" || value === "month") {
+    return true;
+  }
+  if (value.startsWith("custom:")) {
+    const parsed = parseCustomPeriod(value);
+    return parsed.ok;
+  }
+  return false;
+}
+
+/**
+ * Parses a custom period string (format: "custom:YYYY-MM-DD:YYYY-MM-DD")
+ * Returns parsed range or error details.
+ */
+export function parseCustomPeriod(
+  period: string,
+): 
+  | { ok: true; range: CustomDateRange }
+  | { ok: false; error: string; code: string } {
+  const match = /^custom:(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})$/.exec(period);
+  
+  if (!match) {
+    return {
+      ok: false,
+      error: "Invalid custom period format. Use custom:YYYY-MM-DD:YYYY-MM-DD",
+      code: "INVALID_FORMAT",
+    };
+  }
+
+  const [, startStr, endStr] = match;
+  const start = new Date(`${startStr}T00:00:00.000Z`);
+  const end = new Date(`${endStr}T23:59:59.999Z`);
+
+  // Validate dates are valid
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return {
+      ok: false,
+      error: "Invalid date values in custom period",
+      code: "INVALID_DATE",
+    };
+  }
+
+  // Reject inverted ranges
+  if (start > end) {
+    return {
+      ok: false,
+      error: "Start date must be before or equal to end date",
+      code: "INVERTED_RANGE",
+    };
+  }
+
+  // Check max span (90 days)
+  const spanDays = Math.ceil((end.getTime() - start.getTime()) / 86_400_000);
+  if (spanDays > MAX_CUSTOM_RANGE_DAYS) {
+    return {
+      ok: false,
+      error: `Date range cannot exceed ${MAX_CUSTOM_RANGE_DAYS} days`,
+      code: "RANGE_TOO_LONG",
+    };
+  }
+
+  return {
+    ok: true,
+    range: { start, end },
+  };
+}
+
+/**
+ * Encodes a custom date range into a period string.
+ */
+export function encodeCustomPeriod(start: Date, end: Date): Period {
+  const startStr = start.toISOString().split('T')[0];
+  const endStr = end.toISOString().split('T')[0];
+  return `custom:${startStr}:${endStr}`;
+}
+
+/**
+ * Formats a custom range for display (e.g., "Jan 1 - Jan 15, 2024")
+ */
+function formatCustomRangeLabel(start: Date, end: Date): string {
+  const opts: Intl.DateTimeFormatOptions = { 
+    month: 'short', 
+    day: 'numeric',
+    timeZone: 'UTC'
+  };
+  
+  const startYear = start.getUTCFullYear();
+  const endYear = end.getUTCFullYear();
+  
+  if (startYear === endYear) {
+    const startMonth = start.getUTCMonth();
+    const endMonth = end.getUTCMonth();
+    
+    if (startMonth === endMonth) {
+      // Same month and year: "Jan 1-15, 2024"
+      return `${start.toLocaleDateString('en-US', { ...opts, timeZone: 'UTC' }).replace(/,.*/, '')} - ${end.getUTCDate()}, ${endYear}`;
+    }
+    // Same year: "Jan 1 - Feb 15, 2024"
+    return `${start.toLocaleDateString('en-US', opts)} - ${end.toLocaleDateString('en-US', opts)}, ${endYear}`;
+  }
+  
+  // Different years: "Dec 20, 2023 - Jan 5, 2024"
+  return `${start.toLocaleDateString('en-US', { ...opts, year: 'numeric', timeZone: 'UTC' })} - ${end.toLocaleDateString('en-US', { ...opts, year: 'numeric', timeZone: 'UTC' })}`;
 }
 
 const PREVIOUS_PERIOD_LABELS: Record<Period, string> = {
