@@ -1,13 +1,29 @@
 "use client";
 
-import { useCallback, useRef } from "react";
-import { PERIOD_OPTIONS } from "@/lib/periods";
+import { useCallback, useRef, useState } from "react";
+import { PERIOD_OPTIONS, parseCustomPeriod } from "@/lib/periods";
 import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
+import { CustomDateRangePicker } from "@/components/dashboard/CustomDateRangePicker";
+import type { Period } from "@/lib/types";
 
 export function PeriodSelector() {
   const { period, setPeriod, comparePeriod, setComparePeriod } = useDashboard();
   const groupRef = useRef<HTMLDivElement>(null);
+  const [showCustomPicker, setShowCustomPicker] = useState(false);
+  const customButtonRef = useRef<HTMLDivElement>(null);
+
+  const isCustomPeriod = period.startsWith("custom:");
+  const customLabel = isCustomPeriod 
+    ? (() => {
+        const parsed = parseCustomPeriod(period);
+        if (parsed.ok) {
+          const formatDate = (d: Date) => d.toISOString().split('T')[0];
+          return `${formatDate(parsed.range.start)} to ${formatDate(parsed.range.end)}`;
+        }
+        return "Custom";
+      })()
+    : null;
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -33,6 +49,11 @@ export function PeriodSelector() {
     [period, setPeriod],
   );
 
+  const handleCustomApply = (customPeriod: Period) => {
+    setPeriod(customPeriod);
+    setShowCustomPicker(false);
+  };
+
   return (
     <div className="space-y-2">
       <div
@@ -55,6 +76,25 @@ export function PeriodSelector() {
             {option.label}
           </Button>
         ))}
+        <div ref={customButtonRef} className="relative">
+          <Button
+            role="radio"
+            aria-checked={isCustomPeriod}
+            variant={isCustomPeriod ? "default" : "outline"}
+            size="sm"
+            tabIndex={isCustomPeriod ? 0 : -1}
+            onClick={() => setShowCustomPicker(!showCustomPicker)}
+            title={customLabel ?? "Select custom date range"}
+          >
+            {customLabel ?? "Custom"}
+          </Button>
+          {showCustomPicker && (
+            <CustomDateRangePicker
+              onApply={handleCustomApply}
+              onCancel={() => setShowCustomPicker(false)}
+            />
+          )}
+        </div>
       </div>
       <label className="flex items-center justify-end gap-2 text-xs text-text-secondary">
         Compare with

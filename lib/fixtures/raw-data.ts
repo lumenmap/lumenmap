@@ -26,12 +26,34 @@ export interface FixtureRawActivity {
 }
 
 /** Fixed scale factor per period so each metric switch changes visible data. */
-export const FIXTURE_PERIOD_MULTIPLIERS: Record<Period, number> = {
+export const FIXTURE_PERIOD_MULTIPLIERS: Record<Exclude<Period, `custom:${string}:${string}`>, number> = {
   "1d": 1,
   "7d": 6,
   "30d": 24,
   month: 18,
 };
+
+/**
+ * Returns the fixture multiplier for a period, including custom ranges.
+ * Custom ranges use day count as the multiplier for deterministic scaling.
+ */
+function getFixtureMultiplier(period: Period): number {
+  if (period.startsWith("custom:")) {
+    // Extract dates from custom:YYYY-MM-DD:YYYY-MM-DD format
+    const match = /^custom:(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})$/.exec(period);
+    if (match) {
+      const [, startStr, endStr] = match;
+      const start = new Date(`${startStr}T00:00:00.000Z`);
+      const end = new Date(`${endStr}T23:59:59.999Z`);
+      const spanDays = Math.ceil((end.getTime() - start.getTime()) / 86_400_000);
+      // Use day count as multiplier (1 day = 1x, 7 days = 7x, etc.)
+      return Math.max(1, spanDays);
+    }
+    // Fallback to 1d multiplier for invalid custom ranges
+    return FIXTURE_PERIOD_MULTIPLIERS["1d"];
+  }
+  return FIXTURE_PERIOD_MULTIPLIERS[period as Exclude<Period, `custom:${string}:${string}`>];
+}
 
 /**
  * Soroban contract ids used by the fixtures. The named ones exist in
@@ -291,9 +313,10 @@ function scaleRowsWithFactors<T extends { op_count: number }>(
  * Returns the deterministic raw activity rows for a period.
  * Every period gets a distinct, stable total so tests can assert that
  * switching metrics updates the visible data.
+ * Custom date ranges scale by day count (1 day = 1x, 7 days = 7x, etc.)
  */
 export function getFixtureRawActivity(period: Period): FixtureRawActivity {
-  const multiplier = FIXTURE_PERIOD_MULTIPLIERS[period];
+  const multiplier = getFixtureMultiplier(period);
 
   return {
     categories: scaleRows(BASE_CATEGORIES, multiplier),
@@ -324,7 +347,7 @@ export function getFixtureRawActivity(period: Period): FixtureRawActivity {
 export function getFixturePreviousRawActivity(
   period: Period,
 ): FixtureRawActivity {
-  const multiplier = FIXTURE_PERIOD_MULTIPLIERS[period];
+  const multiplier = getFixtureMultiplier(period);
 
   const contracts = BASE_CONTRACTS.filter(
     (row) => row.contract_id !== FIXTURE_CONTRACTS.soroswapRouter,
