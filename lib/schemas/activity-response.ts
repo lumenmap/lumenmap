@@ -379,6 +379,26 @@ const classicDefiBreakdownsSchema = z.object({
   claimableBalances: classicDefiBreakdownSchema,
 });
 
+const liquidityFlowSummarySchema = z.object({
+  pathPaymentCount: z.number(),
+  dexOperationCount: z.number(),
+  liquidityPoolOperationCount: z.number(),
+  pathPaymentAmounts: z
+    .object({
+      xlmAmount: z.string().nullable(),
+      usdcAmount: z.string().nullable(),
+    })
+    .nullable(),
+  intermediateAssets: z.array(
+    z.object({
+      code: z.string(),
+      issuer: z.string().optional(),
+      routeAppearances: z.number(),
+    }),
+  ),
+  intermediateAssetsAvailable: z.boolean(),
+});
+
 export const activityResponseSchema = z.object({
   period: periodSchema,
   start: isoTimestampSchema,
@@ -404,6 +424,7 @@ export const activityResponseSchema = z.object({
   heatmap: activityHeatmapSchema.optional(),
   assetVolumes: z.array(assetPaymentVolumeSchema).optional(),
   classicDeFi: classicDefiBreakdownsSchema.optional(),
+  liquidityFlow: liquidityFlowSummarySchema.optional(),
   fixture: z.boolean().optional(),
 });
 

@@ -407,6 +407,7 @@ export const openApiDocument = {
           protocols: { type: "object", additionalProperties: true },
           assetVolumes: { type: "array", items: { type: "object" } },
           classicDeFi: { type: "object", additionalProperties: true },
+          liquidityFlow: { type: "object", additionalProperties: true },
         },
         additionalProperties: true,
       },

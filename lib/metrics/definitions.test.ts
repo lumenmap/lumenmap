@@ -69,6 +69,7 @@ describe("methodology sections", () => {
       "operations",
       "transactions",
       "payment-volume",
+      "liquidity-flow",
       "tvl",
       "active-accounts",
       "active-destination-accounts",
@@ -77,5 +78,24 @@ describe("methodology sections", () => {
     for (const id of required) {
       assert.ok(ids.includes(id), id);
     }
+  });
+
+  it("documents the liquidity-flow operation types and parsing limits", () => {
+    const section = getMethodologySection("liquidity-flow");
+    const documentedTypes = [
+      "path_payment_strict_receive",
+      "path_payment_strict_send",
+      "manage_buy_offer",
+      "manage_sell_offer",
+      "create_passive_sell_offer",
+      "liquidity_pool_deposit",
+      "liquidity_pool_withdraw",
+    ];
+
+    for (const type of documentedTypes) {
+      assert.ok(section.inclusions.some((item) => item.includes(type)), type);
+    }
+    assert.ok(section.limitations.some((item) => item.includes("soft-fail")));
+    assert.ok(section.limitations.some((item) => item.includes("Route-hop")));
   });
 });

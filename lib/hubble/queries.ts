@@ -36,6 +36,7 @@ import type {
   SorobanFunctionContractRow,
   SorobanFunctionRow,
   NativePaymentVolume,
+  LiquidityFlowSummary,
   PaymentFlowEdgeRow,
   TransactionCategoryRow,
   UsdcAccountRow,
@@ -47,6 +48,11 @@ import type {
   AccountCounterpartyDirection,
   AccountCounterpartyRow,
 } from "@/lib/types";
+import {
+  type LiquidityFlowIntermediateAsset,
+  type PathPaymentAmounts,
+  type PathPaymentIntermediateAssets,
+} from "@/lib/metrics/liquidity-flow";
 
 export {
   assetPaymentVolumeQuery,
@@ -65,6 +71,9 @@ export {
   heatmapQuery,
   latestDataTimestampQuery,
   nativePaymentVolumeQuery,
+  pathPaymentXlmAmountQuery,
+  pathPaymentUsdcAmountQuery,
+  pathPaymentIntermediatesQuery,
   queryRegistry,
   sorobanFunctionContractQuery,
   sorobanFunctionQuery,
@@ -174,6 +183,7 @@ export type RawQueryResults = {
   usdcCategories: UsdcCategoryRow[];
   usdcAccounts: UsdcAccountRow[];
   heatmap: HeatmapRawRow[];
+  liquidityFlow: LiquidityFlowSummary;
 };
 
 export function mapAccountCounterpartyRows(
@@ -391,6 +401,54 @@ export function mapNativePaymentVolumeRow(
     amount: value,
     unit: "XLM",
   };
+}
+
+function parseNonNegativeAmount(value: unknown): string | null {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const amountText = String(value).trim();
+  if (!amountText) return null;
+  const amount = Number(amountText);
+  return Number.isFinite(amount) && amount >= 0 ? amountText : null;
+}
+
+export function mapPathPaymentAmountsRows(
+  xlmRows: Record<string, unknown>[],
+  usdcRows: Record<string, unknown>[],
+): PathPaymentAmounts | null {
+  const xlmRow = xlmRows[0];
+  const usdcRow = usdcRows[0];
+  if (!xlmRow && !usdcRow) return null;
+  return {
+    xlmAmount: parseNonNegativeAmount(xlmRow?.xlm_amount),
+    usdcAmount: parseNonNegativeAmount(usdcRow?.usdc_amount),
+  };
+}
+
+export function mapPathPaymentIntermediateRows(
+  rows: Record<string, unknown>[],
+): PathPaymentIntermediateAssets | null {
+  if (rows.length === 0) return null;
+
+  const assets: LiquidityFlowIntermediateAsset[] = [];
+  for (const row of rows) {
+    const code = typeof row.asset_code === "string" ? row.asset_code.trim() : "";
+    const routeAppearances = Number(row.route_appearances);
+    if (
+      !code ||
+      !Number.isSafeInteger(routeAppearances) ||
+      routeAppearances <= 0
+    ) {
+      continue;
+    }
+
+    const issuer =
+      typeof row.asset_issuer === "string" && row.asset_issuer.trim()
+        ? row.asset_issuer.trim()
+        : undefined;
+    assets.push({ code, ...(issuer ? { issuer } : {}), routeAppearances });
+  }
+
+  return { assets, available: true };
 }
 
 export function mapAccountMetadataRows(

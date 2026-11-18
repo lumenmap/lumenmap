@@ -12,8 +12,8 @@ documented type before the queries that use it can run.** If you change SQL,
 walk the checklist at the bottom of this page first.
 
 Canonical source of truth for the SQL itself:
-[`lib/hubble/shared-queries.mjs`](../lib/hubble/shared-queries.mjs). All 17
-queries registered in `queryRegistry` are listed below.
+[`lib/hubble/shared-queries.mjs`](../lib/hubble/shared-queries.mjs). Queries
+registered in `queryRegistry` are listed below.
 
 ---
 
@@ -33,12 +33,12 @@ queries registered in `queryRegistry` are listed below.
 | Column | Type used as | Read by | Notes |
 | --- | --- | --- | --- |
 | `closed_at` | TIMESTAMP | every query below | Half-open predicate `@start <= closed_at AND closed_at < @end`. Also drives `isPeriodComplete` freshness. |
-| `type_string` | STRING | `categoryQuery`, `transactionCategoryQuery`, `accountQuery`, `nativePaymentVolumeQuery`, `assetPaymentVolumeQuery`, `usdcPaymentVolumeQuery`, `activeDestinationCountQuery`, `usdcCategoryQuery`, `usdcAccountQuery` | Filtered against `ACCOUNT_QUERY_TYPES` / `DESTINATION_QUERY_TYPES`. |
-| `amount` | FLOAT64 / NUMERIC | `categoryQuery`, `accountQuery`, `nativePaymentVolumeQuery`, `assetPaymentVolumeQuery`, `usdcPaymentVolumeQuery`, `usdcCategoryQuery`, `usdcAccountQuery` | Cast differently per query (`FLOAT64` for XLM volume, `NUMERIC` for USDC, `STRING` for the asset rollup). Negative / `NULL` / `INF` / `NAN` values are coerced to `0`. |
-| `asset_type` | STRING | `categoryQuery`, `accountQuery`, `nativePaymentVolumeQuery`, `assetPaymentVolumeQuery` | `'native'` is the XLM sentinel. |
+| `type_string` | STRING | `categoryQuery`, `transactionCategoryQuery`, `accountQuery`, `nativePaymentVolumeQuery`, `assetPaymentVolumeQuery`, `pathPaymentXlmAmountQuery`, `pathPaymentUsdcAmountQuery`, `pathPaymentIntermediatesQuery`, `usdcPaymentVolumeQuery`, `activeDestinationCountQuery`, `usdcCategoryQuery`, `usdcAccountQuery` | Filtered against `ACCOUNT_QUERY_TYPES` / `DESTINATION_QUERY_TYPES`. |
+| `amount` | FLOAT64 / NUMERIC | `categoryQuery`, `accountQuery`, `nativePaymentVolumeQuery`, `assetPaymentVolumeQuery`, `pathPaymentXlmAmountQuery`, `pathPaymentUsdcAmountQuery`, `usdcPaymentVolumeQuery`, `usdcCategoryQuery`, `usdcAccountQuery` | Cast differently per query (`FLOAT64` for XLM volume, `NUMERIC` for USDC, `STRING` for the asset rollup). Negative / `NULL` / `INF` / `NAN` values are coerced to `0`. |
+| `asset_type` | STRING | `categoryQuery`, `accountQuery`, `nativePaymentVolumeQuery`, `assetPaymentVolumeQuery`, `pathPaymentXlmAmountQuery` | `'native'` is the XLM sentinel. |
 | `asset_code`, `asset_issuer` | STRING | `assetPaymentVolumeQuery`, `usdcPaymentVolumeQuery`, `usdcCategoryQuery`, `usdcAccountQuery` | Asset identity. USDC queries match the pair as `STRUCT(code, issuer) IN UNNEST(@assets)`. |
-| `source_asset_type`, `source_asset_code`, `source_asset_issuer`, `source_amount` | STRING / FLOAT64 | `nativePaymentVolumeQuery`, `assetPaymentVolumeQuery`, `usdcPaymentVolumeQuery`, `usdcCategoryQuery`, `usdcAccountQuery` | Send-side of `path_payment_strict_send`. |
-| `dest_asset_code`, `dest_asset_issuer`, `dest_amount` | STRING / FLOAT64 | `usdcCategoryQuery`, `usdcAccountQuery` | Destination-side of `path_payment_strict_receive`. |
+| `source_asset_type`, `source_asset_code`, `source_asset_issuer`, `source_amount` | STRING / FLOAT64 | `nativePaymentVolumeQuery`, `assetPaymentVolumeQuery`, `pathPaymentXlmAmountQuery`, `pathPaymentUsdcAmountQuery`, `usdcPaymentVolumeQuery`, `usdcCategoryQuery`, `usdcAccountQuery` | Send-side of `path_payment_strict_send`. |
+| `dest_asset_code`, `dest_asset_issuer`, `dest_amount` | STRING / FLOAT64 | `pathPaymentUsdcAmountQuery`, `usdcCategoryQuery`, `usdcAccountQuery` | Destination-side of `path_payment_strict_receive`. |
 | `op_source_account` | STRING | `accountQuery`, `activeSourceAccountsQuery`, `usdcAccountQuery` | Ranked per `type_string`. Rows starting with `M` (muxed) are excluded from the active-account count. |
 | `transaction_hash` | STRING | `transactionCategoryQuery` | `COUNT(DISTINCT …)` for the transaction-count metric. |
 | `transaction_id` | STRING | `heatmapQuery` | ⚠️ **Distinct from `transaction_hash` above.** See drift hazards. |
@@ -88,6 +88,9 @@ The on-demand entity first-seen lookup in `lib/entities/first-seen-data.ts` is s
 | `sorobanFunctionQuery` | `enriched_history_operations_soroban` | `soroban_operation_type`, `parameters_decoded`, `closed_at` | `start`, `end` |
 | `sorobanFunctionContractQuery` | `enriched_history_operations_soroban` | `parameters_decoded`, `contract_id`, `soroban_operation_type`, `closed_at` | `start`, `end` |
 | `nativePaymentVolumeQuery` | `enriched_history_operations` | `type_string`, `asset_type`, `amount`, `source_asset_type`, `source_amount`, `closed_at` | `start`, `end` |
+| `pathPaymentXlmAmountQuery` | `enriched_history_operations` | `type_string`, `asset_type`, `amount`, `source_asset_type`, `source_amount`, `closed_at` | `start`, `end` |
+| `pathPaymentUsdcAmountQuery` | `enriched_history_operations` | `type_string`, `amount`, `source_asset_code`, `source_asset_issuer`, `source_amount`, `dest_asset_code`, `dest_asset_issuer`, `dest_amount`, `closed_at` | `start`, `end`, `assets` |
+| `pathPaymentIntermediatesQuery` | `enriched_history_operations` | `type_string`, `closed_at`; optional `details.path` inspected through `TO_JSON_STRING` | `start`, `end` |
 | `assetPaymentVolumeQuery` | `enriched_history_operations` | `type_string`, `asset_type`, `asset_code`, `asset_issuer`, `amount`, `source_*` (4), `closed_at` | `start`, `end` |
 | `usdcPaymentVolumeQuery` | `enriched_history_operations` | `type_string`, `asset_code`, `asset_issuer`, `amount`, `source_asset_code`, `source_asset_issuer`, `source_amount`, `closed_at` | `start`, `end`, `assets` |
 | `activeDestinationCountQuery` | `enriched_history_operations` | `type_string`, `closed_at`, `details.to`, `details.new_account`, `details.into` | `start`, `end`, `types` |
@@ -135,6 +138,10 @@ These have bitten (or are one rename away from biting) the project:
    `sorobanFeeSummaryQuery` and `sorobanFeeContractQuery` are the only readers.
    A missing name must soft-fail `GET /api/soroban-fees` (`status: unavailable`,
    `reason: schema_drift`) and must not 500 the activity response.
+7. **Path-payment enrichments are optional** — amount aggregation and route-hop
+   parsing use `runOptionalQuery`. Missing amount columns leave the corresponding
+   notional unavailable; route parsing reads JSON rather than binding to the
+   `details.path` schema and an absent path returns no ranked assets.
 
 ---
 
