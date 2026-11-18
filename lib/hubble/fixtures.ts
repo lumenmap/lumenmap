@@ -30,6 +30,7 @@ function toVisualization(
     source: data.source,
     sourceTimestamp: DETERMINISTIC_END,
     isPeriodComplete: data.isPeriodComplete,
+    liquidityFlow: data.liquidityFlow,
     kpis: empty
       ? {
           totalOps: { kind: "operations", unit: "ops", value: 0 },

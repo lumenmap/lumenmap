@@ -4,6 +4,7 @@ import {
   buildProtocolSummary,
 } from "@/lib/entities/build-treemap";
 import {
+  FIXTURE_PERIOD_MULTIPLIERS,
   getFixturePreviousRawActivity,
   getFixtureRawActivity,
 } from "@/lib/fixtures/raw-data";
@@ -13,6 +14,7 @@ import {
   getFixtureTimeseries,
 } from "@/lib/fixtures/timeseries";
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
+import { buildLiquidityFlowSummary } from "@/lib/metrics/liquidity-flow";
 import type { DashboardNetworkId } from "@/lib/network";
 import { resolveDashboardNetwork } from "@/lib/network";
 import { previousPeriodAnchor, resolvePeriod } from "@/lib/periods";
@@ -74,6 +76,25 @@ export function getFixtureActivityData(
     },
     usdcCategories: [],
     usdcAccounts: [],
+    liquidityFlow: buildLiquidityFlowSummary(
+      raw.categories,
+      {
+        xlmAmount: String(21_400 * FIXTURE_PERIOD_MULTIPLIERS[period]),
+        usdcAmount: String(62_000 * FIXTURE_PERIOD_MULTIPLIERS[period]),
+      },
+      {
+        assets: [
+          { code: "USDC", routeAppearances: 6_200 },
+          { code: "AQUA", routeAppearances: 3_400 },
+          { code: "XLM", routeAppearances: 1_800 },
+        ].map((asset) => ({
+          ...asset,
+          routeAppearances:
+            asset.routeAppearances * FIXTURE_PERIOD_MULTIPLIERS[period],
+        })),
+        available: true,
+      },
+    ),
     // The previous window exists to diff treemap tiles; its timeseries
     // stays anchored to the active period, which the diff UI never reads.
     timeseries: getFixtureTimeseries(period),

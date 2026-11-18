@@ -1,4 +1,4 @@
-# LumenMap metric methodology (v2.1.0)
+# LumenMap metric methodology (v2.2.0)
 
 Canonical counting rules for LumenMap metrics. These definitions describe how the product measures activity. They are **not** marketing claims about network health or protocol performance.
 
@@ -10,6 +10,7 @@ The interactive copy lives at [`/methodology`](/methodology). Section anchors:
 | Operation categories | `#operation-categories` |
 | Transactions | `#transactions` |
 | Payment volume | `#payment-volume` |
+| Path payments and DEX liquidity flow | `#liquidity-flow` |
 | TVL | `#tvl` |
 | Active accounts | `#active-accounts` |
 | Active destination accounts | `#active-destination-accounts` |

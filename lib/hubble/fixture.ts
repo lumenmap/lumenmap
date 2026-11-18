@@ -4,6 +4,7 @@
  */
 
 import { buildActivityMetricProvenance } from "@/lib/metrics/provenance";
+import { buildLiquidityFlowSummary } from "@/lib/metrics/liquidity-flow";
 import type {
   ActivityDataset,
   Period,
@@ -140,6 +141,21 @@ export function buildFixtureDataset(period: Period = "1d"): ActivityDataset {
       { type_string: "payment", amount: 100000.5 },
       { type_string: "path_payment_strict_receive", amount: 25000 },
     ],
+    liquidityFlow: buildLiquidityFlowSummary(
+      [
+        { type_string: "path_payment_strict_receive", op_count: 62000 },
+        { type_string: "manage_sell_offer", op_count: 95000 },
+      ],
+      { xlmAmount: "21400", usdcAmount: "62000" },
+      {
+        assets: [
+          { code: "USDC", routeAppearances: 6200 },
+          { code: "AQUA", routeAppearances: 3400 },
+          { code: "XLM", routeAppearances: 1800 },
+        ],
+        available: true,
+      },
+    ),
     usdcAccounts: [
       {
         account_id: "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJJ5IAJTGKIN2EX7LBNKNLXLTCV",

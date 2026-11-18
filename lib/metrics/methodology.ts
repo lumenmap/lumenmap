@@ -1,14 +1,15 @@
 /**
- * Canonical metric methodology (v2.1.0).
+ * Canonical metric methodology (v2.2.0).
  * Inline UI definitions link to these section ids via /methodology#<id>.
  */
 
-export const METHODOLOGY_VERSION = "2.1.0";
+export const METHODOLOGY_VERSION = "2.2.0";
 
 export type MethodologySectionId =
   | "operations"
   | "transactions"
   | "payment-volume"
+  | "liquidity-flow"
   | "tvl"
   | "active-accounts"
   | "active-destination-accounts"
@@ -96,6 +97,35 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     limitations: [
       "LumenMap does not present a single cross-asset volume total without a documented normalization method.",
       "Not exposed in the current dashboard UI.",
+    ],
+  },
+  {
+    id: "liquidity-flow",
+    title: "Path payments and DEX liquidity flow",
+    summary:
+      "A period summary of path-payment operations, classic DEX offer operations, and classic liquidity-pool operations, with asset-denominated path-payment amounts where Hubble fields permit.",
+    unit: "operations (count) and separate native asset units",
+    aggregation:
+      "Path-payment, DEX offer, and liquidity-pool counts sum operation-category counts by documented operation type. Path-payment XLM and supported Circle USDC amounts are summed independently; they are never combined.",
+    timeBasis: "Same selected period bounds as operations.",
+    source:
+      "`enriched_history_operations` operation categories and optional path-payment amount / route-path enrichments.",
+    inclusions: [
+      "Path payments: `path_payment_strict_receive`, `path_payment_strict_send`",
+      "DEX offers: `manage_buy_offer`, `manage_sell_offer`, `create_passive_sell_offer`",
+      "Liquidity pools: `liquidity_pool_deposit`, `liquidity_pool_withdraw`",
+      "Top route assets when Hubble exposes path details",
+    ],
+    exclusions: [
+      "Realized trade notional for DEX offer and liquidity-pool operations",
+      "Any cross-asset total or USD conversion",
+      "The endpoint assets of a path are not counted as intermediate assets unless present in the route path",
+    ],
+    limitations: [
+      "XLM uses native path-payment amount fields; USDC is limited to the supported issuer and source/destination fields. Missing or drifted amount fields soft-fail independently of the activity response.",
+      "Route-hop assets are best-effort JSON extraction from Hubble row details; an absent route path yields no ranked assets and does not fail the activity response.",
+      "Offer size is not executed trade volume. Pool operation counts do not identify a pool or its traded value.",
+      "Hubble freshness and partial-period limits apply.",
     ],
   },
   {

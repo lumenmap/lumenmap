@@ -8,6 +8,7 @@ import { NetworkSelector } from "@/components/dashboard/NetworkSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { ComparisonPanel } from "@/components/dashboard/ComparisonPanel";
 import { AssetVolumePanel } from "@/components/dashboard/AssetVolumePanel";
+import { LiquidityFlowPanel } from "@/components/dashboard/LiquidityFlowPanel";
 import { CategoryShareChart } from "@/components/dashboard/CategoryShareChart";
 import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
@@ -51,6 +52,7 @@ export function OverviewSection() {
       <KpiCards />
       <ComparisonPanel />
       <AssetVolumePanel />
+      <LiquidityFlowPanel />
       <CategoryShareChart />
     </div>
   );
