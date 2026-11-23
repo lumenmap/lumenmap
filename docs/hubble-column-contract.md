@@ -24,6 +24,7 @@ queries registered in `queryRegistry` are listed below.
 | `crypto-stellar.crypto_stellar_dbt.enriched_history_operations` | Classic Stellar operations (payments, offers, account ops) | `closed_at` |
 | `crypto-stellar.crypto_stellar_dbt.enriched_history_operations_soroban` | Soroban / smart-contract invocations | `closed_at` |
 | `crypto-stellar.crypto_stellar_dbt.hourly_soroban_fee_agg_contract` | Hourly per-contract fee aggregate | `hour_agg` (**not** `closed_at`) |
+| `crypto-stellar.crypto_stellar.history_transactions` | Optional classic fee pressure | `closed_at` (partitioned by `batch_run_date`) |
 | `crypto-stellar.crypto_stellar_dbt.accounts_current` | Account metadata snapshot | none (current state) |
 
 ---
@@ -77,6 +78,8 @@ queries registered in `queryRegistry` are listed below.
 Every entry of `queryRegistry` with the columns it would fail on if removed.
 
 The on-demand entity first-seen lookup in `lib/entities/first-seen-data.ts` is separate from the activity query registry. It reads `closed_at` and `op_source_account` from `enriched_history_operations` for accounts, or `hour_agg` and `contract_id` from `hourly_soroban_fee_agg_contract` for contracts. Both queries use a bounded time predicate and `maximumBytesBilled`; query failures leave the optional panel field unavailable.
+
+The optional network fee pressure route is also outside the activity query registry. Its classic query reads `closed_at`, `batch_run_date`, `fee_charged`, `operation_count`, and `resource_fee` from bronze `history_transactions`; its Soroban query reads `hour_agg`, `total_non_refundable_resource_fee`, and `txn_count` from the hourly contract aggregate. Each has an independent failure boundary, so schema drift hides only the affected series.
 
 | Query | Table | Columns | Params |
 | --- | --- | --- | --- |
