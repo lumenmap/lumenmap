@@ -2,7 +2,7 @@
 
 import { useDashboard } from '@/components/dashboard/DashboardProvider';
 import { NetworkTreemap } from '@/components/dashboard/NetworkTreemap';
-import { DetailPanel } from '@/components/dashboard/DetailPanel';
+import { DetailPanelContainer } from '@/components/dashboard/DetailPanelContainer';
 import { FreshnessIndicator } from '@/components/dashboard/FreshnessIndicator';
 import { FreshnessWarning } from '@/components/dashboard/FreshnessWarning';
 import { SavedViewsControls } from '@/components/dashboard/SavedViewsControls';
@@ -23,14 +23,12 @@ export function TreemapSection() {
           <button type='button' className='mt-2 text-sm font-medium text-amber-50 underline' onClick={() => setMetric('ops')}>Switch to operations</button>
         </div>
       )}
-      <div className="grid min-w-0 grid-cols-1 gap-6 transition-all duration-300">
+      <div className="grid min-w-0 grid-cols-1 gap-6 transition-all duration-300 motion-reduce:transition-none">
         <div className='min-w-0'>
           <NetworkTreemap />
         </div>
         {selectedNode && (
-          <div className='min-w-0 scroll-mt-4' id='detail-panel-container'>
-            <DetailPanel />
-          </div>
+          <DetailPanelContainer />
         )}
       </div>
     </div>

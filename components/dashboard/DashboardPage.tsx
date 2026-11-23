@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useDashboard, DashboardProvider } from "@/components/dashboard/DashboardProvider";
 import { CategoryShareChart } from "@/components/dashboard/CategoryShareChart";
 import { ClassicDefiActivity } from "@/components/dashboard/ClassicDefiActivity";
-import { DetailPanel } from "@/components/dashboard/DetailPanel";
+import { DetailPanelContainer } from "@/components/dashboard/DetailPanelContainer";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
 import { ActivityErrorBanner } from "@/components/dashboard/ActivityErrorState";
@@ -183,7 +183,7 @@ function DashboardContent() {
 
       {/* Primary visualization */}
       <div
-        className={`grid min-w-0 grid-cols-1 gap-6 transition-all duration-300 ${
+        className={`grid min-w-0 grid-cols-1 gap-6 transition-all duration-300 motion-reduce:transition-none ${
           selectedNode
             ? "xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]"
             : "xl:grid-cols-1"
@@ -193,9 +193,7 @@ function DashboardContent() {
           <NetworkTreemap />
         </div>
         {selectedNode && (
-          <div className="min-w-0 scroll-mt-4" id="detail-panel-container">
-            <DetailPanel />
-          </div>
+          <DetailPanelContainer />
         )}
       </div>
 

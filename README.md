@@ -42,6 +42,8 @@ Single-page dashboard. Data comes from [Hubble](https://developers.stellar.org/d
 - Fixture mode for credential-free local runs on deterministic sample data (not live mainnet data)
 - Responsive dark layout
 
+On viewports below 1280px (Tailwind `xl`), selecting a treemap item opens its details in a dismissible bottom sheet. At 1280px and wider, the main dashboard keeps its side column.
+
 ### Coming next
 
 - Live Protocol TVL adapters (Hubble/venue balance wiring plus the versioned price pipeline; today's snapshots are adapter-backed samples)
