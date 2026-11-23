@@ -8,6 +8,7 @@ import { DetailPanelContainer } from "@/components/dashboard/DetailPanelContaine
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
 import { ActivityErrorBanner } from "@/components/dashboard/ActivityErrorState";
+import { HorizonFallbackNotice } from "@/components/dashboard/HorizonFallbackBanner";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { FlowEgoSection } from "@/components/dashboard/FlowEgoSection";
 import { NetworkTreemap } from "@/components/dashboard/NetworkTreemap";
@@ -147,6 +148,7 @@ function DashboardContent() {
       <WhatChangedCard />
 
       <ActivityErrorBanner />
+      <HorizonFallbackNotice />
 
       {readOnly ? null : <SavedViewsControls />}
 
