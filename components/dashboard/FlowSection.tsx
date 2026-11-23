@@ -2,21 +2,15 @@
 "use client";
 
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
-import { FlowDataTable } from "@/components/dashboard/FlowDataTable";
+import { FlowViewSection } from "@/components/dashboard/FlowViewSection";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
 import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { isMetricSupportedOnNetwork, unsupportedMetricMessage } from "@/lib/network";
-import type { FlowNode, FlowEdge } from "@/lib/types";
 
 export function FlowSection() {
-  const { metric, network, setMetric, data } = useDashboard();
+  const { metric, network, setMetric } = useDashboard();
   const metricSupported = isMetricSupportedOnNetwork(metric, network);
-
-  // The dashboard API includes flow data within the generic `data` object when the metric is relevant.
-  // For simplicity, we fallback to empty arrays if not present.
-  const nodes = (data?.flow?.nodes as readonly FlowNode[]) ?? [];
-  const edges = (data?.flow?.edges as readonly FlowEdge[]) ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-3 py-6 sm:px-6 lg:px-8">
@@ -39,7 +33,7 @@ export function FlowSection() {
         </div>
       )}
 
-      <FlowDataTable nodes={nodes} edges={edges} />
+      <FlowViewSection />
     </div>
   );
 }

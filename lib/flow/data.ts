@@ -6,6 +6,7 @@ import { resolvePeriod } from "@/lib/periods";
 import type { Period } from "@/lib/types";
 import { FIXTURE_FLOW_EDGES } from "./fixtures";
 import { buildFlowGraph, type FlowEdge, type FlowGraph } from "./graph";
+import { FLOW_MAX_EDGES } from "./limits";
 
 export interface FlowResponse extends FlowGraph {
   period: Period;
@@ -13,8 +14,6 @@ export interface FlowResponse extends FlowGraph {
   source: "fixture" | "hubble";
   sampled: boolean;
 }
-
-const MAX_EDGES = 100;
 
 // The account predicate applies before ranking: an ego request cannot be
 // derived from the sampled period overview without losing small counterparties.
@@ -67,7 +66,7 @@ SELECT *, COUNT(*) OVER () AS total_edges
 FROM ranked
 ORDER BY operation_count DESC, SAFE_CAST(amount AS BIGNUMERIC) DESC,
   source, destination, asset_type, asset_code, asset_issuer
-LIMIT ${MAX_EDGES}
+LIMIT ${FLOW_MAX_EDGES}
 `;
 }
 
@@ -134,7 +133,7 @@ export async function getFlowData(
     period,
     account,
     source: "hubble",
-    sampled: Number(typedRows[0]?.total_edges ?? 0) > MAX_EDGES,
+    sampled: Number(typedRows[0]?.total_edges ?? 0) > FLOW_MAX_EDGES,
     ...buildFlowGraph(typedRows.map(mapRow), account ?? undefined),
   };
 }

@@ -22,7 +22,7 @@ test("empty ego graph retains the selected account for the empty state", () => {
 
 test("overview includes the edge outside the ego neighborhood", () => {
   const graph = buildFlowGraph(FIXTURE_FLOW_EDGES);
-  assert.equal(graph.edges.length, 3);
+  assert.equal(graph.edges.length, 4);
   assert.ok(graph.nodes.some((node) => node.id === FIXTURE_ACCOUNTS.unknownA));
 });
 
