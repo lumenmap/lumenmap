@@ -2,7 +2,66 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
 import { TOP_CONTRACT_LIMIT } from "@/lib/constants";
-import { mapAccountCounterpartyRows, mapActiveContractCountRow } from "./queries";
+import {
+  mapAccountCounterpartyRows,
+  mapActiveContractCountRow,
+  mapPathPaymentAmountsRows,
+  mapPathPaymentIntermediateRows,
+} from "./queries";
+
+describe("path-payment mappers", () => {
+  test("maps asset-denominated XLM and USDC notionals", () => {
+    assert.deepEqual(
+      mapPathPaymentAmountsRows(
+        [{ xlm_amount: "123.456" }],
+        [{ usdc_amount: "789.01" }],
+      ),
+      { xlmAmount: "123.456", usdcAmount: "789.01" },
+    );
+    assert.deepEqual(mapPathPaymentAmountsRows([{ xlm_amount: "0" }], []), {
+      xlmAmount: "0",
+      usdcAmount: null,
+    });
+  });
+
+  test("marks missing or malformed amount values unavailable", () => {
+    assert.deepEqual(
+      mapPathPaymentAmountsRows(
+        [{ xlm_amount: "-1" }],
+        [{ usdc_amount: "Infinity" }],
+      ),
+      { xlmAmount: null, usdcAmount: null },
+    );
+    assert.deepEqual(mapPathPaymentAmountsRows([{ xlm_amount: true }], []), {
+      xlmAmount: null,
+      usdcAmount: null,
+    });
+    assert.equal(mapPathPaymentAmountsRows([], []), null);
+  });
+
+  test("maps and validates ranked intermediate-asset rows", () => {
+    assert.deepEqual(
+      mapPathPaymentIntermediateRows([
+        {
+          asset_code: "USDC",
+          asset_issuer: "GISSUER",
+          route_appearances: "8",
+        },
+        { asset_code: "XLM", asset_issuer: null, route_appearances: 3 },
+        { asset_code: "", asset_issuer: null, route_appearances: 20 },
+        { asset_code: "AQUA", asset_issuer: "GISSUER", route_appearances: -1 },
+      ]),
+      {
+        assets: [
+          { code: "USDC", issuer: "GISSUER", routeAppearances: 8 },
+          { code: "XLM", routeAppearances: 3 },
+        ],
+        available: true,
+      },
+    );
+    assert.deepEqual(mapPathPaymentIntermediateRows([]), null);
+  });
+});
 
 describe("mapActiveContractCountRow", () => {
   test("counts each duplicate contract ID once", () => {

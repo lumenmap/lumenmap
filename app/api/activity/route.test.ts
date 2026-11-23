@@ -297,6 +297,8 @@ describe("window=prev (treemap diff mode, issue #447)", () => {
       assert.equal(body.period, "1d");
       assert.equal(body.start, expected.start.toISOString());
       assert.equal(body.end, expected.end.toISOString());
+      assert.ok(body.liquidityFlow);
+      assert.equal(body.liquidityFlow.pathPaymentCount, 48_100);
     } finally {
       if (previousSource === undefined) {
         delete process.env.LUMENMAP_DATA_SOURCE;
@@ -726,4 +728,3 @@ describe("optional query degradation", () => {
     }
   });
 });
-

@@ -283,6 +283,22 @@ export interface AssetPaymentVolumeRow {
   opCount: number;
 }
 
+export interface LiquidityFlowSummary {
+  pathPaymentCount: number;
+  dexOperationCount: number;
+  liquidityPoolOperationCount: number;
+  pathPaymentAmounts: {
+    xlmAmount: string | null;
+    usdcAmount: string | null;
+  } | null;
+  intermediateAssets: {
+    code: string;
+    issuer?: string;
+    routeAppearances: number;
+  }[];
+  intermediateAssetsAvailable: boolean;
+}
+
 export interface PaymentFlowEdgeRow {
   from: string;
   to: string;
@@ -517,6 +533,7 @@ export interface ActivityVisualizationResponse extends ActivityResponseMetadata 
   heatmap?: ActivityHeatmap;
   assetVolumes?: AssetPaymentVolumeRow[];
   classicDeFi?: ClassicDefiBreakdowns;
+  liquidityFlow?: LiquidityFlowSummary;
   /** Present and true when the API returned static fixture data (no GCP credentials). */
   fixture?: boolean;
 }
@@ -550,6 +567,7 @@ export interface ActivityDataset
   metricProvenance: ActivityMetricProvenence;
   timeseries?: ActivityTimeseries;
   heatmap?: ActivityHeatmap;
+  liquidityFlow?: LiquidityFlowSummary;
 }
 
 export interface ApiErrorResponse {

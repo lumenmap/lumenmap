@@ -144,6 +144,7 @@ export function toVisualizationResponse(
     heatmap: data.heatmap,
     assetVolumes: data.assetVolumes,
     classicDeFi: buildClassicDefiBreakdowns(data.accounts),
+    liquidityFlow: data.liquidityFlow,
     metricProvenance: data.metricProvenance,
   };
 }

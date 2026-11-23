@@ -51,6 +51,11 @@ import {
   mapUsdcAccountRows,
   mapUsdcCategoryRows,
   mapUsdcPaymentVolumeRows,
+  mapPathPaymentAmountsRows,
+  mapPathPaymentIntermediateRows,
+  pathPaymentXlmAmountQuery,
+  pathPaymentUsdcAmountQuery,
+  pathPaymentIntermediatesQuery,
   sorobanFunctionContractQuery,
   sorobanFunctionQuery,
   transactionCategoryQuery,
@@ -59,6 +64,7 @@ import {
   usdcPaymentVolumeQuery,
   type RawQueryResults,
 } from "@/lib/hubble/queries";
+import { buildLiquidityFlowSummary } from "@/lib/metrics/liquidity-flow";
 import { hasBigQueryCredentials } from "@/lib/hubble/client";
 import {
   isTestnetDatasetConfigured,
@@ -233,6 +239,8 @@ async function fetchFromHubble(
    * Treemap renders with degraded KPIs and metric breakdowns.
    * - transactionCategory: If fails, treemap loses txn_events/txn_actors views
    * - usdcCategory, usdcAccount: If fails, USDC treemaps show empty
+   * - pathPaymentXlmAmount, pathPaymentUsdcAmount: The matching path notional is unavailable
+   * - pathPaymentIntermediates: route-hop asset rankings are unavailable
    * - activeDestinationCount: If fails, active destination KPI card shows 0
    * - activeContractCount: If fails, active contract KPI card shows 0
    * - accountMetadata: If fails, home_domain labels are unavailable
@@ -258,6 +266,9 @@ async function fetchFromHubble(
     usdcAccountRows,
     timeseriesRows,
     heatmapRows,
+    pathPaymentXlmAmountRows,
+    pathPaymentUsdcAmountRows,
+    pathPaymentIntermediateRows,
   ] = await Promise.all([
     runQuery<Record<string, unknown>>(
       "assetPaymentVolume",
@@ -391,11 +402,51 @@ async function fetchFromHubble(
       params,
       correlationId,
     ),
+    runOptionalQuery(
+      "pathPaymentXlmAmount",
+      () =>
+        runQuery<Record<string, unknown>>(
+          "pathPaymentXlmAmount",
+          pathPaymentXlmAmountQuery,
+          params,
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
+      correlationId,
+    ),
+    runOptionalQuery(
+      "pathPaymentUsdcAmount",
+      () =>
+        runQuery<Record<string, unknown>>(
+          "pathPaymentUsdcAmount",
+          pathPaymentUsdcAmountQuery,
+          {
+            ...params,
+            assets: getUsdcPaymentVolumeParams(),
+          },
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
+      correlationId,
+    ),
+    runOptionalQuery(
+      "pathPaymentIntermediates",
+      () =>
+        runQuery<Record<string, unknown>>(
+          "pathPaymentIntermediates",
+          pathPaymentIntermediatesQuery,
+          params,
+          correlationId,
+        ),
+      () => [] as Record<string, unknown>[],
+      correlationId,
+    ),
   ]);
 
+  const categories = mapCategoryRows(categoryRows);
   return {
     assetVolumes: mapAssetPaymentVolumeRows(assetVolumeRows),
-    categories: mapCategoryRows(categoryRows),
+    categories,
     transactionCategories: mapTransactionCategoryRows(transactionCategoryRows),
     contracts: mapContractRows(contractRows),
     accounts: mapAccountRows(accountRows),
@@ -413,6 +464,14 @@ async function fetchFromHubble(
     usdcAccounts: mapUsdcAccountRows(usdcAccountRows),
     timeseries: mapTimeseriesRows(timeseriesRows),
     heatmap: mapHeatmapRows(heatmapRows),
+    liquidityFlow: buildLiquidityFlowSummary(
+      categories,
+      mapPathPaymentAmountsRows(
+        pathPaymentXlmAmountRows,
+        pathPaymentUsdcAmountRows,
+      ),
+      mapPathPaymentIntermediateRows(pathPaymentIntermediateRows),
+    ),
   };
 }
 
@@ -661,7 +720,7 @@ export async function getActivityData(
   // window (treemap diff mode); the cache key below already includes the
   // resolved start, so both windows coexist in the cache.
   const range = resolvePeriod(period, options.anchor);
-  const cacheKey = `activity:v14:${network}:${period}:${range.start.toISOString()}`;
+  const cacheKey = `activity:v15:${network}:${period}:${range.start.toISOString()}`;
 
   const cached = getCached<ActivityDataset>(cacheKey, { track: true });
   if (cached) {
@@ -800,6 +859,7 @@ export async function getActivityData(
       protocols,
       timeseries,
       heatmap,
+      liquidityFlow: raw.liquidityFlow,
       metricProvenance: buildActivityMetricProvenance(network),
     };
 
