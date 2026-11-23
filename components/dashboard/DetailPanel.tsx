@@ -14,6 +14,7 @@ import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { isEligibleAddress } from "@/lib/clipboard";
 import { buildContractFunctionBreakdown } from "@/lib/entities/contract-function-breakdown";
 import { ContractFunctionBarChart } from "@/components/dashboard/ContractFunctionBarChart";
+import { InvokeSuccessFromMeta } from "@/components/dashboard/InvokeSuccessRate";
 import { ResearchNoteEditor } from "@/components/dashboard/ResearchNoteEditor";
 import { resolveWatchlistKind } from "@/lib/watchlist";
 import { getMetricUnit } from "@/lib/metrics/units";
@@ -258,6 +259,8 @@ export function DetailPanel({ onViewFlow, onClose }: { onViewFlow?: (account: st
             </p>
           </div>
         ) : null}
+
+        {contractId ? InvokeSuccessFromMeta(selectedNode.meta) : null}
 
         {contractId ? (
           <section

@@ -388,6 +388,9 @@ export interface TreemapNodeMeta {
   adapterStatusLabel?: string;
   childCount?: number;
   eventType?: string;
+  /** Present only when the invoke-success columns are on the row. */
+  successfulInvokes?: number | null;
+  failedInvokes?: number | null;
   synthetic?: boolean;
   nodeId?: string;
   /** Coverage metadata for capped (top-N) treemap parents. */
