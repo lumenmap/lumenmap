@@ -3,8 +3,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+const protocolTags = JSON.parse(readFileSync(new URL("../data/protocol-tags.json", import.meta.url), "utf8"));
 
 const CATEGORIES = new Set(["defi", "exchange", "wallet", "anchor", "issuer", "other"]);
+const TAGS = new Set(Object.keys(protocolTags));
 const ADDRESS = /^[GC][A-Z2-7]{55}$/;
 
 // JSON.parse keeps only the last value of a duplicate key. Scan the already parsed
@@ -79,6 +81,9 @@ export function validateEntities(source) {
     }
     if (typeof entity.category === "string" && entity.category.trim() && !CATEGORIES.has(entity.category)) {
       errors.push(`${address}: category must be one of ${[...CATEGORIES].join(", ")}`);
+    }
+    if (typeof entity.tag !== "string" || !TAGS.has(entity.tag)) {
+      errors.push(`${address}: tag must be one of ${[...TAGS].join(", ")}`);
     }
   }
 

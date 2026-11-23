@@ -703,7 +703,8 @@ Known wallets and contracts are in [`data/entities.json`](data/entities.json):
   "CA4HEQTL2WPEUYKYKCDOHCDNIV4QHNJ7EL4J4NQ6VADP7SYHVRYZ7AW2": {
     "name": "Soroswap",
     "category": "defi",
-    "protocol": "Soroswap"
+    "protocol": "Soroswap",
+    "tag": "dex"
   }
 }
 ```

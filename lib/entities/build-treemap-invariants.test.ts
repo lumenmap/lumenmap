@@ -4,7 +4,9 @@ import { describe, test } from "node:test";
 import {
   buildCoverage,
   buildEventTypeTreemap,
+  buildActorTreemap,
 } from "@/lib/entities/build-treemap";
+import { getFixtureRawActivity } from "@/lib/fixtures/raw-data";
 import type { CategoryRow, TreemapNode } from "@/lib/types";
 
 function sumValues(nodes: TreemapNode[] | undefined): number {
@@ -17,6 +19,27 @@ function sumValues(nodes: TreemapNode[] | undefined): number {
 function categories(rows: Array<[string, number]>): CategoryRow[] {
   return rows.map(([type_string, op_count]) => ({ type_string, op_count }));
 }
+
+test("actor leaves carry curated protocol tags", () => {
+  const id = "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH";
+  const tree = buildActorTreemap({
+    categories: [{ type_string: "invoke_host_function", op_count: 10 }],
+    contracts: [{ contract_id: id, op_count: 10 }],
+    accounts: [],
+    sorobanFunctions: [],
+    sorobanFunctionContracts: [],
+    labels: { [id]: { name: "Example DEX", category: "defi", protocol: "Example", tag: "dex" } },
+  });
+  assert.equal(tree.children?.[0]?.children?.[0]?.meta?.tag, "dex");
+});
+
+test("fixture actor entities cover dex, anchor, and payments tags", () => {
+  const tree = buildActorTreemap(getFixtureRawActivity("1d"));
+  const tags = new Set(tree.children?.flatMap((group) => group.children?.map((entity) => entity.meta?.tag) ?? []));
+  for (const tag of ["dex", "anchor", "payments"]) {
+    assert.ok(tags.has(tag), `fixture actor tree should include ${tag}`);
+  }
+});
 
 describe("buildCoverage", () => {
   test("returns undefined for empty children", () => {

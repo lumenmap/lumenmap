@@ -266,7 +266,7 @@ After gathering the [proposal evidence](#proposing-a-label), add or correct a wa
 
 ```json
 {
-  "G...": { "name": "My Protocol", "category": "defi", "protocol": "My Protocol" }
+  "G...": { "name": "My Protocol", "category": "defi", "protocol": "My Protocol", "tag": "dex" }
 }
 ```
 
@@ -309,13 +309,15 @@ Entries in `entities.json` override `directory.json` for the same address. Use `
 
 Valid categories: `defi`, `exchange`, `wallet`, `anchor`, `issuer`, `other`.
 
+Each curated entry also needs one protocol `tag`: `dex` (trading venues and pools), `anchor` (fiat on/off ramps), `payments` (payment and wallet services), `infra` (network tooling), `nft` (NFT services), or `other` (none of these). These tags are separate from the existing entity `category` and the free-text `protocol` name. Choose the service's primary role; use `other` when the evidence does not support a more specific tag. Directory labels without curated tags appear under Other in the dashboard filter. The chip filter is available in actor and Protocol TVL views and narrows both the treemap and table.
+
 ### Proposing a label
 
-Open an [Entity Label Proposal](.github/ISSUE_TEMPLATE/entity_label_proposal.yml) issue before changing `data/entities.json`, or include the same evidence in the entity review section of your PR. Provide the full G account or C contract address and network, proposed `name`, `category`, and `protocol`, an explorer link for the exact address, and a public source controlled by the operator (official site, docs, or signed announcement) that connects that address to the name. Explain corrections to existing labels. Reviewers check the links and the address-to-name relationship manually; the validator only checks registry structure.
+Open an [Entity Label Proposal](.github/ISSUE_TEMPLATE/entity_label_proposal.yml) issue before changing `data/entities.json`, or include the same evidence in the entity review section of your PR. Provide the full G account or C contract address and network, proposed `name`, `category`, `protocol`, and `tag`, an explorer link for the exact address, and a public source controlled by the operator (official site, docs, or signed announcement) that connects that address to the name. Explain corrections to existing labels. Reviewers check the links and the address-to-name relationship manually; the validator only checks registry structure.
 
 Use the public name supported by the evidence, not a vanity name or an inferred owner. A proposal can be rejected for an invalid or duplicate address, missing fields, unsupported category, broken or unrelated proof links, a name that the sources do not verify, or a correction without a reason. A directory label alone is not proof of control. Do not add a label while ownership is ambiguous.
 
-Keep `data/entities.json` as an address-keyed object with non-empty `name`, `category`, and `protocol` strings. Run `npm run entities:validate` before submitting. The command accepts an optional path to validate another JSON file, for example `npm run entities:validate -- path/to/entities.json`. It checks 56-character uppercase base32 G/C address shape; human review establishes address ownership and on-chain provenance.
+Keep `data/entities.json` as an address-keyed object with non-empty `name`, `category`, and `protocol` strings and a `tag` from the closed taxonomy in `data/protocol-tags.json`. Run `npm run entities:validate` before submitting. The command accepts an optional path to validate another JSON file, for example `npm run entities:validate -- path/to/entities.json`. It checks 56-character uppercase base32 G/C address shape; human review establishes address ownership and on-chain provenance.
 
 ---
 

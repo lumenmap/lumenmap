@@ -117,7 +117,7 @@ function validateEntityLabelProposal() {
   if (parsed.name !== "Entity Label Proposal") {
     throw new Error("entity_label_proposal.yml must be named 'Entity Label Proposal'");
   }
-  const requiredIds = ["address", "name", "category", "protocol", "proof_links", "change_reason"];
+  const requiredIds = ["address", "name", "category", "protocol", "tag", "proof_links", "change_reason"];
   for (const id of requiredIds) {
     const field = parsed.body?.find((item) => item.id === id);
     if (!field || field.validations?.required !== true) {

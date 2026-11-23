@@ -1,4 +1,5 @@
 import type { TvlAdapterResult } from "@/lib/tvl/adapter";
+import { getProtocolTag } from "@/lib/entities/registry";
 import type { TreemapPayload, TreemapNode } from "@/lib/types";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -70,6 +71,7 @@ export function buildProtocolTvlTreemap(
         meta: {
           type: "protocol" as const,
           protocol: result.protocol,
+          tag: getProtocolTag(result.protocol),
           share,
           tvlUsd,
           snapshotTime: result.snapshotTime,

@@ -2,7 +2,8 @@
   "GINVALID": {
     "name": "",
     "category": "unknown",
-    "protocol": ""
+    "protocol": "",
+    "tag": "unknown"
   },
   "GINVALID": {
     "name": "Vanity Name",

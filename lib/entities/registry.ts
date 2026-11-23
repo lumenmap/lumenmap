@@ -1,6 +1,6 @@
 import entities from "@/data/entities.json";
 import directory from "@/data/directory.json";
-import type { EntityInfo } from "@/lib/types";
+import type { EntityInfo, ProtocolTag } from "@/lib/types";
 
 const registry: Record<string, EntityInfo> = {
   ...(directory as Record<string, EntityInfo>),
@@ -48,4 +48,11 @@ export function getDisplayName(
 
 export function getAllEntities(): Record<string, EntityInfo> {
   return registry;
+}
+
+export function getProtocolTag(protocol: string): ProtocolTag {
+  const normalized = protocol.trim().toLowerCase();
+  return Object.values(entities as Record<string, EntityInfo>).find(
+    (entity) => entity.protocol.toLowerCase() === normalized,
+  )?.tag ?? "other";
 }

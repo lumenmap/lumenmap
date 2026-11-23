@@ -7,7 +7,7 @@ import { validateEntities } from "./validate-entities.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const address = "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH";
-const valid = { name: "SoroSwap Router", category: "defi", protocol: "SoroSwap" };
+const valid = { name: "SoroSwap Router", category: "defi", protocol: "SoroSwap", tag: "dex" };
 
 test("the current curated registry passes", () => {
   assert.deepEqual(validateEntities(readFileSync(new URL("../data/entities.json", import.meta.url), "utf8")), []);
@@ -27,6 +27,14 @@ test("invalid fixture fails the command with actionable errors", () => {
   assert.match(result.stderr, /address must be a 56-character/);
   assert.match(result.stderr, /protocol must be a non-empty string/);
   assert.match(result.stderr, /category must be one of/);
+  assert.match(result.stderr, /tag must be one of/);
+});
+
+test("unknown, missing, and non-string tags fail", () => {
+  for (const tag of ["lending", "DEX", "", null, 7, undefined]) {
+    const entity = { ...valid, tag };
+    assert.match(validateEntities(JSON.stringify({ [address]: entity })).join("\n"), /tag must be one of/);
+  }
 });
 
 test("duplicate top-level addresses fail even when JSON.parse would overwrite one", () => {

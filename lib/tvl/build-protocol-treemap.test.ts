@@ -19,6 +19,9 @@ describe("protocol TVL treemap", () => {
     assert.equal(stale?.meta?.adapterStatusLabel, "Stale");
     assert.ok((stale?.meta?.tvlUsd ?? 0) > 0);
     assert.ok(stale?.meta?.snapshotTime);
+    assert.equal(stale?.meta?.tag, "payments");
+    assert.equal(treemap.children?.find((child) => child.name === "Soroswap")?.meta?.tag, "dex");
+    assert.equal(treemap.children?.find((child) => child.name === "MoneyGram")?.meta?.tag, "anchor");
   });
 
   it("surfaces a failed adapter as a visible zero-value tile instead of dropping it", () => {
@@ -56,6 +59,7 @@ describe("protocol TVL treemap", () => {
     assert.equal(broken?.meta?.adapterStatusLabel, "Failed");
     assert.equal(broken?.meta?.tvlUsd, 0);
     assert.equal(broken?.color, "#6B7280");
+    assert.equal(broken?.meta?.tag, "other");
 
     // The failed tile must not inflate the total or the working tile's share.
     assert.equal(treemap.value, "1000");
