@@ -8,6 +8,19 @@
 */
 @import "tailwindcss";
 
+/* Mobile details sheet; the xl breakpoint returns it to the normal column. */
+@media (max-width: 1279px) and (prefers-reduced-motion: no-preference) {
+  .detail-sheet-in { animation: detail-sheet-in 180ms ease-out both; }
+  .detail-sheet-out { animation: detail-sheet-out 180ms ease-in both; }
+  .detail-backdrop-in { animation: detail-backdrop-in 180ms ease-out both; }
+  .detail-backdrop-out { animation: detail-backdrop-out 180ms ease-in both; }
+}
+
+@keyframes detail-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes detail-sheet-out { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes detail-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes detail-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+
 :root {
   /* Interface palette */
   --background: #0b0e14;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +51,7 @@ function FirstSeenDetails({ id, type, network }: {
   );
 }
 
-export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => void }) {
+export function DetailPanel({ onViewFlow, onClose }: { onViewFlow?: (account: string) => void; onClose?: () => void }) {
   const {
     selectedNode,
     setSelectedNode,
@@ -63,23 +63,6 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
     setActiveLevelPath,
     readOnly,
   } = useDashboard();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.innerWidth < 1280) {
-      document
-        .getElementById("detail-panel-container")
-        ?.scrollIntoView({ behavior: "smooth" });
-    }
-    const nodeId = selectedNode?.meta?.nodeId;
-    return () => {
-      if (nodeId) {
-        setTimeout(() => {
-          document.getElementById(`node-${nodeId}`)?.focus();
-        }, 0);
-      }
-    };
-  }, [selectedNode?.meta?.nodeId]);
 
   const contractId =
     selectedNode?.meta?.type === "contract" ? selectedNode.meta.id : undefined;
@@ -142,7 +125,7 @@ export function DetailPanel({ onViewFlow }: { onViewFlow?: (account: string) => 
           variant="ghost"
           size="icon"
           className="shrink-0"
-          onClick={() => setSelectedNode(null)}
+          onClick={() => (onClose ? onClose() : setSelectedNode(null))}
           aria-label="Close details"
         >
           <X className="h-4 w-4" />
