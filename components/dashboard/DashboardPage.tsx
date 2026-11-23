@@ -24,7 +24,7 @@ import { HourOfWeekHeatmap } from "@/components/dashboard/HourOfWeekHeatmap";
 
 import { TemporalPatternsDisclosure } from "@/components/dashboard/TemporalPatternsDisclosure";
 import { AssetVolumePanel } from "@/components/dashboard/AssetVolumePanel";
-import { LiquidityFlowPanel } from "@/components/dashboard/LiquidityFlowPanel";
+import { AssetLeaderboard } from "@/components/dashboard/AssetLeaderboard";
 import { SorobanFeePanel } from "@/components/dashboard/SorobanFeePanel";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
@@ -210,7 +210,7 @@ function DashboardContent() {
             content: (
               <div className="flex flex-col gap-6">
                 <AssetVolumePanel />
-                <LiquidityFlowPanel />
+                <AssetLeaderboard />
                 <CategoryShareChart />
                 <ClassicDefiActivity />
               </div>
