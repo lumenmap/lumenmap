@@ -13,6 +13,11 @@ import {
 import { getAllEntities } from "@/lib/entities/registry";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { withApiTrace } from "@/lib/telemetry/tracing";
+import {
+  buildHorizonFallbackReport,
+  isHorizonFallbackEnabled,
+  readHorizonMock,
+} from "@/lib/horizon/fallback";
 
 export const dynamic = "force-dynamic";
 
@@ -258,10 +263,18 @@ async function handleHealthRequest(request: Request) {
       ? "degraded"
       : "healthy";
 
+  // Fallback is a read-path label. It does not change the aggregate status.
+  const fallback = buildHorizonFallbackReport({
+    flagEnabled: isHorizonFallbackEnabled(),
+    hubbleStatus: bq.status,
+    horizonSample: readHorizonMock(),
+  });
+
   return NextResponse.json(
     {
       status: aggregateStatus,
       timestamp: new Date().toISOString(),
+      fallback,
       checks: {
         bigquery: {
           status: bq.status,
