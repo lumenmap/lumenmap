@@ -22,6 +22,15 @@ export const FIXTURE_FLOW_EDGES: FlowEdge[] = [
     operationCount: 2,
   },
   {
+    id: "lobstr-unknown-usdc",
+    source: FIXTURE_ACCOUNTS.lobstr,
+    destination: FIXTURE_ACCOUNTS.unknownA,
+    assetKey: "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    asset: { code: "USDC" },
+    amount: "400000000",
+    operationCount: 2,
+  },
+  {
     id: "lobstr-unknown-xlm",
     source: FIXTURE_ACCOUNTS.lobstr,
     destination: FIXTURE_ACCOUNTS.unknownA,

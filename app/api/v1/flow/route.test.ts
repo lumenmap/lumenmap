@@ -27,7 +27,7 @@ test("flow route passes the account parameter and returns a 1-hop node set", asy
   ]));
 
   const overview = await handleFlowRequest(new Request(base), fetcher);
-  assert.equal((await overview.json()).edges.length, 3);
+  assert.equal((await overview.json()).edges.length, 4);
   assert.deepEqual(calls[1], ["7d", "mainnet", null]);
 });
 
@@ -54,7 +54,7 @@ test("fixture route returns an empty ego graph and a populated overview", async 
 
     const overview = await GET(new Request(base));
     assert.equal(overview.status, 200);
-    assert.equal((await overview.json()).edges.length, 3);
+    assert.equal((await overview.json()).edges.length, 4);
   } finally {
     if (previous === undefined) delete process.env.LUMENMAP_DATA_SOURCE;
     else process.env.LUMENMAP_DATA_SOURCE = previous;
