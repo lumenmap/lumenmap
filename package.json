@@ -19,6 +19,7 @@
     "protect:main": "node scripts/configure-main-protection.mjs",
     "sync:directory": "node scripts/sync-stellar-directory.mjs",
     "test:hubble": "node scripts/test-hubble-queries.mjs",
+    "query:costs": "node scripts/report-hubble-query-costs.mjs",
     "test:hubble:registry": "node scripts/test-query-registry.mjs",
     "test:mapper": "npx tsx tests/test-destination-mapper.mjs",
     "test:usdc-volume": "node scripts/test-usdc-volume.mjs",
