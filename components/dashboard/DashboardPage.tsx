@@ -26,6 +26,7 @@ import { TemporalPatternsDisclosure } from "@/components/dashboard/TemporalPatte
 import { AssetVolumePanel } from "@/components/dashboard/AssetVolumePanel";
 import { AssetLeaderboard } from "@/components/dashboard/AssetLeaderboard";
 import { SorobanFeePanel } from "@/components/dashboard/SorobanFeePanel";
+import { NetworkFeePressurePanel } from "@/components/dashboard/NetworkFeePressurePanel";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { AddressComparisonPanel } from "@/components/dashboard/AddressComparisonPanel";
@@ -225,7 +226,7 @@ function DashboardContent() {
                 <ProtocolBarChart />
                 <ActivityHeatmap />
                 <TimeSeriesChart />
-                <TrustlineVelocityChart />
+                <NetworkFeePressurePanel />
                 <HourOfWeekHeatmap />
               </div>
             ),
