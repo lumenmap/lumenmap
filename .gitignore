@@ -37,3 +37,4 @@ gcp-sa.json
 /test-results/
 /playwright-report/
 /playwright/.cache/
+storybook-static

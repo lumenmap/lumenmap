@@ -41,7 +41,9 @@
     "test:e2e:flow": "FLOW_FIXTURE_MODE=1 playwright test e2e/flow.spec.ts",
     "changelog:generate": "node scripts/generate-changelog.mjs",
     "test:changelog": "node --test scripts/generate-changelog.test.mjs",
-    "wave:size-labels": "node scripts/label-wave-issues-by-size.mjs"
+    "wave:size-labels": "node scripts/label-wave-issues-by-size.mjs",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.3.1",
@@ -67,6 +69,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.52",
+    "@storybook/react-vite": "^10.6.8",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@types/d3-hierarchy": "^3.1.7",
@@ -77,9 +80,11 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "jsdom": "^22.1.0",
+    "storybook": "^10.6.8",
     "tailwindcss": "^4",
     "tsx": "^4.23.5",
     "typescript": "^5",
+    "vite": "^8.3.8",
     "vitest": "^4.1.10",
     "yaml": "^2.9.1"
   }

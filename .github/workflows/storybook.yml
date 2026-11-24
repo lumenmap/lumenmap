@@ -1,0 +1,28 @@
+name: Storybook
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "stories/**"
+      - ".storybook/**"
+      - "components/dashboard/KpiCards.tsx"
+      - "components/dashboard/TreemapMetricSelector.tsx"
+      - "components/dashboard/PeriodSelector.tsx"
+      - "components/dashboard/DetailPanel.tsx"
+      - "components/dashboard/FlowView.tsx"
+      - "components/dashboard/FlowViewSection.tsx"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build-storybook
