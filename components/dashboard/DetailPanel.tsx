@@ -16,6 +16,7 @@ import { buildContractFunctionBreakdown } from "@/lib/entities/contract-function
 import { ContractFunctionBarChart } from "@/components/dashboard/ContractFunctionBarChart";
 import { InvokeSuccessFromMeta } from "@/components/dashboard/InvokeSuccessRate";
 import { ResearchNoteEditor } from "@/components/dashboard/ResearchNoteEditor";
+import { TopCounterparties } from "@/components/dashboard/TopCounterparties";
 import { resolveWatchlistKind } from "@/lib/watchlist";
 import { getMetricUnit } from "@/lib/metrics/units";
 import { formatNumber, formatPercent } from "@/lib/utils";
@@ -238,6 +239,11 @@ export function DetailPanel({ onViewFlow, onClose }: { onViewFlow?: (account: st
         {address && !readOnly &&
         (selectedNode.meta?.type === "account" || selectedNode.meta?.type === "contract") ? (
           <FirstSeenDetails id={address} type={selectedNode.meta.type} network={network} />
+        ) : null}
+
+        {address &&
+        (selectedNode.meta?.type === "account" || selectedNode.meta?.type === "contract") ? (
+          <TopCounterparties />
         ) : null}
 
         {address ? (
