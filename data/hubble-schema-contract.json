@@ -1,0 +1,84 @@
+{
+  "dataset": "crypto-stellar.crypto_stellar_dbt",
+  "tables": {
+    "enriched_history_operations": {
+      "requiredColumns": [
+        "closed_at",
+        "type_string",
+        "amount",
+        "asset_type",
+        "asset_code",
+        "asset_issuer",
+        "source_asset_type",
+        "source_asset_code",
+        "source_asset_issuer",
+        "source_amount",
+        "dest_asset_code",
+        "dest_asset_issuer",
+        "dest_amount",
+        "op_source_account",
+        "transaction_hash",
+        "transaction_id",
+        "details"
+      ],
+      "owners": {
+        "closed_at": ["categoryQuery", "activeDestinationCountQuery", "heatmapQuery"],
+        "type_string": ["categoryQuery", "accountQuery", "usdcCategoryQuery"],
+        "amount": ["categoryQuery", "nativePaymentVolumeQuery", "usdcPaymentVolumeQuery"],
+        "asset_type": ["categoryQuery", "nativePaymentVolumeQuery"],
+        "asset_code": ["assetPaymentVolumeQuery", "usdcPaymentVolumeQuery"],
+        "asset_issuer": ["assetPaymentVolumeQuery", "usdcPaymentVolumeQuery"],
+        "source_asset_type": ["pathPaymentXlmAmountQuery", "usdcPaymentVolumeQuery"],
+        "source_asset_code": ["pathPaymentXlmAmountQuery", "usdcPaymentVolumeQuery"],
+        "source_asset_issuer": ["pathPaymentXlmAmountQuery", "usdcPaymentVolumeQuery"],
+        "source_amount": ["pathPaymentXlmAmountQuery", "usdcPaymentVolumeQuery"],
+        "dest_asset_code": ["pathPaymentUsdcAmountQuery", "usdcCategoryQuery"],
+        "dest_asset_issuer": ["pathPaymentUsdcAmountQuery", "usdcCategoryQuery"],
+        "dest_amount": ["pathPaymentUsdcAmountQuery", "usdcCategoryQuery"],
+        "op_source_account": ["accountQuery", "activeSourceAccountsQuery"],
+        "transaction_hash": ["transactionCategoryQuery"],
+        "transaction_id": ["heatmapQuery"],
+        "details": ["activeDestinationCountQuery"]
+      }
+    },
+    "enriched_history_operations_soroban": {
+      "requiredColumns": [
+        "closed_at",
+        "soroban_operation_type",
+        "parameters_decoded",
+        "contract_id"
+      ],
+      "owners": {
+        "closed_at": ["sorobanFunctionQuery", "sorobanFunctionContractQuery"],
+        "soroban_operation_type": ["sorobanFunctionQuery", "sorobanFunctionContractQuery"],
+        "parameters_decoded": ["sorobanFunctionQuery", "sorobanFunctionContractQuery"],
+        "contract_id": ["sorobanFunctionContractQuery"]
+      }
+    },
+    "hourly_soroban_fee_agg_contract": {
+      "requiredColumns": [
+        "hour_agg",
+        "contract_id",
+        "txn_count"
+      ],
+      "optionalColumns": [
+        "total_fee_charged",
+        "total_non_refundable_resource_fee"
+      ],
+      "owners": {
+        "hour_agg": ["contractQuery", "sorobanFeeSummaryQuery"],
+        "contract_id": ["contractQuery", "activeContractCountQuery"],
+        "txn_count": ["contractQuery", "sorobanFeeSummaryQuery"],
+        "total_fee_charged": ["sorobanFeeSummaryQuery", "sorobanFeeContractQuery"],
+        "total_non_refundable_resource_fee": ["sorobanFeeSummaryQuery", "sorobanFeeContractQuery"]
+      }
+    },
+    "accounts_current": {
+      "requiredColumns": ["account_id", "home_domain"],
+      "owners": {
+        "account_id": ["accountMetadataQuery"],
+        "home_domain": ["accountMetadataQuery"]
+      }
+    }
+  }
+}

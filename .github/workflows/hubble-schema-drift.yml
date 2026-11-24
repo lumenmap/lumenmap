@@ -1,0 +1,40 @@
+name: Hubble schema drift
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+  pull_request:
+    paths:
+      - "data/hubble-schema-contract.json"
+      - "data/hubble-schema-fixture.json"
+      - "scripts/check-hubble-schema-drift.mjs"
+      - "docs/hubble-column-contract.md"
+
+jobs:
+  schema-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Fixture dry-run
+        run: npm run test:schema-drift
+        env:
+          SCHEMA_DRIFT_MODE: fixture
+      - name: Live INFORMATION_SCHEMA (neutral skip without secrets)
+        if: ${{ !contains(join(github.event.pull_request.labels.*.name, ','), 'skip-schema-drift') }}
+        env:
+          SCHEMA_DRIFT_MODE: live
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: |
+          if [ -z "${GCP_SERVICE_ACCOUNT_KEY}" ]; then
+            echo "SKIP: GCP_SERVICE_ACCOUNT_KEY is not configured for this workflow."
+            exit 0
+          fi
+          echo "$GCP_SERVICE_ACCOUNT_KEY" | base64 --decode > "$RUNNER_TEMP/gcp-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/gcp-sa.json"
+          npm run check:schema-drift

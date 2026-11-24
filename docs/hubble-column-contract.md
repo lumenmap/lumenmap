@@ -9,7 +9,9 @@ exactly that: `details` was removed from the source table and
 
 This page is the contract. **Every column listed here must exist with the
 documented type before the queries that use it can run.** If you change SQL,
-walk the checklist at the bottom of this page first.
+walk the checklist at the bottom of this page first. The CI-facing copy of the
+required column list is [`data/hubble-schema-contract.json`](../data/hubble-schema-contract.json);
+keep both in sync and run `npm run test:schema-drift` (see CONTRIBUTING).
 
 Canonical source of truth for the SQL itself:
 [`lib/hubble/shared-queries.mjs`](../lib/hubble/shared-queries.mjs). Queries

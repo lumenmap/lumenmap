@@ -1,0 +1,39 @@
+{
+  "capturedAt": "2026-11-24T00:00:00.000Z",
+  "source": "fixture",
+  "tables": {
+    "enriched_history_operations": [
+      "closed_at",
+      "type_string",
+      "amount",
+      "asset_type",
+      "asset_code",
+      "asset_issuer",
+      "source_asset_type",
+      "source_asset_code",
+      "source_asset_issuer",
+      "source_amount",
+      "dest_asset_code",
+      "dest_asset_issuer",
+      "dest_amount",
+      "op_source_account",
+      "transaction_hash",
+      "transaction_id",
+      "details"
+    ],
+    "enriched_history_operations_soroban": [
+      "closed_at",
+      "soroban_operation_type",
+      "parameters_decoded",
+      "contract_id"
+    ],
+    "hourly_soroban_fee_agg_contract": [
+      "hour_agg",
+      "contract_id",
+      "txn_count",
+      "total_fee_charged",
+      "total_non_refundable_resource_fee"
+    ],
+    "accounts_current": ["account_id", "home_domain"]
+  }
+}
