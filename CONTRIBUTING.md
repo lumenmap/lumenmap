@@ -222,6 +222,21 @@ scripts/
 | `npm run sync:directory` | Pulls entity labels from Stellar Expert |
 | `npm run entities:validate` | Check curated entity addresses and required fields |
 | `npm run test:entities` | Exercise valid and invalid entity fixtures |
+| `npm run storybook` | Fixture-only Storybook for core dashboard components |
+| `npm run build-storybook` | Static Storybook build (also used by the optional CI job) |
+
+---
+
+## Storybook (fixture UI review)
+
+Core dashboard components (`KpiCards`, `TreemapMetricSelector`, `PeriodSelector`, `DetailPanel`, `FlowView`) have stories under `stories/`. Stories mock `useDashboard` — they never hit live Hubble/GCP.
+
+```bash
+npm run storybook          # http://localhost:6006
+npm run build-storybook    # writes storybook-static/ (gitignored)
+```
+
+The optional GitHub Action `.github/workflows/storybook.yml` builds Storybook on changes to stories, `.storybook/`, or those components.
 
 ---
 
