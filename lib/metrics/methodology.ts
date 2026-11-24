@@ -16,6 +16,7 @@ export type MethodologySectionId =
   | "active-contracts"
   | "soroban-share"
   | "soroban-fees"
+  | "network-fee-pressure"
   | "top-category"
   | "operation-categories"
   | "time-basis"
@@ -260,6 +261,18 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
       "Fixture mode ignores the selected period for the numbers and always renders the documented sample: 1,250,000,000 fee stroops, 50,000 invokes, 18,000 stroops of resource fee per invoke.",
       "Hubble lag and partial periods apply. Null aggregate cells are treated as zero; an invoke count of zero leaves the average null.",
     ],
+  },
+  {
+    id: "network-fee-pressure",
+    title: "Network fee pressure",
+    summary: "Hourly for Today and daily for longer periods, showing classic fee pressure and Soroban resource fees beside operation activity.",
+    unit: "Classic p95 charged stroops per operation; Soroban average non-refundable resource stroops per contract transaction; operation count.",
+    aggregation: "Classic: APPROX_QUANTILES(fee_charged / operation_count, 100)[95] on transactions with zero or null resource_fee. Soroban: SUM(total_non_refundable_resource_fee) / SUM(txn_count). Operation counts come from the dashboard time series.",
+    timeBasis: "UTC buckets in the selected half-open period. Today uses hours; 7 days, 30 days, and month use days.",
+    source: "Mainnet Hubble bronze history_transactions for classic fees and dbt hourly_soroban_fee_agg_contract for Soroban resources. The operation sparkline uses the activity response; live testnet fees are unavailable.",
+    inclusions: ["Charged transaction fees in stroops", "Non-refundable Soroban resource fees attributed to contracts"],
+    exclusions: ["Pending bids and fee-market simulation", "Soroban transactions with no contract aggregate row", "Refundable fees and rent detail"],
+    limitations: ["Each fee series soft-fails independently when its table or columns are unavailable; the panel hides when neither series has data.", "The three sparklines use independent vertical scales; compare timing, not absolute height. Hubble lag and partial periods apply.", "Fixture values are synthetic: classic p95 starts at 100 stroops/op and adds 25 per bucket modulo 5; Soroban average starts at 18,000 stroops/transaction and adds 2,000 per bucket modulo 4. Bucket 14 adds 175 and 10,000 respectively."],
   },
   {
     id: "top-category",

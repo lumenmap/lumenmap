@@ -212,6 +212,14 @@ particular, summing operation-type counts must never be labelled “transactions
 | **Fixture sample** | With `LUMENMAP_DATA_SOURCE=fixture`, the panel always renders 1,250,000,000 stroops of fees, 50,000 invokes, and 18,000 stroops of non-refundable resource fee per invoke. The sample contracts are 640,000,000 / 22,000 / 396,000,000, 410,000,000 / 18,000 / 324,000,000, and 200,000,000 / 10,000 / 180,000,000 (fee stroops / invokes / resource stroops). Those numbers are defined in `lib/soroban-fees/fixture.ts` and are not live rankings. |
 | **Limitations** | Subject to Hubble freshness and partial periods. Null numeric cells map to zero. A live query failure of any other kind returns `reason: "query_failed"` with the same non-500 contract. |
 
+### Network fee pressure
+
+**Methodology ID:** `network-fee-pressure` · **Version:** `1.0.0`
+
+Today uses hourly UTC buckets; longer selected periods use daily buckets. Classic fee pressure is the approximate 95th percentile of `fee_charged / operation_count` (stroops per operation) from `crypto-stellar.crypto_stellar.history_transactions`, restricted to rows with zero or null Soroban `resource_fee`, a positive operation count, and a nonnegative charged fee. The transaction table is filtered by both `closed_at` and its `batch_run_date` partition. Soroban pressure is `SUM(total_non_refundable_resource_fee) / SUM(txn_count)` (stroops per contract-attributed transaction) from `crypto-stellar.crypto_stellar_dbt.hourly_soroban_fee_agg_contract`. The third sparkline uses the dashboard's operation-count buckets for the same period. Each sparkline has its own vertical scale, so only the timing of spikes is comparable.
+
+Each fee query is isolated. Live fee pressure is currently mainnet-only; the panel is hidden on live testnet. A missing table, column, or query failure omits that series, and the panel hides if neither returns fee observations. Missing buckets are not interpolated. Soroban contract attribution can omit network transactions, and Hubble ingestion can lag. This is descriptive data, not a fee bid recommendation. Fixture mode uses synthetic values: classic starts at 100 stroops/op plus 25 times the bucket index modulo 5; Soroban starts at 18,000 stroops/transaction plus 2,000 times the index modulo 4. Bucket 14 adds 175 and 10,000 respectively.
+
 ## Payment-flow graph
 
 **Anchors:** `/methodology#flow`, `#flow-nodes`, `#flow-edges`, `#flow-sampling`,

@@ -35,6 +35,7 @@ Single-page dashboard. Data comes from [Hubble](https://developers.stellar.org/d
 - Shareable URL state: period, metric, view, drill-down path, network, and comparison period
 - KPI cards: total operations, Soroban share, top category, active contracts, active wallets, and active destinations (sparklines on operations and Soroban share)
 - Operations-vs-transactions time-series chart (UTC buckets, partial-bucket flags), stacked category-share area chart (absolute and % modes, UTC buckets), and daily / hour-of-week activity heatmaps
+- Network fee pressure sparklines for classic p95 charged fees and Soroban average non-refundable resource fees, with operation counts on the same period (when Hubble fee columns are available)
 - Dashboard search across loaded accounts, contracts, assets, protocols, and categories
 - Protocol activity ranking grouped by protocol, with entity labels for known wallets and contracts
 - Per-asset payment-volume panel (native units, issuers kept distinct)
