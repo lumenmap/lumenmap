@@ -2,12 +2,14 @@ interface SparklineProps {
   data?: number[];
   loading?: boolean;
   label?: string;
+  description?: string;
 }
 
 export function Sparkline({
   data,
   loading = false,
   label = "Trend",
+  description,
 }: SparklineProps) {
   if (loading)
     return (
@@ -34,12 +36,14 @@ export function Sparkline({
       role="img"
       aria-label={label}
     >
+      {description ? <title>{description}</title> : null}
       <polyline
         points={points}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
         vectorEffect="non-scaling-stroke"
+        className="motion-reduce:transition-none"
       />
     </svg>
   );
