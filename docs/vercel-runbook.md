@@ -8,6 +8,11 @@ This runbook establishes the official maintainer procedure for managing Vercel e
 
 LumenMap relies on environment variables to authenticate with Google Cloud BigQuery (Hubble dataset) and tune server caching.
 
+Before changing a production dashboard query, review the
+[Hubble dashboard query cost notes](hubble-query-costs.md) and run
+`npm run query:costs` with operator-owned credentials. The helper performs
+BigQuery dry runs only and does not print credential material.
+
 > [!IMPORTANT]
 > Never record or commit secret values (such as raw JSON keys or base64 credential strings) into the repository. Environment variables must be configured through the Vercel Project Dashboard or local `.env.local` files.
 

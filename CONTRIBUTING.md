@@ -240,10 +240,11 @@ npm run lint       # check before committing
 ### Query changes (requires GCP)
 
 SQL depends on upstream Hubble columns that nothing in the app validates. Read
-the [Hubble column contract](docs/hubble-column-contract.md) before editing a
-query: it lists every column each query reads, the known drift hazards, the
-`INFORMATION_SCHEMA` / dry-run commands to confirm a column still exists, and a
-checklist to paste into your PR.
+the [Hubble column contract](docs/hubble-column-contract.md) and the
+[dashboard query cost notes](docs/hubble-query-costs.md) before editing a
+query. They list every column each query reads, the known drift hazards, the
+expensive query shapes, the dry-run workflow, and the checklist to paste into
+your PR.
 
 1. Edit queries in `lib/hubble/queries.ts` or `lib/hubble/activity.ts`.
 2. Confirm the columns you reference still exist (see the contract doc), then
