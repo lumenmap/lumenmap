@@ -379,6 +379,27 @@ const classicDefiBreakdownsSchema = z.object({
   claimableBalances: classicDefiBreakdownSchema,
 });
 
+const liquidityFlowSubtypeShareSchema = z.object({
+  type: z.string(),
+  opCount: z.number(),
+  available: z.boolean(),
+});
+
+const liquidityFlowSplitRowSchema = z.object({
+  bucket: z.enum(["manage_offer", "path_payment", "related"]),
+  label: z.string(),
+  opCount: z.number(),
+  share: z.number(),
+  subtypes: z.array(liquidityFlowSubtypeShareSchema),
+});
+
+const liquidityFlowSplitSchema = z.object({
+  rows: z.array(liquidityFlowSplitRowSchema),
+  totalOpCount: z.number(),
+  presentSubtypes: z.array(z.string()),
+  missingSubtypes: z.array(z.string()),
+});
+
 const liquidityFlowSummarySchema = z.object({
   pathPaymentCount: z.number(),
   dexOperationCount: z.number(),
@@ -397,6 +418,7 @@ const liquidityFlowSummarySchema = z.object({
     }),
   ),
   intermediateAssetsAvailable: z.boolean(),
+  split: liquidityFlowSplitSchema,
 });
 
 export const activityResponseSchema = z.object({

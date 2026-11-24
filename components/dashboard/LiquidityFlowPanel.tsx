@@ -1,10 +1,27 @@
 "use client";
 
+import { Download } from "lucide-react";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { LiquidityFlowSummary } from "@/lib/types";
-import { formatNumber } from "@/lib/utils";
+import {
+  serializeLiquidityFlowSplitToCsv,
+  type LiquidityFlowSplitBucket,
+} from "@/lib/metrics/liquidity-flow";
+import { downloadBlob, generateSafeFilename } from "@/lib/export-utils";
+import type {
+  LiquidityFlowSplit,
+  LiquidityFlowSummary,
+  Period,
+} from "@/lib/types";
+import { formatNumber, formatPercent } from "@/lib/utils";
+
+const SPLIT_BAR_COLORS: Record<LiquidityFlowSplitBucket, string> = {
+  manage_offer: "bg-amber-500/80",
+  path_payment: "bg-cyan-400/80",
+  related: "bg-emerald-500/80",
+};
 
 function Amount({ value, unit }: { value: string | null; unit: string }) {
   return (
@@ -17,11 +34,131 @@ function Amount({ value, unit }: { value: string | null; unit: string }) {
   );
 }
 
+function SplitShareBar({ split }: { split: LiquidityFlowSplit }) {
+  const ariaParts = split.rows.map(
+    (row) =>
+      `${row.label} ${formatNumber(row.opCount)} ops (${formatPercent(row.share * 100)})`,
+  );
+  const label =
+    split.totalOpCount === 0
+      ? "No manage-offer, path-payment, or related operations in this period"
+      : `Liquidity routing share: ${ariaParts.join("; ")}`;
+
+  return (
+    <div className="space-y-2" data-testid="liquidity-flow-split-bar">
+      <div
+        role="img"
+        aria-label={label}
+        className="flex h-3 w-full overflow-hidden rounded-full bg-white/5"
+      >
+        {split.rows.map((row) =>
+          row.share > 0 ? (
+            <div
+              key={row.bucket}
+              className={`${SPLIT_BAR_COLORS[row.bucket]} h-full`}
+              style={{ width: `${row.share * 100}%` }}
+              title={`${row.label}: ${formatPercent(row.share * 100)}`}
+            />
+          ) : null,
+        )}
+      </div>
+      <ul className="flex flex-wrap gap-3 text-xs text-zinc-400">
+        {split.rows.map((row) => (
+          <li key={row.bucket} className="flex items-center gap-1.5">
+            <span
+              className={`inline-block h-2.5 w-2.5 rounded-sm ${SPLIT_BAR_COLORS[row.bucket]}`}
+              aria-hidden="true"
+            />
+            <span>
+              {row.label} · {formatPercent(row.share * 100)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SplitShareTable({ split }: { split: LiquidityFlowSplit }) {
+  return (
+    <div className="overflow-x-auto" data-testid="liquidity-flow-split-table">
+      <table className="w-full min-w-[28rem] text-left text-sm">
+        <caption className="sr-only">
+          Manage-offer, path-payment, and related liquidity-pool operation
+          shares for the selected period
+        </caption>
+        <thead className="text-xs text-zinc-500">
+          <tr>
+            <th scope="col" className="py-2 pr-3 font-medium">
+              Bucket
+            </th>
+            <th scope="col" className="py-2 pr-3 font-medium">
+              Operations
+            </th>
+            <th scope="col" className="py-2 pr-3 font-medium">
+              Share
+            </th>
+            <th scope="col" className="py-2 font-medium">
+              Subtypes
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {split.rows.map((row) => (
+            <tr key={row.bucket} className="border-t border-white/10">
+              <th scope="row" className="py-2 pr-3 font-medium text-zinc-200">
+                {row.label}
+              </th>
+              <td className="py-2 pr-3 font-mono text-xs text-zinc-300">
+                {formatNumber(row.opCount)}
+              </td>
+              <td className="py-2 pr-3 font-mono text-xs text-zinc-300">
+                {formatPercent(row.share * 100)}
+              </td>
+              <td className="py-2 text-xs text-zinc-400">
+                {row.subtypes
+                  .map((subtype) =>
+                    subtype.available
+                      ? `${subtype.type.replaceAll("_", " ")} (${formatNumber(subtype.opCount)})`
+                      : `${subtype.type.replaceAll("_", " ")} (missing)`,
+                  )
+                  .join(" · ")}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {split.missingSubtypes.length > 0 ? (
+        <p className="mt-2 text-xs text-zinc-500" role="status">
+          Missing subtypes soft-failed to zero:{" "}
+          {split.missingSubtypes.join(", ")}.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function LiquidityFlowDetails({
   summary,
+  period,
 }: {
   summary: LiquidityFlowSummary;
+  period: Period;
 }) {
+  const handleExportCsv = () => {
+    const csv = serializeLiquidityFlowSplitToCsv(summary.split);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    downloadBlob(
+      blob,
+      generateSafeFilename(
+        "lumenmap-liquidity-flow",
+        "dex-path-split",
+        period,
+        "csv",
+      ),
+    );
+  };
+
   return (
     <>
       <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -44,6 +181,26 @@ function LiquidityFlowDetails({
           </dd>
         </div>
       </dl>
+
+      <div className="space-y-3 border-t border-white/10 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-xs font-medium text-zinc-400">
+            Manage-offer / path-payment / related share
+          </h3>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            aria-label="Export liquidity flow split as CSV"
+          >
+            <Download className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+            CSV
+          </Button>
+        </div>
+        <SplitShareBar split={summary.split} />
+        <SplitShareTable split={summary.split} />
+      </div>
 
       <div className="grid gap-4 border-t border-white/10 pt-4 sm:grid-cols-2">
         <div>
@@ -102,7 +259,7 @@ function LiquidityFlowDetails({
 }
 
 export function LiquidityFlowPanel() {
-  const { data, isLoading } = useDashboard();
+  const { data, isLoading, period } = useDashboard();
   const summary = data?.liquidityFlow;
 
   return (
@@ -111,7 +268,8 @@ export function LiquidityFlowPanel() {
         <CardTitle>Path payments &amp; liquidity routing</CardTitle>
         <p className="text-xs text-zinc-400">
           Path-payment notionals stay in their native units. DEX offer and pool
-          operation counts are shown separately; they are not traded volume.
+          operation counts are shown separately; they are not traded volume. The
+          share split groups manage offers, path payments, and related pool ops.
           <a
             href="/methodology#liquidity-flow"
             className="ml-1 text-stellar-light hover:text-white"
@@ -124,7 +282,7 @@ export function LiquidityFlowPanel() {
         {!summary && isLoading ? (
           <Skeleton className="h-36 w-full rounded-xl" />
         ) : summary ? (
-          <LiquidityFlowDetails summary={summary} />
+          <LiquidityFlowDetails summary={summary} period={period} />
         ) : (
           <p className="text-sm text-zinc-400">
             Path-payment and DEX summary data is unavailable for this response.

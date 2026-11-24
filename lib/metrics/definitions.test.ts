@@ -95,7 +95,12 @@ describe("methodology sections", () => {
     for (const type of documentedTypes) {
       assert.ok(section.inclusions.some((item) => item.includes(type)), type);
     }
+    assert.ok(section.inclusions.some((item) => item.includes("manage_offer")));
+    assert.ok(section.exclusions.some((item) => item.includes("Order book")));
     assert.ok(section.limitations.some((item) => item.includes("soft-fail")));
     assert.ok(section.limitations.some((item) => item.includes("Route-hop")));
+    assert.ok(
+      section.limitations.some((item) => item.includes("Missing category subtypes")),
+    );
   });
 });
