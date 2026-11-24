@@ -41,6 +41,15 @@ body:
     validations:
       required: true
 
+  - type: dropdown
+    id: tag
+    attributes:
+      label: Protocol tag
+      description: Choose the primary role of the service. See the taxonomy in CONTRIBUTING.md.
+      options: ["dex", "anchor", "payments", "infra", "nft", "other"]
+    validations:
+      required: true
+
   - type: textarea
     id: proof_links
     attributes:

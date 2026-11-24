@@ -34,7 +34,8 @@ import type {
   DashboardMetricId,
   TreemapNode,
 } from "@/lib/types";
-import { getErrorCopy } from "@/lib/error-copy";
+import protocolTags from "@/data/protocol-tags.json";
+import type { ProtocolTag } from "@/lib/types";
 
 const CATEGORY_LEGEND = [
   { key: "soroban", label: "Soroban" },
@@ -64,11 +65,12 @@ function toChartNode(node: TreemapNode<number | string>): TreemapNode {
 }
 
 
-function filterTreemapByCategories(
+function filterTreemap(
   root: TreemapNode,
   excludedCategories: Set<string>,
-): TreemapNode | null {
-  if (excludedCategories.size === 0) return root;
+  selectedTag: ProtocolTag | null,
+): TreemapNode {
+  if (excludedCategories.size === 0 && !selectedTag) return root;
 
   const filterNode = (node: TreemapNode): TreemapNode | null => {
     const category = node.meta?.category;
@@ -82,9 +84,18 @@ function filterTreemapByCategories(
         .map(filterNode)
         .filter((child): child is TreemapNode => child !== null);
 
-      if (filteredChildren.length > 0) {
-        return { ...node, children: filteredChildren };
+      if (filteredChildren.length > 0 || node.meta?.type === "root") {
+        return {
+          ...node,
+          ...(selectedTag ? {
+            value: filteredChildren.reduce((sum, child) => sum + (child.value ?? 0), 0),
+            meta: { ...node.meta, childCount: filteredChildren.length, coverage: undefined },
+          } : {}),
+          children: filteredChildren,
+        };
       }
+
+      if (selectedTag) return null;
 
       const val = node.value ?? node.meta?.opCount ?? 0;
       if (val === 0) return null;
@@ -95,10 +106,17 @@ function filterTreemapByCategories(
       return null;
     }
 
+    if (selectedTag && (
+      !["account", "contract", "protocol"].includes(node.meta?.type ?? "") ||
+      (node.meta?.tag ?? "other") !== selectedTag
+    )) {
+      return null;
+    }
+
     return node;
   };
 
-  return filterNode(root);
+  return filterNode(root) ?? { ...root, children: [] };
 }
 
 /**
@@ -153,8 +171,12 @@ export function NetworkTreemap() {
   const [excludedCategories, setExcludedCategories] = useState<Set<string>>(
     new Set(),
   );
+  const [selectedTag, setSelectedTag] = useState<ProtocolTag | null>(null);
+  const showTagFilters = metric === "protocol_tvl" || treemapView === "actors" || treemapView === "actors_dest";
+  const filtersActive = excludedCategories.size > 0 || (showTagFilters && selectedTag !== null);
 
   const toggleCategory = (key: string) => {
+    setActiveLevelPath([]);
     setExcludedCategories((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -163,16 +185,17 @@ export function NetworkTreemap() {
     });
   };
 
-  const resetFilters = () => setExcludedCategories(new Set());
+  const resetFilters = () => {
+    setExcludedCategories(new Set());
+    setSelectedTag(null);
+    setActiveLevelPath([]);
+  };
 
   const activePayload = selectTreemapPayload(data, metric, treemapView) ?? null;
   const activeTreemap = useMemo(
     () => (activePayload ? toChartNode(activePayload) : null),
     [activePayload],
   );
-  const isEmpty =
-    !!activeTreemap &&
-    (!activeTreemap.children || activeTreemap.children.length === 0);
 
   // Period-over-period diff overlay (issue #447). Protocol TVL is excluded:
   // adapters report a current snapshot, so the previous window would read
@@ -185,10 +208,10 @@ export function NetworkTreemap() {
   }, [diffActive, previousData, metric, treemapView]);
   const diffIndex = useMemo(
     () =>
-      diffActive && previousData
+      diffActive && previousData && !filtersActive
         ? buildTreemapDiffIndex(activeTreemap, previousTreemap)
         : null,
-    [diffActive, previousData, activeTreemap, previousTreemap],
+    [diffActive, previousData, activeTreemap, previousTreemap, filtersActive],
   );
   const currentLevelPathKey = useMemo(
     () => treemapPathKey(activeLevelPath),
@@ -196,14 +219,21 @@ export function NetworkTreemap() {
   );
   const filteredTreemap = useMemo(() => {
     if (!activeTreemap) return null;
-    if (metric === "protocol_tvl") return activeTreemap;
-    return filterTreemapByCategories(activeTreemap, excludedCategories);
-  }, [activeTreemap, excludedCategories, metric]);
+    return filterTreemap(
+      activeTreemap,
+      metric === "protocol_tvl" ? new Set() : excludedCategories,
+      showTagFilters ? selectedTag : null,
+    );
+  }, [activeTreemap, excludedCategories, metric, selectedTag, showTagFilters]);
+  const isEmpty = !!filteredTreemap && !filteredTreemap.children?.length;
 
   const filterAnnouncement =
     excludedCategories.size === 0
       ? "All categories visible"
       : `Excluded categories: ${[...excludedCategories].join(", ")}`;
+  const tagAnnouncement = showTagFilters
+    ? `; protocol tag: ${selectedTag ? protocolTags[selectedTag] : "all"}`
+    : "";
 
   const activeViewLabel =
     TREEMAP_VIEWS.find((v) => v.id === treemapView)?.label?.toLowerCase() ||
@@ -352,11 +382,31 @@ export function NetworkTreemap() {
             Tile colors encode adapter status: complete, partial, or stale.
           </p>
         ) : null}
-        {!isFlowView && diffActive && previousData ? (
+        {showTagFilters && !isFlowView ? (
+          <div role="group" aria-label="Protocol tags" className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-zinc-500">Protocol tag</span>
+            {([null, ...Object.keys(protocolTags)] as (ProtocolTag | null)[]).map((tag) => (
+              <button
+                key={tag ?? "all"}
+                type="button"
+                aria-label={`${tag ? protocolTags[tag] : "All"} protocol tag filter`}
+                aria-pressed={selectedTag === tag}
+                onClick={() => {
+                  setSelectedTag(tag);
+                  setActiveLevelPath([]);
+                }}
+                className={`rounded-full border px-3 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 ${selectedTag === tag ? "border-white/30 bg-white/20 text-white" : "border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10"}`}
+              >
+                {tag ? protocolTags[tag] : "All"}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {!isFlowView && diffActive && previousData && !filtersActive ? (
           <TreemapDiffLegend />
         ) : null}
         <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-          {filterAnnouncement}
+          {filterAnnouncement}{tagAnnouncement}
         </div>
       </CardHeader>
       <CardContent
@@ -386,7 +436,7 @@ export function NetworkTreemap() {
             <ActivityRetryButton testId="treemap-retry" />
           </div>
         ) : (
-          <div key={`${period}-${treemapView}-${metric}-${excludedCategories.size}`} className={CHART_FRAME_CLASS}>
+          <div key={`${period}-${treemapView}-${metric}-${[...excludedCategories].join(",")}-${selectedTag}`} className={CHART_FRAME_CLASS}>
             {!isEmpty ? (
               <D3Treemap
                 root={filteredTreemap}
@@ -409,16 +459,16 @@ export function NetworkTreemap() {
                 className="flex h-full flex-col items-center justify-center gap-1 p-6 text-center text-sm text-zinc-500"
               >
                 <p className="font-medium text-zinc-300">
-                  {excludedCategories.size > 0
-                    ? "No categories selected."
+                  {filtersActive
+                    ? "No entities match these filters."
                     : "No activity available"}
                 </p>
                 <p className="text-xs">
-                  {excludedCategories.size > 0
-                    ? "Reset filters to show all categories again."
+                  {filtersActive
+                    ? "Reset filters to show all entities again."
                     : `There are no ${activeViewLabel} with ${metricLabel} for ${periodLabel}. Try another view, metric, or time range.`}
                 </p>
-                {excludedCategories.size > 0 ? (
+                {filtersActive ? (
                   <Button
                     variant="ghost"
                     size="sm"

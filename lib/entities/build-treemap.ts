@@ -107,6 +107,7 @@ function buildContractLeaves(
           id: row.contract_id,
           category: "soroban",
           protocol: entity?.protocol,
+          tag: entity?.tag,
           opCount: row.op_count,
         },
       };
@@ -135,6 +136,7 @@ function buildAccountLeavesFromRows(
           id: row.account_id,
           category: group,
           protocol: entity?.protocol,
+          tag: entity?.tag,
           opCount: row.op_count,
           xlmVolume: row.xlm_volume,
         },
@@ -494,6 +496,7 @@ function buildUsdcAccountLeavesFromRows(
           id: row.account_id,
           category: group,
           protocol: entity?.protocol,
+          tag: entity?.tag,
           usdcVolume: row.amount,
         },
       };

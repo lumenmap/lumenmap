@@ -219,7 +219,10 @@ export interface EntityInfo {
   name: string;
   category: string;
   protocol: string;
+  tag?: ProtocolTag;
 }
+
+export type ProtocolTag = keyof typeof import("@/data/protocol-tags.json");
 
 export interface CategoryRow {
   type_string: string;
@@ -374,6 +377,7 @@ export interface TreemapNodeMeta {
   id?: string;
   category?: string;
   protocol?: string;
+  tag?: ProtocolTag;
   share?: number;
   opCount?: number;
   txnCount?: number;
