@@ -7,6 +7,7 @@ import { FreshnessIndicator } from '@/components/dashboard/FreshnessIndicator';
 import { FreshnessWarning } from '@/components/dashboard/FreshnessWarning';
 import { SavedViewsControls } from '@/components/dashboard/SavedViewsControls';
 import { isMetricSupportedOnNetwork, unsupportedMetricMessage } from '@/lib/network';
+import { ChartDeepLink } from '@/components/dashboard/ChartDeepLink';
 
 export function TreemapSection() {
   const { network, metric, setMetric, selectedNode } = useDashboard();
@@ -25,7 +26,9 @@ export function TreemapSection() {
       )}
       <div className="grid min-w-0 grid-cols-1 gap-6 transition-all duration-300 motion-reduce:transition-none">
         <div className='min-w-0'>
-          <NetworkTreemap />
+          <ChartDeepLink id="network-treemap" label="network treemap">
+            <NetworkTreemap />
+          </ChartDeepLink>
         </div>
         {selectedNode && (
           <DetailPanelContainer />
