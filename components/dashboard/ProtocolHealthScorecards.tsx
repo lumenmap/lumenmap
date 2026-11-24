@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PROTOCOL_HEALTH_COMPONENT_LABELS } from "@/lib/protocol-health/constants";
 import type { ProtocolHealthComponentId } from "@/lib/protocol-health/constants";
+import { attachProtocolSeries } from "@/lib/protocol-health/attach-series";
 import type { ProtocolHealthResponseBody } from "@/lib/schemas/protocol-health";
 import { isMetricSupportedOnNetwork } from "@/lib/network";
 import type { SearchResult } from "@/lib/search/types";
@@ -61,6 +62,14 @@ export function ProtocolHealthScorecards() {
     queryFn: () => fetchProtocolHealth(period, network),
     staleTime: 60_000,
   });
+  const leaderboardRows = query.data
+    ? attachProtocolSeries(
+        query.data.protocols,
+        query.data.protocols
+          .filter((row) => row.timeseries)
+          .map((row) => ({ protocol: row.protocol, values: row.timeseries ?? [] })),
+      )
+    : [];
 
   const openCard = (card: ProtocolHealthResponseBody["protocols"][number]) => {
     const child = data?.treemaps.protocol_tvl.children?.find(
@@ -163,7 +172,7 @@ export function ProtocolHealthScorecards() {
           data-testid="protocol-health-grid"
           className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
         >
-          {query.data.protocols.slice(0, query.data.displayLimit).map((card) => {
+          {leaderboardRows.slice(0, query.data.displayLimit).map((card) => {
             const points = card.timeseries;
             return (
               <li key={card.protocol} className="min-w-0">
@@ -229,10 +238,16 @@ export function ProtocolHealthScorecards() {
                         })}
                       </dl>
                       {points && points.length >= 2 ? (
-                        <Sparkline
-                          data={points}
-                          label={`${card.protocol} activity trend`}
-                        />
+                        <div
+                          title={`Recent operations: ${formatNumber(points[0])} to ${formatNumber(points[points.length - 1])}`}
+                          className="h-8"
+                        >
+                          <Sparkline
+                            data={points}
+                            label={`${card.protocol} operations trend, ${formatNumber(points[0])} at the start and ${formatNumber(points[points.length - 1])} at the end`}
+                            description={`Recent operations: ${formatNumber(points[0])} to ${formatNumber(points[points.length - 1])}`}
+                          />
+                        </div>
                       ) : null}
                     </CardContent>
                   </Card>
