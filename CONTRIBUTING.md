@@ -365,6 +365,21 @@ Size labels are independent of the `good first issue` label — a `size:S` issue
 
 `scripts/backfill-wave-size-labels.mjs` applies this guide to a batch of already-open `Stellar Wave` issues; see the script's header comment for usage and for the judgment notes behind each sizing decision it was seeded with.
 
+Maintainers can triage the current open queue with the `gh`-based helper. It
+defaults to a dry run and never removes existing labels:
+
+```bash
+npm run wave:size-labels
+npm run wave:size-labels -- --apply
+```
+
+The helper skips issues that already have `size:S`, `size:M`, or `size:L`. Its
+suggestion is based on body length plus explicit BigQuery, schema, build-tool,
+component, test, and accessibility keywords. These are review prompts, not a
+source of truth: a maintainer must review the dry-run output before using
+`--apply`, and can override any suggestion using the guide above. The command
+exits non-zero when `gh auth status`, issue listing, or label application fails.
+
 ---
 
 ## Branch and PR workflow
