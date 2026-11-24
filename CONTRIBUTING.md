@@ -245,6 +245,21 @@ query: it lists every column each query reads, the known drift hazards, the
 `INFORMATION_SCHEMA` / dry-run commands to confirm a column still exists, and a
 checklist to paste into your PR.
 
+CI also runs a **schema-drift** check. The machine-readable contract lives in
+[`data/hubble-schema-contract.json`](data/hubble-schema-contract.json) (keep it
+aligned with the markdown contract). Locally:
+
+```bash
+npm run test:schema-drift          # fixture dry-run (no GCP)
+SCHEMA_DRIFT_MODE=live npm run check:schema-drift   # INFORMATION_SCHEMA when creds exist
+SCHEMA_DRIFT_SKIP=1 npm run check:schema-drift      # no-op skip
+```
+
+The GitHub Action `.github/workflows/hubble-schema-drift.yml` always runs the
+fixture dry-run. The live step skips with a neutral summary when
+`GCP_SERVICE_ACCOUNT_KEY` is unset, and can be skipped on a PR with the
+`skip-schema-drift` label.
+
 1. Edit queries in `lib/hubble/queries.ts` or `lib/hubble/activity.ts`.
 2. Confirm the columns you reference still exist (see the contract doc), then
    test against live data:
