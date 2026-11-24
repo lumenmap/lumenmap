@@ -13,6 +13,7 @@ import { CategoryShareChart } from "@/components/dashboard/CategoryShareChart";
 import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
+import { BudgetBurnLine } from "@/components/dashboard/BudgetBurnLine";
 import { isMetricSupportedOnNetwork, unsupportedMetricMessage } from "@/lib/network";
 
 export function OverviewSection() {
@@ -39,6 +40,7 @@ export function OverviewSection() {
       </header>
 
       <FreshnessWarning />
+      <BudgetBurnLine />
       <SavedViewsControls />
 
       {!metricSupported && (

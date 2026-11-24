@@ -16,6 +16,9 @@ LumenMap relies on environment variables to authenticate with Google Cloud BigQu
 | `GOOGLE_APPLICATION_CREDENTIALS` | Local | File path string (e.g., `./gcp-sa.json`) | None | Path to local GCP service account JSON key file for local development. |
 | `GCP_SERVICE_ACCOUNT_KEY` | Preview, Production, Local | Base64-encoded string | None | Base64-encoded GCP Service Account JSON key. Required for Vercel serverless functions where local filesystem paths do not exist. |
 | `CACHE_TTL_SECONDS` | Local, Preview, Production | Integer (seconds) | `900` (15 minutes) | Controls in-memory server cache TTL for BigQuery activity query results to manage BigQuery cost and rate limits. |
+| `BIGQUERY_DAILY_BYTES_BUDGET` | Local, Preview, Production | Integer (bytes) | `53687091200` (50 GB) | Soft daily ceiling for in-process BigQuery bytes billed. Exposed on `/api/health` as used/remaining. |
+| `BIGQUERY_DAILY_BUDGET_SOFT_RATIO` | Local, Preview, Production | Float (0–1] | `0.8` | Health soft-warns when used ÷ budget reaches this ratio. Core activity stays up. |
+| `BIGQUERY_DAILY_BUDGET_HARD_FAIL` | Local, Preview, Production | Boolean | `false` | When `true`, optional non-critical queries soft-fail once the daily budget is exceeded. Required KPIs still run. |
 
 ### Explicit Environment Differences
 
@@ -94,6 +97,9 @@ If `GCP_SERVICE_ACCOUNT_KEY` is missing or corrupted:
   ```bash
   base64 -i gcp-sa.json | tr -d '\n'
   ```
+
+### Daily BigQuery burn budget
+`GET /api/health?type=readiness` includes `checks.bytesBilled.dailyBudgetBytes`, `dailyUsedBytes`, `dailyRemainingBytes`, and `dailyBudgetStatus` (`ok` | `soft_warn` | `over`). Soft warnings degrade readiness without taking down core activity. Set `BIGQUERY_DAILY_BUDGET_HARD_FAIL=true` only when operators want optional enrichments to stop once the daily ceiling is crossed. The overview dashboard renders the same numbers as a burn line.
 
 ### Data-Staleness Verification
 Hubble data updates in intraday batches on BigQuery. To verify data freshness:

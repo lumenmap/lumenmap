@@ -1,5 +1,6 @@
 import { classifyError, endTimer, logWarn, startTimer } from "@/lib/log";
 import type { ErrorClass } from "@/lib/log";
+import { shouldHardFailNonCriticalQuery } from "@/lib/hubble/bytes-budget";
 import { metrics } from "@/lib/telemetry/metrics";
 
 /**
@@ -82,6 +83,20 @@ export async function runOptionalQuery<T>(
   correlationId: string,
 ): Promise<T> {
   const timer = startTimer();
+
+  if (shouldHardFailNonCriticalQuery()) {
+    const errorClass: ErrorClass = "cost_limit";
+    logWarn({
+      event: "activity.query.soft_fail",
+      correlationId,
+      queryName,
+      durationMs: endTimer(timer),
+      errorClass,
+      errorMessage: "Daily BigQuery bytes budget exceeded",
+    });
+    recordSoftFailure({ queryName, errorClass });
+    return fallback();
+  }
 
   try {
     return await execute();
