@@ -1,9 +1,11 @@
 "use client";
 
-import { useId, useState } from "react";
-import { Download } from "lucide-react";
+import { useId, useRef, useState } from "react";
+import { Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
+import { copyText } from "@/lib/clipboard";
+import { buildMarkdownFromActivity } from "@/lib/export-markdown";
 import {
   buildDashboardPdfDocument,
   buildExportMetadata,
@@ -21,10 +23,15 @@ interface ExportControlsProps {
   svgRef?: React.RefObject<SVGSVGElement>;
 }
 
+type CopyMarkdownStatus = "idle" | "copied" | "failed";
+
 export function ExportControls({ svgRef }: ExportControlsProps) {
   const { data, period, treemapView, isLoading, isFetching } = useDashboard();
   const [exportAsLight, setExportAsLight] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<CopyMarkdownStatus>("idle");
+  const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lightToggleId = useId();
+  const copyStatusId = useId();
 
   const activeView = TREEMAP_VIEWS.find((v) => v.id === treemapView);
   const viewLabel = activeView?.label || "Network Activity";
@@ -149,6 +156,39 @@ export function ExportControls({ svgRef }: ExportControlsProps) {
     }
   };
 
+  const handleCopyMarkdown = async () => {
+    if (isLoading || isFetching || !data?.kpis) {
+      setCopyStatus("failed");
+      if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+      copyResetTimer.current = setTimeout(() => setCopyStatus("idle"), 4000);
+      return;
+    }
+
+    const permalink =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${window.location.pathname}${window.location.search}`
+        : "";
+
+    const markdown = buildMarkdownFromActivity(data, permalink);
+    const result = await copyText(markdown);
+
+    if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+    if (result.ok) {
+      setCopyStatus("copied");
+      copyResetTimer.current = setTimeout(() => setCopyStatus("idle"), 2000);
+      return;
+    }
+    setCopyStatus("failed");
+    copyResetTimer.current = setTimeout(() => setCopyStatus("idle"), 4000);
+  };
+
+  const copyToast =
+    copyStatus === "copied"
+      ? "Markdown snapshot copied to clipboard"
+      : copyStatus === "failed"
+        ? "Could not copy Markdown. Try again or select text manually."
+        : "";
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <label
@@ -195,6 +235,38 @@ export function ExportControls({ svgRef }: ExportControlsProps) {
         <Download className="h-3.5 w-3.5" />
         Export PDF
       </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          void handleCopyMarkdown();
+        }}
+        disabled={isLoading || isFetching || !data?.kpis}
+        className="gap-1.5 text-xs"
+        title="Copy a Markdown summary of period, KPIs, top categories, and protocols"
+        aria-label="Copy dashboard snapshot as Markdown"
+        aria-describedby={copyStatusId}
+      >
+        <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+        Copy Markdown
+      </Button>
+      <p
+        id={copyStatusId}
+        role="status"
+        aria-live="polite"
+        className={
+          copyStatus === "idle"
+            ? "sr-only"
+            : copyStatus === "copied"
+              ? "text-xs text-emerald-400"
+              : "text-xs text-amber-300"
+        }
+      >
+        {copyStatus === "idle"
+          ? "Copies a Markdown snapshot for issue and grant reports"
+          : copyToast}
+      </p>
     </div>
   );
 }
