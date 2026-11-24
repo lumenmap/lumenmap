@@ -4,7 +4,6 @@
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
-import { NetworkSelector } from "@/components/dashboard/NetworkSelector";
 import { DashboardSearch } from "@/components/dashboard/DashboardSearch";
 import { ComparisonPanel } from "@/components/dashboard/ComparisonPanel";
 import { AssetVolumePanel } from "@/components/dashboard/AssetVolumePanel";
@@ -14,6 +13,7 @@ import { SavedViewsControls } from "@/components/dashboard/SavedViewsControls";
 import { FreshnessIndicator } from "@/components/dashboard/FreshnessIndicator";
 import { FreshnessWarning } from "@/components/dashboard/FreshnessWarning";
 import { isMetricSupportedOnNetwork, unsupportedMetricMessage } from "@/lib/network";
+import { ChartDeepLink } from "@/components/dashboard/ChartDeepLink";
 
 export function OverviewSection() {
   const { network, metric, setMetric } = useDashboard();
@@ -50,10 +50,10 @@ export function OverviewSection() {
 
       <DashboardSearch />
       <KpiCards />
-      <ComparisonPanel />
-      <AssetVolumePanel />
-      <LiquidityFlowPanel />
-      <CategoryShareChart />
+      <ChartDeepLink id="period-comparison" label="period comparison"><ComparisonPanel /></ChartDeepLink>
+      <ChartDeepLink id="asset-volume-chart" label="payment volume by asset"><AssetVolumePanel /></ChartDeepLink>
+      <ChartDeepLink id="liquidity-routing-chart" label="liquidity routing"><LiquidityFlowPanel /></ChartDeepLink>
+      <ChartDeepLink id="category-share-chart" label="category share"><CategoryShareChart /></ChartDeepLink>
     </div>
   );
 }

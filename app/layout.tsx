@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { AppProviders } from "@/components/providers";
 import { IncidentBannerHost } from "@/components/IncidentBannerHost";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { ChartDeepLinkRestorer } from "@/components/dashboard/ChartDeepLink";
 import "./globals.css";
 
 const geistSans = { variable: "font-sans" };
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className="min-h-full bg-canvas text-foreground">
         <AppProviders>
           <ServiceWorkerRegister />
+          <ChartDeepLinkRestorer />
           <IncidentBannerHost />
           <main className="min-h-screen">{children}</main>
         </AppProviders>
