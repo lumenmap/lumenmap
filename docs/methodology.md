@@ -11,6 +11,10 @@ The interactive copy lives at [`/methodology`](/methodology). Section anchors:
 | Transactions | `#transactions` |
 | Payment volume | `#payment-volume` |
 | Path payments and DEX liquidity flow | `#liquidity-flow` |
+| Claimable create vs claim velocity | `#claimable-velocity` |
+| Claimable velocity · classification | `#claimable-velocity-classification` |
+| Claimable velocity · net outstanding delta | `#claimable-velocity-net-delta` |
+| Claimable velocity · limits | `#claimable-velocity-limits` |
 | TVL | `#tvl` |
 | Active accounts | `#active-accounts` |
 | Active destination accounts | `#active-destination-accounts` |

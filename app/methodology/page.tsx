@@ -12,12 +12,28 @@ import {
   PROTOCOL_HEALTH_COMPONENTS,
 } from "@/lib/protocol-health/constants";
 import { FLOW_METHODOLOGY_ANCHORS } from "@/lib/metrics/flow-methodology-anchors";
+import { CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS } from "@/lib/metrics/claimable-velocity-methodology-anchors";
 
 const FLOW_SUBSECTIONS = [
   { id: FLOW_METHODOLOGY_ANCHORS.nodes, title: "Nodes" },
   { id: FLOW_METHODOLOGY_ANCHORS.edges, title: "Edges" },
   { id: FLOW_METHODOLOGY_ANCHORS.sampling, title: "Sampling and coverage" },
   { id: FLOW_METHODOLOGY_ANCHORS.assetModes, title: "Asset modes" },
+] as const;
+
+const CLAIMABLE_VELOCITY_SUBSECTIONS = [
+  {
+    id: CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.classification,
+    title: "Classification",
+  },
+  {
+    id: CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.netDelta,
+    title: "Net outstanding delta",
+  },
+  {
+    id: CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.limits,
+    title: "Limits",
+  },
 ] as const;
 
 export const metadata = {
@@ -59,6 +75,20 @@ export default function MethodologyPage() {
               >
                 {section.title}
               </a>
+              {section.id === CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.velocity ? (
+                <ul className="mt-2 flex flex-col gap-1 pl-4">
+                  {CLAIMABLE_VELOCITY_SUBSECTIONS.map((sub) => (
+                    <li key={sub.id}>
+                      <a
+                        href={`#${sub.id}`}
+                        className="text-zinc-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stellar rounded-sm"
+                      >
+                        {sub.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </li>
           ))}
           <li>
@@ -101,7 +131,10 @@ export default function MethodologyPage() {
       </nav>
 
       <div className="space-y-8">
-        {METHODOLOGY_SECTIONS.map((section) => (
+        {METHODOLOGY_SECTIONS.filter(
+          (section) =>
+            section.id !== CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.velocity,
+        ).map((section) => (
           <section
             key={section.id}
             id={section.id}
@@ -157,6 +190,110 @@ export default function MethodologyPage() {
             </div>
           </section>
         ))}
+
+        {(() => {
+          const section = METHODOLOGY_SECTIONS.find(
+            (entry) =>
+              entry.id === CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.velocity,
+          );
+          if (!section) return null;
+          return (
+            <section
+              id={CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.velocity}
+              className="scroll-mt-24 space-y-3 rounded-xl border border-white/10 bg-black/20 p-5"
+            >
+              <h2 className="text-xl font-semibold text-white">{section.title}</h2>
+              <p className="text-sm leading-relaxed text-zinc-300">
+                {section.summary}
+              </p>
+              <dl className="grid gap-3 text-sm text-zinc-400 sm:grid-cols-2">
+                <div>
+                  <dt className="text-zinc-500">Unit</dt>
+                  <dd className="text-zinc-200">{section.unit}</dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Aggregation</dt>
+                  <dd className="text-zinc-200">{section.aggregation}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-zinc-500">Time basis</dt>
+                  <dd className="text-zinc-200">{section.timeBasis}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-zinc-500">Source</dt>
+                  <dd className="font-mono text-xs text-zinc-200">{section.source}</dd>
+                </div>
+              </dl>
+              <div className="grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <h3 className="text-zinc-500">Inclusions</h3>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-zinc-300">
+                    {section.inclusions.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-zinc-500">Exclusions</h3>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-zinc-300">
+                    {section.exclusions.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-sm text-zinc-500">Known limitations</h3>
+                <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-zinc-300">
+                  {section.limitations.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="space-y-4 border-t border-white/10 pt-4">
+                <section
+                  id={CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.classification}
+                  className="scroll-mt-24 space-y-2"
+                >
+                  <h3 className="text-sm font-medium text-zinc-200">
+                    Classification
+                  </h3>
+                  <p className="text-sm text-zinc-400">
+                    Only <code className="font-mono text-xs">create_claimable_balance</code>{" "}
+                    and <code className="font-mono text-xs">claim_claimable_balance</code>{" "}
+                    enter the dual series. Clawbacks and every other operation
+                    type are ignored rather than inferred.
+                  </p>
+                </section>
+                <section
+                  id={CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.netDelta}
+                  className="scroll-mt-24 space-y-2"
+                >
+                  <h3 className="text-sm font-medium text-zinc-200">
+                    Net outstanding delta
+                  </h3>
+                  <p className="text-sm text-zinc-400">
+                    When the series is ready, net outstanding delta is period
+                    creates minus period claims. It is an operation-count KPI
+                    for the selected window, not a reconstructed claimable
+                    ledger balance.
+                  </p>
+                </section>
+                <section
+                  id={CLAIMABLE_VELOCITY_METHODOLOGY_ANCHORS.limits}
+                  className="scroll-mt-24 space-y-2"
+                >
+                  <h3 className="text-sm font-medium text-zinc-200">Limits</h3>
+                  <p className="text-sm text-zinc-400">
+                    Missing or malformed create/claim rows soft-fail the chart.
+                    Zero create and claim activity shows an empty state. Sponsor
+                    analytics and full ledger reconstruction are out of scope.
+                  </p>
+                </section>
+              </div>
+            </section>
+          );
+        })()}
 
         <section
           id="protocol-scatter"

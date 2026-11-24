@@ -10,6 +10,7 @@ export type MethodologySectionId =
   | "transactions"
   | "payment-volume"
   | "liquidity-flow"
+  | "claimable-velocity"
   | "tvl"
   | "active-accounts"
   | "active-destination-accounts"
@@ -130,6 +131,34 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
       "Missing category subtypes soft-fail to count 0 with `available: false` and do not fail the activity response or omit their bucket.",
       "Route-hop assets are best-effort JSON extraction from Hubble row details; an absent route path yields no ranked assets and does not fail the activity response.",
       "Offer size is not executed trade volume. Pool operation counts do not identify a pool or its traded value.",
+      "Hubble freshness and partial-period limits apply.",
+    ],
+  },
+  {
+    id: "claimable-velocity",
+    title: "Claimable-balance create vs claim velocity",
+    summary:
+      "Dual UTC-day series of classic claimable-balance create and claim operations for the selected period, with a net outstanding delta of creates minus claims when the series is computable.",
+    unit: "operations (count) per UTC day; net outstanding delta as a signed operation count",
+    aggregation:
+      "Rows typed `create_claimable_balance` and `claim_claimable_balance` are summed by UTC calendar day of `closed_at`. Net outstanding delta is period creates minus period claims.",
+    timeBasis:
+      "Same selected period bounds as operations. Bucket labels are UTC dates (YYYY-MM-DD).",
+    source:
+      "Typed claimable create/claim operation counts (fixture dataset locally; optional Hubble enrichment when available). Soft-fails when the series is missing or malformed.",
+    inclusions: [
+      "Creates: `create_claimable_balance`",
+      "Claims: `claim_claimable_balance`",
+    ],
+    exclusions: [
+      "Clawbacks (`clawback_claimable_balance`) and every non-claimable operation type",
+      "Full claimable-balance ledger reconstruction and sponsor analytics",
+      "Balances created before the selected period",
+    ],
+    limitations: [
+      "Net outstanding delta is an operation-count approximation for the window; it is not on-chain claimable ledger state.",
+      "Missing or malformed create/claim rows soft-fail the chart rather than inventing counts.",
+      "Zero create and claim activity renders an empty state.",
       "Hubble freshness and partial-period limits apply.",
     ],
   },
