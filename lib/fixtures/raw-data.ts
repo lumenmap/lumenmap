@@ -93,6 +93,7 @@ const BASE_CATEGORIES: CategoryRow[] = [
   { type_string: "create_account", op_count: 6_000 },
   { type_string: "manage_sell_offer", op_count: 90_000 },
   { type_string: "manage_buy_offer", op_count: 70_000 },
+  { type_string: "create_passive_sell_offer", op_count: 5_000 },
   { type_string: "liquidity_pool_deposit", op_count: 8_000 },
   { type_string: "liquidity_pool_withdraw", op_count: 6_000 },
   { type_string: "create_claimable_balance", op_count: 5_200 },

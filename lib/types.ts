@@ -286,6 +286,27 @@ export interface AssetPaymentVolumeRow {
   opCount: number;
 }
 
+export interface LiquidityFlowSubtypeShare {
+  type: string;
+  opCount: number;
+  available: boolean;
+}
+
+export interface LiquidityFlowSplitRow {
+  bucket: "manage_offer" | "path_payment" | "related";
+  label: string;
+  opCount: number;
+  share: number;
+  subtypes: LiquidityFlowSubtypeShare[];
+}
+
+export interface LiquidityFlowSplit {
+  rows: LiquidityFlowSplitRow[];
+  totalOpCount: number;
+  presentSubtypes: string[];
+  missingSubtypes: string[];
+}
+
 export interface LiquidityFlowSummary {
   pathPaymentCount: number;
   dexOperationCount: number;
@@ -300,6 +321,7 @@ export interface LiquidityFlowSummary {
     routeAppearances: number;
   }[];
   intermediateAssetsAvailable: boolean;
+  split: LiquidityFlowSplit;
 }
 
 export interface PaymentFlowEdgeRow {

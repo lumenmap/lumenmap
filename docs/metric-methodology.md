@@ -1,6 +1,6 @@
 # LumenMap metric methodology
 
-**Methodology version:** 2.2.0\
+**Methodology version:** 2.3.0\
 **Status:** Canonical for the current mainnet dashboard and its planned metrics  
 **Last updated:** 2026-11-18
 
@@ -132,17 +132,17 @@ particular, summing operation-type counts must never be labelled “transactions
 
 ### Path payments and DEX liquidity flow
 
-**Methodology ID:** `liquidity-flow` · **Version:** `1.0.0`
+**Methodology ID:** `liquidity-flow` · **Version:** `1.1.0`
 
 | Property | Canonical definition |
 | --- | --- |
-| **Unit** | Operation counts, plus separate XLM and supported USDC path-payment amounts in their native units. |
-| **Aggregation** | Counts sum category rows for the included operation types. Path-payment XLM notionals sum native send-side amounts for `path_payment_strict_send` and native destination amounts for `path_payment_strict_receive`. USDC notionals use the supported issuer allow-list and the corresponding source/destination amount fields. Amounts are not added across assets. |
+| **Unit** | Operation counts and three-bucket shares, plus separate XLM and supported USDC path-payment amounts in their native units. |
+| **Aggregation** | Counts sum category rows for the included operation types. The share split groups those counts into `manage_offer` (DEX manage / passive offers), `path_payment`, and `related` (liquidity-pool deposit/withdraw); each share is `opCount / three-bucket total`. Path-payment XLM notionals sum native send-side amounts for `path_payment_strict_send` and native destination amounts for `path_payment_strict_receive`. USDC notionals use the supported issuer allow-list and the corresponding source/destination amount fields. Amounts are not added across assets. |
 | **Time basis** | `closed_at >= @start AND closed_at < @end`. |
 | **Source** | `crypto-stellar.crypto_stellar_dbt.enriched_history_operations`, category totals, and optional `pathPaymentXlmAmountQuery`, `pathPaymentUsdcAmountQuery`, and `pathPaymentIntermediatesQuery` enrichments. |
-| **Includes** | Path payments: `path_payment_strict_receive`, `path_payment_strict_send`; DEX offers: `manage_buy_offer`, `manage_sell_offer`, `create_passive_sell_offer`; liquidity pools: `liquidity_pool_deposit`, `liquidity_pool_withdraw`. Top intermediate assets are ranked by route-path appearances when Hubble path details are present. |
-| **Excludes** | Executed DEX trade notional, pool reserve changes, mixed-asset totals, and fiat conversion. Offer amounts describe offer size rather than a completed trade. |
-| **Limitations** | Amounts are optional and soft-fail if relevant Hubble amount columns or schemas are unavailable. USDC is scoped to the verified issuer; XLM and USDC are reported separately. Intermediate-asset extraction is best-effort from row JSON at `details.path`; absent path details produce no ranked assets. Optional failures do not fail the activity response. Hubble lag and partial periods apply. |
+| **Includes** | Path payments: `path_payment_strict_receive`, `path_payment_strict_send`; DEX offers (`manage_offer`): `manage_buy_offer`, `manage_sell_offer`, `create_passive_sell_offer`; related liquidity pools: `liquidity_pool_deposit`, `liquidity_pool_withdraw`. Top intermediate assets are ranked by route-path appearances when Hubble path details are present. CSV export emits one row per subtype under its bucket. |
+| **Excludes** | Executed DEX trade notional, order-book reconstruction, off-chain price impact, pool reserve changes, mixed-asset totals, fiat conversion, and operation types outside the three buckets (for example plain `payment`). Offer amounts describe offer size rather than a completed trade. |
+| **Limitations** | Amounts are optional and soft-fail if relevant Hubble amount columns or schemas are unavailable. Missing category subtypes soft-fail to count 0 with `available: false` and keep their bucket visible. USDC is scoped to the verified issuer; XLM and USDC are reported separately. Intermediate-asset extraction is best-effort from row JSON at `details.path`; absent path details produce no ranked assets. Optional failures do not fail the activity response. Hubble lag and partial periods apply. |
 
 ### Total value locked (TVL)
 
@@ -344,7 +344,8 @@ Incomplete periods and a missing baseline produce no banner. `?anomaly=spike` an
 
 ### Version history
 
-- **2.2.0 (current):** Added the path-payment and DEX liquidity-flow summary, with independent soft-fail XLM/USDC path notionals and best-effort route-hop asset rankings. DEX offer and liquidity-pool operation counts are not presented as realized volume.
+- **2.3.0 (current):** Extended the liquidity-flow summary with a manage-offer / path-payment / related share split (table, stacked bar, CSV rows). Missing category subtypes soft-fail to zero. Fixture categories include every split subtype, including `create_passive_sell_offer`.
+- **2.2.0:** Added the path-payment and DEX liquidity-flow summary, with independent soft-fail XLM/USDC path notionals and best-effort route-hop asset rankings. DEX offer and liquidity-pool operation counts are not presented as realized volume.
 - **2.1.0:** Added the `operation-categories` metric and split **Liquidity Pools** (`liquidity_pool_deposit`, `liquidity_pool_withdraw`) out of **DEX Trades** and **Claimable Balances** (`create_claimable_balance`, `claim_claimable_balance`, `clawback_claimable_balance`) out of **Account Operations**; added the DeFi-on-classic ranked account tables. Category totals produced before 2.1.0 use the previous grouping and must be labelled as such rather than compared with current values. No other metric definition changed.
 - **2.0.0:** Optional query soft-failure for activeDestinationCount, activeContractCount, and transactionCategory queries.
 
