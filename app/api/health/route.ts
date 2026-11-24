@@ -10,6 +10,7 @@ import {
   getBytesBilledWindowMinutes,
   getRollingBytesBilled,
 } from "@/lib/hubble/bytes-billed-telemetry";
+import { getDailyBudgetSnapshot } from "@/lib/hubble/bytes-budget";
 import { getAllEntities } from "@/lib/entities/registry";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { withApiTrace } from "@/lib/telemetry/tracing";
@@ -60,6 +61,10 @@ type CheckResult = {
 type BytesBilledCheckResult = CheckResult & {
   rollingBytesBilled: number;
   windowMinutes: number;
+  dailyBudgetBytes: number;
+  dailyUsedBytes: number;
+  dailyRemainingBytes: number;
+  dailyBudgetStatus: "ok" | "soft_warn" | "over";
 };
 
 async function withTimeout<T>(
@@ -186,6 +191,7 @@ function checkCache(): CheckResult {
 function checkBytesBilled(): BytesBilledCheckResult {
   const start = Date.now();
   const windowMinutes = getBytesBilledWindowMinutes();
+  const budget = getDailyBudgetSnapshot();
 
   if (isFixtureMode()) {
     return {
@@ -194,19 +200,38 @@ function checkBytesBilled(): BytesBilledCheckResult {
       message: "Fixture mode reports zero bytes billed",
       rollingBytesBilled: 0,
       windowMinutes,
+      dailyBudgetBytes: budget.budgetBytes,
+      dailyUsedBytes: 0,
+      dailyRemainingBytes: budget.budgetBytes,
+      dailyBudgetStatus: "ok",
     };
   }
 
   const rollingBytesBilled = getRollingBytesBilled();
   const threshold = getBytesBilledDegradedThreshold();
+  const budgetDegraded = budget.status !== "ok";
+  const rollingDegraded = rollingBytesBilled > threshold;
 
-  if (rollingBytesBilled > threshold) {
+  if (rollingDegraded || budgetDegraded) {
+    const parts: string[] = [];
+    if (rollingDegraded) {
+      parts.push("Rolling BigQuery bytes billed exceeded configured threshold");
+    }
+    if (budget.status === "soft_warn") {
+      parts.push("Daily BigQuery bytes budget soft threshold reached");
+    } else if (budget.status === "over") {
+      parts.push("Daily BigQuery bytes budget exceeded");
+    }
     return {
       status: "degraded",
       latencyMs: Date.now() - start,
-      message: "Rolling BigQuery bytes billed exceeded configured threshold",
+      message: parts.join("; "),
       rollingBytesBilled,
       windowMinutes,
+      dailyBudgetBytes: budget.budgetBytes,
+      dailyUsedBytes: budget.usedBytes,
+      dailyRemainingBytes: budget.remainingBytes,
+      dailyBudgetStatus: budget.status,
     };
   }
 
@@ -216,6 +241,10 @@ function checkBytesBilled(): BytesBilledCheckResult {
     message: "Rolling BigQuery bytes billed within threshold",
     rollingBytesBilled,
     windowMinutes,
+    dailyBudgetBytes: budget.budgetBytes,
+    dailyUsedBytes: budget.usedBytes,
+    dailyRemainingBytes: budget.remainingBytes,
+    dailyBudgetStatus: budget.status,
   };
 }
 
@@ -296,6 +325,10 @@ async function handleHealthRequest(request: Request) {
           latencyMs: bytesBilled.latencyMs,
           rollingBytesBilled: bytesBilled.rollingBytesBilled,
           windowMinutes: bytesBilled.windowMinutes,
+          dailyBudgetBytes: bytesBilled.dailyBudgetBytes,
+          dailyUsedBytes: bytesBilled.dailyUsedBytes,
+          dailyRemainingBytes: bytesBilled.dailyRemainingBytes,
+          dailyBudgetStatus: bytesBilled.dailyBudgetStatus,
           message:
             bytesBilled.status !== "ok" ? bytesBilled.message : undefined,
         },

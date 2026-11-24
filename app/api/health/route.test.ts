@@ -11,6 +11,8 @@ describe("health bytes-billed readiness", () => {
     fixture: process.env.LUMENMAP_DATA_SOURCE,
     threshold: process.env.BIGQUERY_BYTES_BILLED_DEGRADED_THRESHOLD,
     window: process.env.BIGQUERY_BYTES_BILLED_WINDOW_MINUTES,
+    budget: process.env.BIGQUERY_DAILY_BYTES_BUDGET,
+    soft: process.env.BIGQUERY_DAILY_BUDGET_SOFT_RATIO,
   };
 
   beforeEach(() => {
@@ -18,6 +20,8 @@ describe("health bytes-billed readiness", () => {
     delete process.env.LUMENMAP_DATA_SOURCE;
     process.env.BIGQUERY_BYTES_BILLED_WINDOW_MINUTES = "15";
     process.env.BIGQUERY_BYTES_BILLED_DEGRADED_THRESHOLD = "1000";
+    process.env.BIGQUERY_DAILY_BYTES_BUDGET = "10000";
+    process.env.BIGQUERY_DAILY_BUDGET_SOFT_RATIO = "0.8";
   });
 
   afterEach(() => {
@@ -34,6 +38,10 @@ describe("health bytes-billed readiness", () => {
     } else {
       process.env.BIGQUERY_BYTES_BILLED_WINDOW_MINUTES = previous.window;
     }
+    if (previous.budget === undefined) delete process.env.BIGQUERY_DAILY_BYTES_BUDGET;
+    else process.env.BIGQUERY_DAILY_BYTES_BUDGET = previous.budget;
+    if (previous.soft === undefined) delete process.env.BIGQUERY_DAILY_BUDGET_SOFT_RATIO;
+    else process.env.BIGQUERY_DAILY_BUDGET_SOFT_RATIO = previous.soft;
   });
 
   it("reports zero bytes billed in fixture mode", async () => {
@@ -55,8 +63,38 @@ describe("health bytes-billed readiness", () => {
     };
     assert.equal(body.checks.bytesBilled.rollingBytesBilled, 0);
     assert.equal(body.checks.bytesBilled.status, "ok");
+    assert.equal(
+      (body.checks.bytesBilled as { dailyUsedBytes?: number }).dailyUsedBytes,
+      0,
+    );
     assert.ok(["healthy", "degraded", "unavailable"].includes(body.status));
     assert.ok(Number.isInteger(body.checks.bigquery.latencyMs));
+  });
+
+  it("soft-warns when daily budget usage crosses the soft ratio", async () => {
+    process.env.BIGQUERY_BYTES_BILLED_DEGRADED_THRESHOLD = "1000000";
+    recordBytesBilled(8000);
+    const { GET } = await import("./route");
+    const response = await GET(
+      new Request("http://localhost/api/health?type=readiness"),
+    );
+    const body = (await response.json()) as {
+      status: string;
+      checks: {
+        bytesBilled: {
+          status: string;
+          dailyUsedBytes: number;
+          dailyRemainingBytes: number;
+          dailyBudgetStatus: string;
+          message?: string;
+        };
+      };
+    };
+    assert.equal(body.checks.bytesBilled.dailyBudgetStatus, "soft_warn");
+    assert.equal(body.checks.bytesBilled.dailyUsedBytes, 8000);
+    assert.equal(body.checks.bytesBilled.dailyRemainingBytes, 2000);
+    assert.equal(body.checks.bytesBilled.status, "degraded");
+    assert.ok((body.checks.bytesBilled.message ?? "").includes("soft"));
   });
 
   it("marks readiness degraded when rolling bytes exceed the threshold", async () => {

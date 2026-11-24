@@ -3,6 +3,11 @@
  * Used by structured logs and readiness health — never stores project/table IDs.
  */
 
+import {
+  recordDailyBytesBilled,
+  resetDailyBytesBudget,
+} from "@/lib/hubble/bytes-budget";
+
 export type BytesBilledSample = {
   atMs: number;
   bytes: number;
@@ -16,12 +21,14 @@ const DEFAULT_DEGRADED_THRESHOLD = 10 * 1_073_741_824;
 
 export function resetBytesBilledTelemetry(): void {
   samples.length = 0;
+  resetDailyBytesBudget();
 }
 
 export function recordBytesBilled(bytes: number, atMs = Date.now()): void {
   const value = Number.isFinite(bytes) ? Math.max(0, Math.floor(bytes)) : 0;
   samples.push({ atMs, bytes: value });
   pruneOlderThan(atMs - getBytesBilledWindowMs());
+  recordDailyBytesBilled(value, atMs);
 }
 
 function pruneOlderThan(cutoffMs: number): void {
